@@ -9,8 +9,6 @@ supersedes:
   - "[[Agent team compositions (archetypes)]]"
 ---
 
-# Unconscious Development
-
 Work that happens below your attention, surfaced to you only at approval points. Settled by interview on 2026-11-10 (44 questions, cited as Q numbers), reframed around a cast of Jungian archetypes on 2026-11-11. Nothing below is built. Read it, annotate what is wrong (`<leader>ya`), and the build order at the end starts after that.
 
 Written for you, not for agents. Agents get smaller documents derived from this one: role prompts, skills, charters, PROJECT.md files.

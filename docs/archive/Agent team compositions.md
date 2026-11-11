@@ -5,8 +5,6 @@ written: 2026-11-10
 relates: "[[Agent team design]]"
 ---
 
-# Agent team compositions
-
 Four ways to arrange the delegate roles around Bakery's card loop. Read the criteria, then the options, then annotate which fits (`<leader>ya`). Nothing here is built.
 
 ## Where the roles come from

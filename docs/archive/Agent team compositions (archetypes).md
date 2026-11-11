@@ -5,8 +5,6 @@ written: 2026-11-10
 relates: "[[Agent team design]]", "[[Agent team compositions]]"
 ---
 
-# Agent team compositions, Jungian edition
-
 Same four compositions as [[Agent team compositions]], renamed and reframed with archetypes. The operational boundaries do not change. The archetypes are a naming layer that makes the boundary question easier to argue about: "should the Shadow ever share a context with the Creator" is a sharper question than "should the reviewer see the worker's transcript".
 
 A note on provenance. Jung named a handful of archetypes (Self, Shadow, Persona, Anima and Animus, Trickster, Wise Old Man, Great Mother, Hero). The twelve-archetype wheel (Explorer, Sage, Ruler, Creator, Magician and so on) is a later derivation by Pearson and Mark. This document uses both, labelled.

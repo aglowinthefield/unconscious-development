@@ -5,8 +5,6 @@ decided: 2026-11-10
 scope: cross-project (Silk, impression, bakery)
 ---
 
-# Unconscious Development: agent team design
-
 The flow is called Unconscious Development: work that happens below your
 attention, surfaced to you only at approval points.
 
