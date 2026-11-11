@@ -31,13 +31,13 @@ The Persona row is the design doc's Q2 and Q15 restated: archetypes are generic,
 
 A boundary earns its place only when one of these differs across it. Domain, repo, and task size do not qualify; the Persona carries those.
 
-| Criterion | Splits |
-|---|---|
-| Write permission | Creator from Explorer, Sage, Shadow |
-| Output contract | Shadow (verdicts) from Explorer (paths) from Trickster (pass or fail) |
-| Context isolation | Shadow from Creator. Sage from Explorer, weakly |
-| Authorization | Self from everyone. Ruler and Magician stop at proposing |
-| Model tier | Ruler and Magician on the strongest model; Creator and Explorer on `auto` |
+| Criterion         | Splits                                                                    |
+| ----------------- | ------------------------------------------------------------------------- |
+| Write permission  | Creator from Explorer, Sage, Shadow                                       |
+| Output contract   | Shadow (verdicts) from Explorer (paths) from Trickster (pass or fail)     |
+| Context isolation | Shadow from Creator. Sage from Explorer, weakly                           |
+| Authorization     | Self from everyone. Ruler and Magician stop at proposing                  |
+| Model tier        | Ruler and Magician on the strongest model; Creator and Explorer on `auto` |
 
 Explorer and Sage differ only on output contract, and weakly, when either is dispatched alone. They earn separate existence when sequenced: the Sage plans on the Explorer's facts rather than on facts it chose to look for. `oracle` was a third read-only role that differed from the Explorer only in returning an answer instead of paths; it is removed. The Explorer's task sets the output shape.
 

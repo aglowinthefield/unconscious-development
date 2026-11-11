@@ -3,7 +3,10 @@ status: proposed
 decided: 2026-11-10
 revised: 2026-11-11
 scope: cross-project (Silk, impression, bakery)
-supersedes: "[[Agent team design]]", "[[Agent team compositions]]", "[[Agent team compositions (archetypes)]]"
+supersedes:
+  - "[[Agent team design]]"
+  - "[[Agent team compositions]]"
+  - "[[Agent team compositions (archetypes)]]"
 ---
 
 # Unconscious Development
