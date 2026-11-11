@@ -9,43 +9,49 @@ supersedes:
   - "[[Agent team compositions (archetypes)]]"
 ---
 
-Work that happens below your attention, surfaced to you only at approval points. Settled by interview on 2026-11-10 (44 questions, cited as Q numbers), reframed around a cast of Jungian archetypes on 2026-11-11. Nothing below is built. Read it, annotate what is wrong (`<leader>ya`), and the build order at the end starts after that.
+%%Work that happens below your attention, surfaced to you only at approval points. I hate this line. Let's not add sales pitches in this doc.%%
+%% @agent 2026-11-11: removed the line; the doc opens with the interview sentence %%
+Settled by interview on 2026-11-10 ([[Interview 2026-11-10|transcript]]; footnotes point at the question), reframed around a cast of Jungian archetypes on 2026-11-11. Nothing below is built. Read it, annotate what is wrong (`<leader>ya`), and the build order at the end starts after that.
 
 Written for you, not for agents. Agents get smaller documents derived from this one: role prompts, skills, charters, PROJECT.md files.
 
-
 ## The shape
 
-An agent is three layers (Q1). Any one alone collapses the other two.
+%%We have the interview archived somewhere right? Do we need these Qn markers everywhere? Could we put the transcript in a different doc and link to it via footnote links?%%
+%% @agent 2026-11-11: transcript exported from the pi session to archive/Interview 2026-11-10.md; every Qn is now a footnote linking to that question's heading %%
+An agent is three layers[^Q1]. Any one alone collapses the other two.
 
 1. a skill: the method, portable, in dotfiles
 2. a role: a subagent definition that loads the skill, in dotfiles
 3. a place it runs: a Bakery card, an agent session in any terminal, or a scheduled headless run
 
-None of the three is tied to one harness. Skills follow the Agent Skills spec, roles are subagent definitions in whatever form the harness reads, the run place is a session or a card. Pi is the harness today; the design must survive swapping it. herdr is one way to open and watch sessions, not a requirement.
+None of the three is tied to one harness. Skills follow the Agent Skills spec, roles are subagent definitions in whatever form the harness reads, the run place is a session or a card. Pi is the harness today; the design must survive swapping it. `herdr` is one way to open and watch sessions, not a requirement.
 
-Work starts only from an approved spec. A spec is a file in `docs/specs/`, merged by PR. The merge flips a GitHub label, and a script generates the Bakery cards from it. You are the single approver. Nothing dispatches itself (Q5).
+%%We don't want strict reliance on GitHub for this flow. I'm also nervous about unbounded growth of the docs/specs folder. We've had thousands of pull requests the past few months and most of those specs are going to be useless almost immediately (e.g. typos, changing constant values, net additions). %%
+Work starts only from an approved spec. A spec is a file in `docs/specs/`, merged by PR. The merge flips a GitHub label, and a script generates the Bakery cards from it. You are the single approver. Nothing dispatches itself[^Q5].
 
 
 ## The cast
 
 Jung named the Self, Shadow, Persona, Trickster, and a few others. The Explorer, Sage, Ruler, Creator, and Magician come from Pearson and Mark's later twelve-archetype wheel. Both are used, labelled.
 
-| Archetype | Source | On the wire | May | Must not |
-|---|---|---|---|---|
-| Self | Jung | you | approve specs, batches, merges | be delegated |
-| Magician | Pearson | `chief` | read every `PROJECT.md` and `Now/` page, propose a batch, turn approved specs into cards | write specs or code, start cards |
-| Ruler | Pearson | `lead` | hold one domain's charter, dispatch, write specs, make small changes (Q34) | push, open PRs, hand-write Ready cards |
-| Explorer | Pearson | `researcher` | read anything, return paths and lines, answer questions | write |
-| Sage | Pearson | `planner` | propose steps and order, with a reason | choose and then pretend to compare |
-| Creator | Pearson | `worker` | change files, run tests, report | review its own work |
-| Shadow | Jung | `reviewer` | see what the Creator did not want seen; return per-criterion verdicts with evidence | see the Creator's reasoning. Fresh context only |
-| Trickster | Jung | verifier (new) | run the criteria the Shadow marked `needs-run` and try to make them fail | judge code it has not run |
-| Persona | Jung | a charter or skill | the mask any archetype wears to become a specialist | be a role |
+| Archetype | Source  | On the wire        | May                                                                                      | Must not                                        |
+| --------- | ------- | ------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Self      | Jung    | you                | approve specs, batches, merges                                                           | be delegated                                    |
+| Magician  | Pearson | `chief`            | read every `PROJECT.md` and `Now/` page, propose a batch, turn approved specs into cards | write specs or code, start cards                |
+| Ruler     | Pearson | `lead`             | hold one domain's charter, dispatch, write specs, make small changes[^Q34]               | push, open PRs, hand-write Ready cards          |
+| Explorer  | Pearson | `researcher`       | read anything, return paths and lines, answer questions                                  | write                                           |
+| Sage      | Pearson | `planner`          | propose steps and order, with a reason                                                   | choose and then pretend to compare              |
+| Creator   | Pearson | `worker`           | change files, run tests, report                                                          | review its own work                             |
+| Shadow    | Jung    | `reviewer`         | see what the Creator did not want seen; return per-criterion verdicts with evidence      | see the Creator's reasoning. Fresh context only |
+| Trickster | Jung    | verifier (new)     | run the criteria the Shadow marked `needs-run` and try to make them fail                 | judge code it has not run                       |
+| Persona   | Jung    | a charter or skill | the mask any archetype wears to become a specialist                                      | be a role                                       |
 
-Archetypes are generic; a charter makes them specialists (Q2, Q15). A `mobile-creator` is a Creator wearing the mobile charter. Flexibility comes from the Persona, not from more roles (Q6, Q24): a thin charter behaves like a Sage, a rich one like a specialist.
+%%We should be more clear about what a charter is, and maybe decide if there are alternative names that are more Jungian for it to match. Even I'm not totally clear where a charter lives or what it does.%%
+Archetypes are generic; a charter makes them specialists[^Q2][^Q15]. A `mobile-creator` is a Creator wearing the mobile charter. Flexibility comes from the Persona, not from more roles[^Q6][^Q24]: a thin charter behaves like a Sage, a rich one like a specialist.
 
-`oracle`, a third read-only role that returned an answer instead of paths, is removed. The Explorer's task sets its output shape.
+%%No need for this.%%
+%% @agent 2026-11-11: removed the oracle paragraph %%
 
 Whether the archetype names replace the wire names in role prompts is undecided (decision 5). Until then: archetypes on paper, wire names in the harness config.
 
@@ -53,13 +59,13 @@ Whether the archetype names replace the wire names in role prompts is undecided 
 
 A boundary earns its place only when one of these differs across it. Domain, repo, and task size never qualify; the Persona carries those.
 
-| Criterion | Splits |
-|---|---|
-| Write permission | Creator from Explorer, Sage, Shadow |
-| Output contract | Shadow (verdicts) from Explorer (paths) from Trickster (pass or fail) |
-| Context isolation | Shadow from Creator. Sage from Explorer, when sequenced |
-| Authorization | Self from everyone. Ruler and Magician stop at proposing |
-| Model tier | Ruler and Magician on the strongest model; Creator and Explorer on `auto` (Q29) |
+| Criterion         | Splits                                                                          |
+| ----------------- | ------------------------------------------------------------------------------- |
+| Write permission  | Creator from Explorer, Sage, Shadow                                             |
+| Output contract   | Shadow (verdicts) from Explorer (paths) from Trickster (pass or fail)           |
+| Context isolation | Shadow from Creator. Sage from Explorer, when sequenced                         |
+| Authorization     | Self from everyone. Ruler and Magician stop at proposing                        |
+| Model tier        | Ruler and Magician on the strongest model; Creator and Explorer on `auto`[^Q29] |
 
 Explorer and Sage differ only on output contract when dispatched alone. They earn separate existence when sequenced: the Sage plans on the Explorer's facts rather than on facts it chose to look for. Ruler and Sage both propose; the Sage proposes a plan for one task, the Ruler proposes within a domain's law with the Self in the room. Shadow and Trickster are the only two roles whose isolation is enforced by something other than a prompt: a fresh delegate context, a separate card.
 
@@ -85,6 +91,7 @@ Ticket: silk-remix #412, "Bulk archive from the orders list", labelled `domain:o
                               Trickster card (needs-run criteria only) ──▶ Self approves, merge
 ```
 
+%%Not sure what headless, morning really is. There should be a general trigger for these. Needs to be more abstract but also defined. %%
 1. Noticing. Magician. A headless morning run reads `PROJECT.md`, open issues, CI state, and yesterday's `Now/silk.md`. It appends a proposal to the page: #412 is small, the orders charter exists, spec it today.
 2. Approval. Self. You read the page and say yes. First authorization point.
 3. Spec. Self and Ruler, together. Interactive session on `spec/412`. The Ruler wears `docs/domains/orders/CHARTER.md`. It sends an Explorer for the facts (where the list query lives, how single archive works, whether a soft-delete flag exists). It sends a Sage for the shape (client loop, one mutation, or background job; recommends one, with a reason). You argue with the Ruler, pick the mutation, and the Ruler writes `docs/specs/412-bulk-archive.md` with acceptance criteria and a setup note. PR opened, `check-spec` passes, you merge, label flips to `ready-for-agent`.
@@ -98,7 +105,7 @@ What the walk shows: the Ruler appears once, at spec time, where you are present
 
 ## Verification scope
 
-The spec says what must be true. Who checks each claim is a property of the claim, decided when the diff exists, not a mode the spec picks. The Shadow's verdict has three states (Q13, Q37, revised):
+The spec says what must be true. Who checks each claim is a property of the claim, decided when the diff exists, not a mode the spec picks. The Shadow's verdict has three states[^Q13][^Q37] (revised):
 
 ```
 criteria: [{ id, verdict: met | unmet | needs-run, evidence }]
@@ -117,16 +124,16 @@ Control: a lazy Shadow marks everything `needs-run`. The evidence requirement an
 
 Bakery constraints: one card is one agent session in one worktree; a finished run reaches Review only; retry continues the same session; `depend` cuts the next worktree from a `main` holding the earlier card; card runs see only the repo's `AGENTS.md` and the global one, so the Persona must be named in the card body.
 
-| | A Creator + Shadow | B Ruler's court | C journey of cards | D Magician + Self |
-|---|---|---|---|---|
-| Shape | Creator summons Shadow before reporting | Ruler in the card dispatches Explorer, Creator, Shadow | Explorer card → Creator card → Trickster card | Magician outside; A inside each card |
-| Sessions per task | 1 | 1 | 3 | 1 |
-| Strong-model layers | 1 | 2 | 1 | 1 (+Magician) |
-| Trickster | only via `needs-run` | only via `needs-run` | always a card | via `needs-run` |
-| Review stops | 1 | 1 | 3 | 1 |
-| Persona loaded by | card body | Ruler | each card body | card body |
-| Needs an interactive session | no | no | no | for approval only |
-| Build-order step | 2 | 1 and 2 | 3 | 4 |
+|                              | A Creator + Shadow                      | B Ruler's court                                        | C journey of cards                            | D Magician + Self                    |
+| ---------------------------- | --------------------------------------- | ------------------------------------------------------ | --------------------------------------------- | ------------------------------------ |
+| Shape                        | Creator summons Shadow before reporting | Ruler in the card dispatches Explorer, Creator, Shadow | Explorer card → Creator card → Trickster card | Magician outside; A inside each card |
+| Sessions per task            | 1                                       | 1                                                      | 3                                             | 1                                    |
+| Strong-model layers          | 1                                       | 2                                                      | 1                                             | 1 (+Magician)                        |
+| Trickster                    | only via `needs-run`                    | only via `needs-run`                                   | always a card                                 | via `needs-run`                      |
+| Review stops                 | 1                                       | 1                                                      | 3                                             | 1                                    |
+| Persona loaded by            | card body                               | Ruler                                                  | each card body                                | card body                            |
+| Needs an interactive session | no                                      | no                                                     | no                                            | for approval only                    |
+| Build-order step             | 2                                       | 1 and 2                                                | 3                                             | 4                                    |
 
 A is the default and needs nothing new. The Shadow's task must read criteria from the card body, never from the Creator's message; a Shadow briefed by the Creator is a mirror. B is for a domain whose specs keep coming back thin; its risk is a Ruler whose context fills with the Creator's transcript and starts judging, so the Shadow stays a separate delegate. C is Bakery-only and gives each stage its own diff and cost line; its cost is three Review stops unless unattended review passes the read-only cards. D is the end state and composes with A or B inside the card. The walked ticket is D with A inside.
 
@@ -135,69 +142,71 @@ A is the default and needs nothing new. The Shadow's task must read criteria fro
 
 ### Structure
 
-**Q2, Q15. Charter sections.** `docs/domains/<name>/CHARTER.md`: owner, scope (agent-map areas), invariants (what this domain refuses), standing questions, cost model, key files, recent decisions (ADR links), how to run things here (which db-tests, which device, which dashboard; the Trickster's setup source).
+**Charter sections.**[^Q2][^Q15] `docs/domains/<name>/CHARTER.md`: owner, scope (agent-map areas), invariants (what this domain refuses), standing questions, cost model, key files, recent decisions (ADR links), how to run things here (which db-tests, which device, which dashboard; the Trickster's setup source).
 
-**Q34. A Ruler may implement small changes itself.** At most 3 files, no schema or migration, no `.tsx` or mobile UI, no new dependency, no paid-API path. It still writes a short spec and still gets a Shadow. Skip the dispatch, not the record.
+**A Ruler may implement small changes itself.**[^Q34] At most 3 files, no schema or migration, no `.tsx` or mobile UI, no new dependency, no paid-API path. It still writes a short spec and still gets a Shadow. Skip the dispatch, not the record.
 
-**Q14. Two new roles only.** Ruler and Magician. Specifying and briefing are skills those roles load.
+**Two new roles only.**[^Q14] Ruler and Magician. Specifying and briefing are skills those roles load.
 
-**Q25, Q36. The Magician is cross-domain and cross-project.** It reads `PROJECT.md` in each repo (tracker, hosted Bakery server and board, CI, vault page), proposes a batch (issues, domain, order, rough spend), appends it to the vault page, and after approval runs `spec-to-cards`.
+**The Magician is cross-domain and cross-project.**[^Q25][^Q36] It reads `PROJECT.md` in each repo (tracker, hosted Bakery server and board, CI, vault page), proposes a batch (issues, domain, order, rough spend), appends it to the vault page, and after approval runs `spec-to-cards`.
 
-**Q8. Dotfiles hold the generic parts; repos hold the specific parts.** Cast and skills: `~/.agents/skills` plus the harness's role config, both chezmoi-managed. Charters, `PROJECT.md`, specs: in each repo.
+**Dotfiles hold the generic parts; repos hold the specific parts.**[^Q8] Cast and skills: `~/.agents/skills` plus the harness's role config, both chezmoi-managed. Charters, `PROJECT.md`, specs: in each repo.
 
 ### Tracker and spec
 
-**Q9, Q19. Drop Linear. GitHub Issues everywhere.** Migrate only Linear Todo and In Progress, about 50 issues: title, body, `domain:*` labels, an `imported-from: SIL-nnn` line, one-shot script kept in the repo. Repo tooling that changes: `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, the PR-body Linear link rule, `linear-nuke`, Bakery card keys.
+**Drop Linear. GitHub Issues everywhere.**[^Q9][^Q19] Migrate only Linear Todo and In Progress, about 50 issues: title, body, `domain:*` labels, an `imported-from: SIL-nnn` line, one-shot script kept in the repo. Repo tooling that changes: `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, the PR-body Linear link rule, `linear-nuke`, Bakery card keys.
 
-**Q20. Labels carry domain and state.** One `domain:<name>` per issue. State: `needs-spec`, `ready-for-agent`, `ready-for-human`.
+**Labels carry domain and state.**[^Q20] One `domain:<name>` per issue. State: `needs-spec`, `ready-for-agent`, `ready-for-human`.
 
-**Q3, Q10. The spec is a file.** `docs/specs/<issue>-<slug>.md`. The issue links to it. The card body is generated from it.
+**The spec is a file.**[^Q3][^Q10] `docs/specs/<issue>-<slug>.md`. The issue links to it. The card body is generated from it.
 
-**Q11. Required spec sections (revised).** Goal; Non-goals; Acceptance criteria (each with an id); Setup note (data, device, environment a `needs-run` criterion would need; may say `none`); Surfaces touched; Constraints and invariants (from the charter; may say `none`); Cost and scale (may say `none`). The former Verification section is gone; scope is decided per criterion by the Shadow.
+**Required spec sections (revised).**[^Q11] Goal; Non-goals; Acceptance criteria (each with an id); Setup note (data, device, environment a `needs-run` criterion would need; may say `none`); Surfaces touched; Constraints and invariants (from the charter; may say `none`); Cost and scale (may say `none`). The former Verification section is gone; scope is decided per criterion by the Shadow.
 
-**Q31. Spec format.** Frontmatter `issue`, `domain`, `status`, `budget_usd`, `surfaces`; fixed headings; tasks as a checklist, an item may carry `after: <task-id>`. `check-spec` validates `docs/specs/**` in CI and refuses a spec without acceptance criteria.
+**Spec format.**[^Q31] Frontmatter `issue`, `domain`, `status`, `budget_usd`, `surfaces`; fixed headings; tasks as a checklist, an item may carry `after: <task-id>`. `check-spec` validates `docs/specs/**` in CI and refuses a spec without acceptance criteria.
 
-**Q12, Q21. You and the Ruler draft together.** Interactive agent session, `spec/<issue>` branch, same worktree, you edit the file directly. Lands by PR, Codiff for the walkthrough. Merging is the approval.
+**You and the Ruler draft together.**[^Q12][^Q21] Interactive agent session, `spec/<issue>` branch, same worktree, you edit the file directly. Lands by PR, Codiff for the walkthrough. Merging is the approval.
 
-**Q32. Merge flips the label.** A GitHub Action on merge to `main` that touches a spec with `status: approved` moves `needs-spec` to `ready-for-agent` and comments the spec path on the issue. `spec-to-cards` refuses anything else.
+**Merge flips the label.**[^Q32] A GitHub Action on merge to `main` that touches a spec with `status: approved` moves `needs-spec` to `ready-for-agent` and comments the spec path on the issue. `spec-to-cards` refuses anything else.
 
-**Q22, Q23. One card per task.** `spec-to-cards <issue>` creates cards with `--key gh-<issue>/<task>` and `depend` edges. Never one card per surface.
+**One card per task.**[^Q22][^Q23] `spec-to-cards <issue>` creates cards with `--key gh-<issue>/<task>` and `depend` edges. Never one card per surface.
 
-**Q33. Out-of-scope findings become issues.** `gh issue create` with `needs-spec` and the domain label, linked from the PR body.
+**Out-of-scope findings become issues.**[^Q33] `gh issue create` with `needs-spec` and the domain label, linked from the PR body.
 
 ### Memory and switching
 
-**Q4, Q17, Q35. One vault page per project.** `Now/<project>.md` plus `Now/index.md`. Frontmatter `last_briefed`, `briefing_sources`. Sections: Priority now; In flight; Blocked on me; Decisions pending; Proposed batch (the Magician appends here); Last touched.
+**One vault page per project.**[^Q4][^Q17][^Q35] `Now/<project>.md` plus `Now/index.md`. Frontmatter `last_briefed`, `briefing_sources`. Sections: Priority now; In flight; Blocked on me; Decisions pending; Proposed batch (the Magician appends here); Last touched.
 
-**Q7, Q27. Briefing is a skill, run on demand.** Inputs: `gh` (open PRs, CI state, issues by label), Bakery cards, runs, cost, and the page's previous state so it can say what changed. Grafana and Sentry join after two weeks of the cheap sources being right. Must work in print mode and never rely on a terminal UI to show its result.
+**Briefing is a skill, run on demand.**[^Q7][^Q27] Inputs: `gh` (open PRs, CI state, issues by label), Bakery cards, runs, cost, and the page's previous state so it can say what changed. Grafana and Sentry join after two weeks of the cheap sources being right. Must work in print mode and never rely on a terminal UI to show its result.
 
-**Q26, Q42. The Magician is a resumed agent session.** Its contract is its inputs and the `Now/` page it writes. Where it runs is a choice per day: a resumed session in a terminal, a herdr tab, a headless cron on mochi, later a Bakery room. A Ruler you collaborate with is the same kind of session. Rulers inside a card run are ephemeral delegates.
+**The Magician is a resumed agent session.**[^Q26][^Q42] Its contract is its inputs and the `Now/` page it writes. Where it runs is a choice per day: a resumed session in a terminal, a herdr tab, a headless cron on mochi, later a Bakery room. A Ruler you collaborate with is the same kind of session. Rulers inside a card run are ephemeral delegates.
 
-**Q41. Hosted Bakery on mochi is canonical.** `http://mochi:4317`, every project. Local boards are scratch and the Magician ignores them.
+**Hosted Bakery on mochi is canonical.**[^Q41] `http://mochi:4317`, every project. Local boards are scratch and the Magician ignores them.
 
 ### Tooling home
 
-**Q43.** `check-spec`, the spec, charter, and `PROJECT.md` templates, and the label-flip workflow: a new package in `~/code/clearstack`. `spec-to-cards`: in Bakery as `bakery-cli spec-to-cards`.
+**Tooling home.**[^Q43] `check-spec`, the spec, charter, and `PROJECT.md` templates, and the label-flip workflow: a new package in `~/code/clearstack`. `spec-to-cards`: in Bakery as `bakery-cli spec-to-cards`.
 
-**Q40. Names.** Files: `docs/domains/<name>/CHARTER.md`, `PROJECT.md`. Roles: see decision 5.
+**Names.**[^Q40] Files: `docs/domains/<name>/CHARTER.md`, `PROJECT.md`. Roles: see decision 5.
 
 
 ## What gets built
 
-Dotfiles: Ruler and Magician roles; `spec` skill (Q11 shape); `briefing` skill (Q27 inputs); the Shadow's verdict contract in its role prompt.
+Dotfiles: Ruler and Magician roles; `spec` skill (the spec format[^Q11]); `briefing` skill (the briefing inputs[^Q27]); the Shadow's verdict contract in its role prompt.
 
 clearstack, new package: `check-spec`; spec, charter, `PROJECT.md` templates; label-flip workflow.
 
 Bakery: `bakery-cli spec-to-cards`; store the `criteria` array on the card; emit a Trickster card when any verdict is `needs-run`.
 
-silk-remix: six charters under `docs/domains/` (ingestion-search, mobile, web, api-contracts-shared, infra-ci-release, billing-insights-console), drafted by an Explorer from `docs/agent-map/`, `CODEBASE_OVERVIEW.md`, ADRs, `notes/03 Landscape/`; you edit invariants and standing questions (Q28). `PROJECT.md`. Linear migration script.
+silk-remix: six charters under `docs/domains/` (ingestion-search, mobile, web, api-contracts-shared, infra-ci-release, billing-insights-console), drafted by an Explorer from `docs/agent-map/`, `CODEBASE_OVERVIEW.md`, ADRs, `notes/03 Landscape/`; you edit invariants and standing questions[^Q28]. `PROJECT.md`. Linear migration script.
 
 impression, bakery: `PROJECT.md`, `docs/specs/`, a mochi board for impression.
 
 Vault: `Now/index.md`, `Now/silk.md`, `Now/impression.md`, `Now/bakery.md`.
 
 
-## Build order (Q30)
+## Build order
+
+From the interview.[^Q30]
 
 1. Ruler role, `spec` skill, ingestion-search charter.
 2. SIL-258 (SSE connections cut at about 125 s) through the loop by hand, composition A: spec PR, one card by hand, Creator, Shadow with criteria. Measure reconnects per hour before and after, and how often the Shadow's `unmet` and `needs-run` are right.
@@ -205,7 +214,7 @@ Vault: `Now/index.md`, `Now/silk.md`, `Now/impression.md`, `Now/bakery.md`.
 4. Magician role, `briefing` skill, Silk `PROJECT.md`, its vault page. Use the Magician for one week.
 5. Migrate Linear, add labels, retire `linear-nuke`.
 6. The other five Silk charters.
-7. `PROJECT.md`, `docs/specs/`, mochi board for impression and bakery (Q38).
+7. `PROJECT.md`, `docs/specs/`, mochi board for impression and bakery[^Q38].
 8. Bakery stores criteria; Trickster card on first `needs-run`; later, block Done on `unmet`.
 
 
@@ -226,3 +235,44 @@ party presets there are disabled. A lookup.
 Probably the card body names the charter path.
 - Whether silk-remix's `ops-alert` issues get a `domain:*` label or stay
 outside the taxonomy.
+
+[^Q1]: [[Interview 2026-11-10#Q1|Q1]]
+[^Q2]: [[Interview 2026-11-10#Q2|Q2]]
+[^Q3]: [[Interview 2026-11-10#Q3|Q3]]
+[^Q4]: [[Interview 2026-11-10#Q4|Q4]]
+[^Q5]: [[Interview 2026-11-10#Q5|Q5]]
+[^Q6]: [[Interview 2026-11-10#Q6|Q6]]
+[^Q7]: [[Interview 2026-11-10#Q7|Q7]]
+[^Q8]: [[Interview 2026-11-10#Q8|Q8]]
+[^Q9]: [[Interview 2026-11-10#Q9|Q9]]
+[^Q10]: [[Interview 2026-11-10#Q10|Q10]]
+[^Q11]: [[Interview 2026-11-10#Q11|Q11]]
+[^Q12]: [[Interview 2026-11-10#Q12|Q12]]
+[^Q13]: [[Interview 2026-11-10#Q13|Q13]]
+[^Q14]: [[Interview 2026-11-10#Q14|Q14]]
+[^Q15]: [[Interview 2026-11-10#Q15|Q15]]
+[^Q17]: [[Interview 2026-11-10#Q17|Q17]]
+[^Q19]: [[Interview 2026-11-10#Q19|Q19]]
+[^Q20]: [[Interview 2026-11-10#Q20|Q20]]
+[^Q21]: [[Interview 2026-11-10#Q21|Q21]]
+[^Q22]: [[Interview 2026-11-10#Q22|Q22]]
+[^Q23]: [[Interview 2026-11-10#Q23|Q23]]
+[^Q24]: [[Interview 2026-11-10#Q24|Q24]]
+[^Q25]: [[Interview 2026-11-10#Q25|Q25]]
+[^Q26]: [[Interview 2026-11-10#Q26|Q26]]
+[^Q27]: [[Interview 2026-11-10#Q27|Q27]]
+[^Q28]: [[Interview 2026-11-10#Q28|Q28]]
+[^Q29]: [[Interview 2026-11-10#Q29|Q29]]
+[^Q30]: [[Interview 2026-11-10#Q30|Q30]]
+[^Q31]: [[Interview 2026-11-10#Q31|Q31]]
+[^Q32]: [[Interview 2026-11-10#Q32|Q32]]
+[^Q33]: [[Interview 2026-11-10#Q33|Q33]]
+[^Q34]: [[Interview 2026-11-10#Q34|Q34]]
+[^Q35]: [[Interview 2026-11-10#Q35|Q35]]
+[^Q36]: [[Interview 2026-11-10#Q36|Q36]]
+[^Q37]: [[Interview 2026-11-10#Q37|Q37]]
+[^Q38]: [[Interview 2026-11-10#Q38|Q38]]
+[^Q40]: [[Interview 2026-11-10#Q40|Q40]]
+[^Q41]: [[Interview 2026-11-10#Q41|Q41]]
+[^Q42]: [[Interview 2026-11-10#Q42|Q42]]
+[^Q43]: [[Interview 2026-11-10#Q43|Q43]]
