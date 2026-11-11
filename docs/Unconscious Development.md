@@ -82,6 +82,18 @@ No tool is a dependency except files and scripts. The contract is Markdown (Pers
 The cast owns the subagent namespace. Any harness or extension that ships its own subagent presets competes for the same names and delegation surface. Those presets get disabled or overridden so only the cast is reachable.
 
 
+### Triggers
+
+Nothing in the cast runs on its own. Each unattended invocation starts from a trigger, which is a named reason passed to the role as its first input. Three kinds, and the Magician's question for each:
+
+| Kind | Example | The Magician asks |
+|---|---|---|
+| scheduled | daily, before you start | what should run next |
+| event | a card reached Review; a spec merged | does this unblock anything |
+| request | you asked | whatever you asked |
+
+How a trigger is delivered (a cron, a Bakery hook, you typing) is implementation and stays out of this document. What the design fixes is only that the trigger is named in the input and recorded in the `Now/` page, so a proposal always says why it was made. Start with the request kind alone; add scheduled when you trust the proposals; add events last.
+
 ## A feature ticket, walked
 
 Ticket: silk-remix #412, "Bulk archive from the orders list", labelled `domain:orders`, `needs-spec`.
@@ -98,7 +110,8 @@ Ticket: silk-remix #412, "Bulk archive from the orders list", labelled `domain:o
 ```
 
 %%Not sure what headless, morning really is. There should be a general trigger for these. Needs to be more abstract but also defined. %%
-1. Noticing. Magician. A headless morning run reads `PROJECT.md`, open issues, CI state, and yesterday's `Now/silk.md`. It appends a proposal to the page: #412 is small, the orders Persona exists, spec it today.
+%% @agent 2026-11-11: replaced with "on a trigger" and added a Triggers paragraph after the two global rules; three kinds, no infrastructure %%
+1. Noticing. Magician. On a trigger (here, the daily one) the Magician reads `PROJECT.md`, open issues, CI state, and yesterday's `Now/silk.md`. It appends a proposal to the page: #412 is small, the orders Persona exists, spec it today.
 2. Approval. Self. You read the page and say yes. First authorization point.
 3. Spec. Self and Ruler, together. Interactive session on `spec/412`. The Ruler wears `docs/personas/orders.md`. It sends an Explorer for the facts (where the list query lives, how single archive works, whether a soft-delete flag exists). It sends a Sage for the shape (client loop, one mutation, or background job; recommends one, with a reason). You argue with the Ruler, pick the mutation, and the Ruler writes `docs/specs/412-bulk-archive.md` with acceptance criteria and a setup note. PR opened, `check-spec` passes, you merge, label flips to `ready-for-agent`.
 4. Cards. Magician. `spec-to-cards` turns the spec into cards. One task, one Creator card; the body names the Persona path and the criteria.
