@@ -28,7 +28,10 @@ An agent is three layers[^Q1]. Any one alone collapses the other two.
 None of the three is tied to one harness. Skills follow the Agent Skills spec, roles are subagent definitions in whatever form the harness reads, the run place is a session or a card. Pi is the harness today; the design must survive swapping it. `herdr` is one way to open and watch sessions, not a requirement.
 
 %%We don't want strict reliance on GitHub for this flow. I'm also nervous about unbounded growth of the docs/specs folder. We've had thousands of pull requests the past few months and most of those specs are going to be useless almost immediately (e.g. typos, changing constant values, net additions). %%
-Work starts only from an approved spec. A spec is a file in `docs/specs/`, merged by PR. The merge flips a GitHub label, and a script generates the Bakery cards from it. You are the single approver. Nothing dispatches itself[^Q5].
+%% @agent 2026-11-11: tracker is now an interface (issue, domain, state) with GitHub as today's implementation; specs are tiered, so trivial work carries its criteria in the issue and never gets a file; merged specs are pruned %%
+Work starts only from approved acceptance criteria. Where they live depends on the work. A trivial change (typo, constant, copy, a net addition with no design) carries its criteria in the issue, and the card is made from the issue. Work that needs design gets a spec file in `docs/specs/`, merged by PR; the merge sets the issue's state, and a script generates the Bakery cards from it. You are the single approver. Nothing dispatches itself[^Q5].
+
+The tracker is an interface, not a tool: an issue has a domain, a state, and acceptance criteria, and the scripts read and write those through one thin adapter. GitHub Issues is today's implementation, the same way Pi is today's harness.
 
 
 ## The cast
@@ -154,11 +157,18 @@ A is the default and needs nothing new. The Shadow's task must read criteria fro
 
 ### Tracker and spec
 
-**Drop Linear. GitHub Issues everywhere.**[^Q9][^Q19] Migrate only Linear Todo and In Progress, about 50 issues: title, body, `domain:*` labels, an `imported-from: SIL-nnn` line, one-shot script kept in the repo. Repo tooling that changes: `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, the PR-body Linear link rule, `linear-nuke`, Bakery card keys.
+**Drop Linear. GitHub Issues as the first tracker adapter.**[^Q9][^Q19] The scripts (`check-spec`, `spec-to-cards`, the state flip) call a `tracker` adapter with four verbs: get issue, set state, add label, create issue. `gh` is the first implementation. Migrate only Linear Todo and In Progress, about 50 issues: title, body, `domain:*` labels, an `imported-from: SIL-nnn` line, one-shot script kept in the repo. Repo tooling that changes: `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, the PR-body Linear link rule, `linear-nuke`, Bakery card keys.
 
-**Labels carry domain and state.**[^Q20] One `domain:<name>` per issue. State: `needs-spec`, `ready-for-agent`, `ready-for-human`.
+**Issues carry domain and state.**[^Q20] One `domain:<name>` per issue. State: `needs-spec`, `ready-for-agent`, `ready-for-human`. On GitHub these are labels.
 
-**The spec is a file.**[^Q3][^Q10] `docs/specs/<issue>-<slug>.md`. The issue links to it. The card body is generated from it.
+**Specs are tiered.**[^Q3][^Q10] The Ruler decides at spec time.
+
+- Trivial: criteria in the issue body under an `## Acceptance criteria` heading. No file, no spec PR. `spec-to-cards` reads the issue. Typos, constants, copy, config flags, net additions with no design choice.
+- Designed: `docs/specs/<issue>-<slug>.md`, merged by PR. The issue links to it. The card body is generated from it.
+
+`check-spec` validates both shapes. A trivial issue with more than one task, a schema change, or a new dependency is refused and sent to the designed tier.
+
+**Specs are pruned.** Once the work is merged and the code is the record, the spec is history. `docs/specs/` holds only open and recently merged specs; a merged spec moves to `docs/specs/done/` on merge of its last card and is deleted after 90 days by the same workflow. The issue and the PR keep the criteria array, so nothing is lost.
 
 **Required spec sections (revised).**[^Q11] Goal; Non-goals; Acceptance criteria (each with an id); Setup note (data, device, environment a `needs-run` criterion would need; may say `none`); Surfaces touched; Constraints and invariants (from the charter; may say `none`); Cost and scale (may say `none`). The former Verification section is gone; scope is decided per criterion by the Shadow.
 
@@ -166,17 +176,17 @@ A is the default and needs nothing new. The Shadow's task must read criteria fro
 
 **You and the Ruler draft together.**[^Q12][^Q21] Interactive agent session, `spec/<issue>` branch, same worktree, you edit the file directly. Lands by PR, Codiff for the walkthrough. Merging is the approval.
 
-**Merge flips the label.**[^Q32] A GitHub Action on merge to `main` that touches a spec with `status: approved` moves `needs-spec` to `ready-for-agent` and comments the spec path on the issue. `spec-to-cards` refuses anything else.
+**Merge flips the state.**[^Q32] A CI job on merge to `main` that touches a spec with `status: approved` moves the issue from `needs-spec` to `ready-for-agent` through the tracker adapter and comments the spec path. For trivial issues you flip the state by hand after reading the criteria. `spec-to-cards` refuses anything not `ready-for-agent`.
 
 **One card per task.**[^Q22][^Q23] `spec-to-cards <issue>` creates cards with `--key gh-<issue>/<task>` and `depend` edges. Never one card per surface.
 
-**Out-of-scope findings become issues.**[^Q33] `gh issue create` with `needs-spec` and the domain label, linked from the PR body.
+**Out-of-scope findings become issues.**[^Q33] Created through the tracker adapter with `needs-spec` and the domain, linked from the PR body.
 
 ### Memory and switching
 
 **One vault page per project.**[^Q4][^Q17][^Q35] `Now/<project>.md` plus `Now/index.md`. Frontmatter `last_briefed`, `briefing_sources`. Sections: Priority now; In flight; Blocked on me; Decisions pending; Proposed batch (the Magician appends here); Last touched.
 
-**Briefing is a skill, run on demand.**[^Q7][^Q27] Inputs: `gh` (open PRs, CI state, issues by label), Bakery cards, runs, cost, and the page's previous state so it can say what changed. Grafana and Sentry join after two weeks of the cheap sources being right. Must work in print mode and never rely on a terminal UI to show its result.
+**Briefing is a skill, run on demand.**[^Q7][^Q27] Inputs: the tracker adapter (open PRs, CI state, issues by state), Bakery cards, runs, cost, and the page's previous state so it can say what changed. Grafana and Sentry join after two weeks of the cheap sources being right. Must work in print mode and never rely on a terminal UI to show its result.
 
 **The Magician is a resumed agent session.**[^Q26][^Q42] Its contract is its inputs and the `Now/` page it writes. Where it runs is a choice per day: a resumed session in a terminal, a herdr tab, a headless cron on mochi, later a Bakery room. A Ruler you collaborate with is the same kind of session. Rulers inside a card run are ephemeral delegates.
 
@@ -193,7 +203,7 @@ A is the default and needs nothing new. The Shadow's task must read criteria fro
 
 Dotfiles: Ruler and Magician roles; `spec` skill (the spec format[^Q11]); `briefing` skill (the briefing inputs[^Q27]); the Shadow's verdict contract in its role prompt.
 
-clearstack, new package: `check-spec`; spec, charter, `PROJECT.md` templates; label-flip workflow.
+clearstack, new package: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; spec, charter, `PROJECT.md` templates; state-flip and spec-prune workflows.
 
 Bakery: `bakery-cli spec-to-cards`; store the `criteria` array on the card; emit a Trickster card when any verdict is `needs-run`.
 
