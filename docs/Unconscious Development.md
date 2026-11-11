@@ -13,7 +13,7 @@ supersedes:
 %% @agent 2026-11-11: removed the line; the doc opens with the interview sentence %%
 Settled by interview on 2026-11-10 ([[Interview 2026-11-10|transcript]]; footnotes point at the question), reframed around a cast of Jungian archetypes on 2026-11-11. Nothing below is built. Read it, annotate what is wrong (`<leader>ya`), and the build order at the end starts after that.
 
-Written for you, not for agents. Agents get smaller documents derived from this one: role prompts, skills, charters, PROJECT.md files.
+Written for you, not for agents. Agents get smaller documents derived from this one: role prompts, skills, Personas, PROJECT.md files.
 
 ## The shape
 
@@ -42,16 +42,19 @@ Jung named the Self, Shadow, Persona, Trickster, and a few others. The Explorer,
 | --------- | ------- | ------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | Self      | Jung    | you                | approve specs, batches, merges                                                           | be delegated                                    |
 | Magician  | Pearson | `chief`            | read every `PROJECT.md` and `Now/` page, propose a batch, turn approved specs into cards | write specs or code, start cards                |
-| Ruler     | Pearson | `lead`             | hold one domain's charter, dispatch, write specs, make small changes[^Q34]               | push, open PRs, hand-write Ready cards          |
+| Ruler     | Pearson | `lead`             | hold one domain's Persona, dispatch, write specs, make small changes[^Q34]               | push, open PRs, hand-write Ready cards          |
 | Explorer  | Pearson | `researcher`       | read anything, return paths and lines, answer questions                                  | write                                           |
 | Sage      | Pearson | `planner`          | propose steps and order, with a reason                                                   | choose and then pretend to compare              |
 | Creator   | Pearson | `worker`           | change files, run tests, report                                                          | review its own work                             |
 | Shadow    | Jung    | `reviewer`         | see what the Creator did not want seen; return per-criterion verdicts with evidence      | see the Creator's reasoning. Fresh context only |
 | Trickster | Jung    | verifier (new)     | run the criteria the Shadow marked `needs-run` and try to make them fail                 | judge code it has not run                       |
-| Persona   | Jung    | a charter or skill | the mask any archetype wears to become a specialist                                      | be a role                                       |
+| Persona   | Jung    | `docs/personas/<domain>.md` | hold one domain's context: what it refuses, what it costs, where its files are, how to run it | be dispatched. A file, read first by whoever works in the domain                 |
 
 %%We should be more clear about what a charter is, and maybe decide if there are alternative names that are more Jungian for it to match. Even I'm not totally clear where a charter lives or what it does.%%
-Archetypes are generic; a charter makes them specialists[^Q2][^Q15]. A `mobile-creator` is a Creator wearing the mobile charter. Flexibility comes from the Persona, not from more roles[^Q6][^Q24]: a thin charter behaves like a Sage, a rich one like a specialist.
+%% @agent 2026-11-11: charter is gone; the Persona is the file, docs/personas/<domain>.md, and this paragraph now says what it holds, who reads it, who writes it %%
+Archetypes are generic; a Persona makes them specialists[^Q2][^Q15]. The Persona is the one cast member that is a file rather than a role: `docs/personas/<domain>.md`, one per domain, in the repo it describes. Whoever works in that domain reads it first, so the mobile Ruler and the mobile Creator are the plain Ruler and Creator wearing `docs/personas/mobile.md`. Flexibility comes from the Persona, not from more roles[^Q6][^Q24]: a thin Persona behaves like a Sage, a rich one like a specialist.
+
+A Persona holds: owner; scope (which agent-map areas); invariants (what this domain refuses); standing questions; cost model; key files; recent decisions (ADR links); how to run things here (which db-tests, which device, which dashboard; the Trickster's setup source). An Explorer drafts it from the repo's existing docs; you and a Ruler edit the invariants and standing questions; it changes by PR like any other file.
 
 %%No need for this.%%
 %% @agent 2026-11-11: removed the oracle paragraph %%
@@ -74,7 +77,7 @@ Explorer and Sage differ only on output contract when dispatched alone. They ear
 
 ### Two global rules
 
-No tool is a dependency except files and scripts. The contract is Markdown (charters, `PROJECT.md`, specs, `Now/` pages, `AGENTS.md`), skills, and scripts (`check-spec`, `spec-to-cards`, the label workflow). Everything runs from a plain agent session or a Bakery card. herdr may add a tab or shortcut on top; Pi is the harness today; neither may be named in a charter, spec, or skill. Role prompts are the one place a harness's delegation tool appears, and the file to rewrite if the harness changes.
+No tool is a dependency except files and scripts. The contract is Markdown (Personas, `PROJECT.md`, specs, `Now/` pages, `AGENTS.md`), skills, and scripts (`check-spec`, `spec-to-cards`, the label workflow). Everything runs from a plain agent session or a Bakery card. herdr may add a tab or shortcut on top; Pi is the harness today; neither may be named in a charter, spec, or skill. Role prompts are the one place a harness's delegation tool appears, and the file to rewrite if the harness changes.
 
 The cast owns the subagent namespace. Any harness or extension that ships its own subagent presets competes for the same names and delegation surface. Those presets get disabled or overridden so only the cast is reachable.
 
@@ -95,11 +98,11 @@ Ticket: silk-remix #412, "Bulk archive from the orders list", labelled `domain:o
 ```
 
 %%Not sure what headless, morning really is. There should be a general trigger for these. Needs to be more abstract but also defined. %%
-1. Noticing. Magician. A headless morning run reads `PROJECT.md`, open issues, CI state, and yesterday's `Now/silk.md`. It appends a proposal to the page: #412 is small, the orders charter exists, spec it today.
+1. Noticing. Magician. A headless morning run reads `PROJECT.md`, open issues, CI state, and yesterday's `Now/silk.md`. It appends a proposal to the page: #412 is small, the orders Persona exists, spec it today.
 2. Approval. Self. You read the page and say yes. First authorization point.
-3. Spec. Self and Ruler, together. Interactive session on `spec/412`. The Ruler wears `docs/domains/orders/CHARTER.md`. It sends an Explorer for the facts (where the list query lives, how single archive works, whether a soft-delete flag exists). It sends a Sage for the shape (client loop, one mutation, or background job; recommends one, with a reason). You argue with the Ruler, pick the mutation, and the Ruler writes `docs/specs/412-bulk-archive.md` with acceptance criteria and a setup note. PR opened, `check-spec` passes, you merge, label flips to `ready-for-agent`.
-4. Cards. Magician. `spec-to-cards` turns the spec into cards. One task, one Creator card; the body names the charter path and the criteria.
-5. Making. Creator with Shadow. Bakery starts a session in a fresh worktree. The Creator reads the charter, implements, runs tests. Before reporting it summons a Shadow with the criteria copied from the card body. The Shadow returns `criteria: [{id, verdict, evidence}]`: the 500-id limit `met`, the audit-log entry `met`, "list shows 20 after archiving 30" `needs-run`. The Creator reports with the array attached. Card moves to Review.
+3. Spec. Self and Ruler, together. Interactive session on `spec/412`. The Ruler wears `docs/personas/orders.md`. It sends an Explorer for the facts (where the list query lives, how single archive works, whether a soft-delete flag exists). It sends a Sage for the shape (client loop, one mutation, or background job; recommends one, with a reason). You argue with the Ruler, pick the mutation, and the Ruler writes `docs/specs/412-bulk-archive.md` with acceptance criteria and a setup note. PR opened, `check-spec` passes, you merge, label flips to `ready-for-agent`.
+4. Cards. Magician. `spec-to-cards` turns the spec into cards. One task, one Creator card; the body names the Persona path and the criteria.
+5. Making. Creator with Shadow. Bakery starts a session in a fresh worktree. The Creator reads the Persona, implements, runs tests. Before reporting it summons a Shadow with the criteria copied from the card body. The Shadow returns `criteria: [{id, verdict, evidence}]`: the 500-id limit `met`, the audit-log entry `met`, "list shows 20 after archiving 30" `needs-run`. The Creator reports with the array attached. Card moves to Review.
 6. Verifying. Trickster. Because one criterion is `needs-run`, a dependent card gets that criterion and the setup note: seed 50 orders, archive 30, assert the list shows 20. Pass or fail, nothing else. Had every criterion been `met`, this step would not exist.
 7. Approval. Self. One diff, a verdict array, a verify result. Approve, merge. Second and last authorization point.
 
@@ -145,15 +148,13 @@ A is the default and needs nothing new. The Shadow's task must read criteria fro
 
 ### Structure
 
-**Charter sections.**[^Q2][^Q15] `docs/domains/<name>/CHARTER.md`: owner, scope (agent-map areas), invariants (what this domain refuses), standing questions, cost model, key files, recent decisions (ADR links), how to run things here (which db-tests, which device, which dashboard; the Trickster's setup source).
-
 **A Ruler may implement small changes itself.**[^Q34] At most 3 files, no schema or migration, no `.tsx` or mobile UI, no new dependency, no paid-API path. It still writes a short spec and still gets a Shadow. Skip the dispatch, not the record.
 
 **Two new roles only.**[^Q14] Ruler and Magician. Specifying and briefing are skills those roles load.
 
 **The Magician is cross-domain and cross-project.**[^Q25][^Q36] It reads `PROJECT.md` in each repo (tracker, hosted Bakery server and board, CI, vault page), proposes a batch (issues, domain, order, rough spend), appends it to the vault page, and after approval runs `spec-to-cards`.
 
-**Dotfiles hold the generic parts; repos hold the specific parts.**[^Q8] Cast and skills: `~/.agents/skills` plus the harness's role config, both chezmoi-managed. Charters, `PROJECT.md`, specs: in each repo.
+**Dotfiles hold the generic parts; repos hold the specific parts.**[^Q8] Cast and skills: `~/.agents/skills` plus the harness's role config, both chezmoi-managed. Personas, `PROJECT.md`, specs: in each repo.
 
 ### Tracker and spec
 
@@ -170,7 +171,7 @@ A is the default and needs nothing new. The Shadow's task must read criteria fro
 
 **Specs are pruned.** Once the work is merged and the code is the record, the spec is history. `docs/specs/` holds only open and recently merged specs; a merged spec moves to `docs/specs/done/` on merge of its last card and is deleted after 90 days by the same workflow. The issue and the PR keep the criteria array, so nothing is lost.
 
-**Required spec sections (revised).**[^Q11] Goal; Non-goals; Acceptance criteria (each with an id); Setup note (data, device, environment a `needs-run` criterion would need; may say `none`); Surfaces touched; Constraints and invariants (from the charter; may say `none`); Cost and scale (may say `none`). The former Verification section is gone; scope is decided per criterion by the Shadow.
+**Required spec sections (revised).**[^Q11] Goal; Non-goals; Acceptance criteria (each with an id); Setup note (data, device, environment a `needs-run` criterion would need; may say `none`); Surfaces touched; Constraints and invariants (from the Persona; may say `none`); Cost and scale (may say `none`). The former Verification section is gone; scope is decided per criterion by the Shadow.
 
 **Spec format.**[^Q31] Frontmatter `issue`, `domain`, `status`, `budget_usd`, `surfaces`; fixed headings; tasks as a checklist, an item may carry `after: <task-id>`. `check-spec` validates `docs/specs/**` in CI and refuses a spec without acceptance criteria.
 
@@ -194,20 +195,20 @@ A is the default and needs nothing new. The Shadow's task must read criteria fro
 
 ### Tooling home
 
-**Tooling home.**[^Q43] `check-spec`, the spec, charter, and `PROJECT.md` templates, and the label-flip workflow: a new package in `~/code/clearstack`. `spec-to-cards`: in Bakery as `bakery-cli spec-to-cards`.
+**Tooling home.**[^Q43] `check-spec`, the spec, Persona, and `PROJECT.md` templates, and the label-flip workflow: a new package in `~/code/clearstack`. `spec-to-cards`: in Bakery as `bakery-cli spec-to-cards`.
 
-**Names.**[^Q40] Files: `docs/domains/<name>/CHARTER.md`, `PROJECT.md`. Roles: see decision 5.
+**Names.**[^Q40] Files: `docs/personas/<domain>.md`, `PROJECT.md`. Roles: see decision 5.
 
 
 ## What gets built
 
 Dotfiles: Ruler and Magician roles; `spec` skill (the spec format[^Q11]); `briefing` skill (the briefing inputs[^Q27]); the Shadow's verdict contract in its role prompt.
 
-clearstack, new package: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; spec, charter, `PROJECT.md` templates; state-flip and spec-prune workflows.
+clearstack, new package: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; spec, Persona, `PROJECT.md` templates; state-flip and spec-prune workflows.
 
 Bakery: `bakery-cli spec-to-cards`; store the `criteria` array on the card; emit a Trickster card when any verdict is `needs-run`.
 
-silk-remix: six charters under `docs/domains/` (ingestion-search, mobile, web, api-contracts-shared, infra-ci-release, billing-insights-console), drafted by an Explorer from `docs/agent-map/`, `CODEBASE_OVERVIEW.md`, ADRs, `notes/03 Landscape/`; you edit invariants and standing questions[^Q28]. `PROJECT.md`. Linear migration script.
+silk-remix: six Personas under `docs/personas/` (ingestion-search, mobile, web, api-contracts-shared, infra-ci-release, billing-insights-console), drafted by an Explorer from `docs/agent-map/`, `CODEBASE_OVERVIEW.md`, ADRs, `notes/03 Landscape/`; you edit invariants and standing questions[^Q28]. `PROJECT.md`. Linear migration script.
 
 impression, bakery: `PROJECT.md`, `docs/specs/`, a mochi board for impression.
 
@@ -218,12 +219,12 @@ Vault: `Now/index.md`, `Now/silk.md`, `Now/impression.md`, `Now/bakery.md`.
 
 From the interview.[^Q30]
 
-1. Ruler role, `spec` skill, ingestion-search charter.
+1. Ruler role, `spec` skill, ingestion-search Persona.
 2. SIL-258 (SSE connections cut at about 125 s) through the loop by hand, composition A: spec PR, one card by hand, Creator, Shadow with criteria. Measure reconnects per hour before and after, and how often the Shadow's `unmet` and `needs-run` are right.
 3. `check-spec`, label-flip workflow, `spec-to-cards`. Redo step 2's card creation through the script.
 4. Magician role, `briefing` skill, Silk `PROJECT.md`, its vault page. Use the Magician for one week.
 5. Migrate Linear, add labels, retire `linear-nuke`.
-6. The other five Silk charters.
+6. The other five Silk Personas.
 7. `PROJECT.md`, `docs/specs/`, mochi board for impression and bakery[^Q38].
 8. Bakery stores criteria; Trickster card on first `needs-run`; later, block Done on `unmet`.
 
@@ -233,7 +234,7 @@ From the interview.[^Q30]
 1. Which composition for step 2. Proposed: A.
 2. Whether a spec author may pre-mark a criterion `needs-run` for known device or data needs, or only the Shadow may.
 3. Whether the Trickster is a role or only a card.
-4. Whether Ruler is a role or a Persona a Creator wears, pending the check on whether the harness's role config accepts new names and on disabling competing presets.
+4. Whether Ruler is a role or a skill a Creator loads, pending the check on whether the harness's role config accepts new names and on disabling competing presets.
 5. Whether archetype names replace the wire names in role prompts. Agents following `clear-voice` will push back on metaphor in prompts; wire names may be better on the wire and archetypes on paper.
 
 
@@ -242,7 +243,7 @@ From the interview.[^Q30]
 - Where the current harness defines subagent roles, and whether third
 party presets there are disabled. A lookup.
 - How a card run loads the Ruler when a card needs domain context.
-Probably the card body names the charter path.
+Probably the card body names the Persona path.
 - Whether silk-remix's `ops-alert` issues get a `domain:*` label or stay
 outside the taxonomy.
 
