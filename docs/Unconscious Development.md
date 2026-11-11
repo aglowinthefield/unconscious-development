@@ -84,15 +84,17 @@ The cast owns the subagent namespace. Any harness or extension that ships its ow
 
 ### Triggers
 
-Nothing in the cast runs on its own. Each unattended invocation starts from a trigger, which is a named reason passed to the role as its first input. Three kinds, and the Magician's question for each:
+Nothing in the cast runs on its own. The Magician's method is the `briefing` skill, and a trigger is whatever invokes it. Today that is you, typing `/briefing silk` in a session; the skill reads the tracker, the cards and the previous `Now/silk.md`, rewrites the page, and names at its top who asked and when. That is the whole mechanism, and it is enough to test the Magician before any role exists.
 
-| Kind | Example | The Magician asks |
+The other kinds are the same skill invoked by something other than you:
+
+| Kind | Invoked by | The Magician asks |
 |---|---|---|
-| scheduled | daily, before you start | what should run next |
-| event | a card reached Review; a spec merged | does this unblock anything |
-| request | you asked | whatever you asked |
+| request | you, `/briefing <project>` | whatever you asked |
+| scheduled | a cron running `pi -p "/briefing silk"` | what should run next |
+| event | a hook on a card reaching Review or a spec merging | does this unblock anything |
 
-How a trigger is delivered (a cron, a Bakery hook, you typing) is implementation and stays out of this document. What the design fixes is only that the trigger is named in the input and recorded in the `Now/` page, so a proposal always says why it was made. Start with the request kind alone; add scheduled when you trust the proposals; add events last.
+Only the first exists until its proposals have been right for a while. The page's `trigger` line is what tells a later reader why a proposal was made.
 
 ## A feature ticket, walked
 
@@ -100,7 +102,7 @@ Ticket: silk-remix #412, "Bulk archive from the orders list", labelled `domain:o
 
 ```
  Magician ──proposes──▶ Self ──yes──▶ Ruler session (spec/412)
- (headless, morning)                   │  Explorer ──facts──▶ Sage ──shape──▶ Ruler + Self write spec
+ (/briefing silk)                      │  Explorer ──facts──▶ Sage ──shape──▶ Ruler + Self write spec
                                        ▼
                               PR, check-spec, merge, label flips
                                        │
@@ -111,7 +113,7 @@ Ticket: silk-remix #412, "Bulk archive from the orders list", labelled `domain:o
 
 %%Not sure what headless, morning really is. There should be a general trigger for these. Needs to be more abstract but also defined. %%
 %% @agent 2026-11-11: replaced with "on a trigger" and added a Triggers paragraph after the two global rules; three kinds, no infrastructure %%
-1. Noticing. Magician. On a trigger (here, the daily one) the Magician reads `PROJECT.md`, open issues, CI state, and yesterday's `Now/silk.md`. It appends a proposal to the page: #412 is small, the orders Persona exists, spec it today.
+1. Noticing. Magician. On a trigger (here, you ran `/briefing silk`) the Magician reads `PROJECT.md`, open issues, CI state, and yesterday's `Now/silk.md`. It appends a proposal to the page: #412 is small, the orders Persona exists, spec it today.
 2. Approval. Self. You read the page and say yes. First authorization point.
 3. Spec. Self and Ruler, together. Interactive session on `spec/412`. The Ruler wears `docs/personas/orders.md`. It sends an Explorer for the facts (where the list query lives, how single archive works, whether a soft-delete flag exists). It sends a Sage for the shape (client loop, one mutation, or background job; recommends one, with a reason). You argue with the Ruler, pick the mutation, and the Ruler writes `docs/specs/412-bulk-archive.md` with acceptance criteria and a setup note. PR opened, `check-spec` passes, you merge, label flips to `ready-for-agent`.
 4. Cards. Magician. `spec-to-cards` turns the spec into cards. One task, one Creator card; the body names the Persona path and the criteria.
