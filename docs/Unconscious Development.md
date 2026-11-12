@@ -208,11 +208,13 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 **The Magician is a resumed agent session.**[^Q26][^Q42] Its contract is its inputs and the `🌀 Now/` page it writes. Where it runs is a choice per day: a resumed session in a terminal, a herdr tab, a headless cron on mochi, later a Bakery room. A Ruler you collaborate with is the same kind of session. Rulers inside a vessel are ephemeral delegates.
 
-**Bakery is the first runner.**[^Q41] A Bakery card is a vessel. `bakery-cli` covers the four verbs (`create --key`, idempotent; `depend`; Review; retry in the same session) and adds a cost line per run (`runs`) and a spend cap (`pickup --budget`). Hosted Bakery on mochi, `http://mochi:4317`, is canonical for every project. Local boards are scratch and the Magician ignores them.
+**Bakery is the first runner.**[^Q41] A Bakery card is a vessel. `bakery-cli` covers the four verbs (`create --key`, idempotent; `depend`; Review; retry in the same session) and adds a cost line per run (`runs`) and a spend cap (`pickup --budget`). For these projects, hosted Bakery on mochi, `http://mochi:4317`, is canonical, set in each `PROJECT.md`. Local boards are scratch and the Magician ignores them.
 
 ### Tooling home
 
-**Tooling home.**[^Q43] `check-spec`, the spec, Persona, and `PROJECT.md` templates, and the label-flip workflow: a new package in `~/code/clearstack`. `spec-to-tasks` and the `runner` adapter live there too, so no runner owns the script; Bakery is the adapter's first implementation.
+**UD ships its own tooling.**[^Q43] (revised) `check-spec`, `spec-to-tasks`, the `tracker` and `runner` adapters, the spec, Persona and `PROJECT.md` templates, and the state-flip and spec-prune workflows live in this repo. No tracker or runner owns any of it. It is meant for public release, so nothing in it assumes this machine, these projects or these tools.
+
+**Discovered first, configured second.** Every setting has a default found from the repo, and `PROJECT.md` frontmatter overrides it. Tracker: from the git remote (a GitHub remote means `gh`). Runner: Bakery when `bakery-cli` is on the path and a board is configured, else a plain agent session. Personas: `docs/personas/*.md`. Specs: `docs/specs/`. Domains: the Persona filenames. The vault page: a `now_dir` setting, with no default, so nothing writes outside the repo until asked. Runner settings, such as a Bakery server URL, belong to the adapter's own block in `PROJECT.md`. An adapter is a module implementing its four verbs, chosen by name, so a new tracker or runner is added without touching the scripts.
 
 **Names.**[^Q40] Files: `docs/personas/<domain>.md`, `PROJECT.md`. Roles: see decision 5.
 
@@ -221,7 +223,7 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 Dotfiles: Ruler and Magician roles; `spec` skill (the spec format[^Q11]); `briefing` skill (the briefing inputs[^Q27]); the Shadow's verdict contract in its role prompt.
 
-clearstack, new package: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; `spec-to-tasks` and the `runner` adapter with a Bakery implementation; spec, Persona, `PROJECT.md` templates; state-flip and spec-prune workflows.
+This repo: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; `spec-to-tasks` and the `runner` adapter with a Bakery implementation; spec, Persona, `PROJECT.md` templates; state-flip and spec-prune workflows.
 
 Bakery, as a runner: store the `criteria` array on the task; start a Trickster vessel when any verdict is `needs-run`.
 
