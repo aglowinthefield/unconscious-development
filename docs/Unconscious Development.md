@@ -200,7 +200,7 @@ A is the default and needs nothing new. The Shadow's task must read criteria fro
 
 ### Memory and switching
 
-**One vault page per project.**[^Q4][^Q17][^Q35] `Now/<project>.md` plus `Now/index.md`. Frontmatter `last_briefed`, `briefing_sources`. Sections: Priority now; In flight; Blocked on me; Decisions pending; Proposed batch (the Magician appends here); Last touched.
+**One vault page per project.**[^Q4][^Q17][^Q35] `Now/<project>.md` plus `Now/index.md`. Frontmatter `last_briefed`, `briefing_sources`. Sections: Priority now; In flight; Blocked on me; Decisions pending; Proposed batch (the Magician appends here); Last touched. Issues and PRs appear as bare GitHub URLs; the Obsidian plugin GitHub Link (`github-link`, with a token for private repos) draws each as a badge with title, state and checks, so the page carries only what the badge does not. Suggested, not required; the page reads fine as plain links.
 
 **Briefing is a skill, run on demand.**[^Q7][^Q27] Inputs: the tracker adapter (open PRs, CI state, issues by state), Bakery cards, runs, cost, and the page's previous state so it can say what changed. Grafana and Sentry join after two weeks of the cheap sources being right. Must work in print mode and never rely on a terminal UI to show its result.
 
