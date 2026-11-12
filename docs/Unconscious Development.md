@@ -1,7 +1,7 @@
 ---
 status: proposed
 decided: 2026-11-10
-revised: 2026-11-11
+revised: 2026-11-12
 scope: cross-project (Silk, impression, bakery)
 supersedes:
   - "[[Agent team design]]"
@@ -23,15 +23,17 @@ An agent is three layers[^Q1]. Any one alone collapses the other two.
 
 1. a skill: the method, portable, in dotfiles
 2. a role: a subagent definition that loads the skill, in dotfiles
-3. a place it runs: a Bakery card, an agent session in any terminal, or a scheduled headless run
+3. a place it runs: a vessel, an agent session in any terminal, or a scheduled headless run
 
-None of the three is tied to one harness. Skills follow the Agent Skills spec, roles are subagent definitions in whatever form the harness reads, the run place is a session or a card. Pi is the harness today; the design must survive swapping it. `herdr` is one way to open and watch sessions, not a requirement.
+None of the three is tied to one harness. Skills follow the Agent Skills spec, roles are subagent definitions in whatever form the harness reads, the run place is a session or a vessel. Pi is the harness today; the design must survive swapping it. `herdr` is one way to open and watch sessions, not a requirement.
 
 %%We don't want strict reliance on GitHub for this flow. I'm also nervous about unbounded growth of the docs/specs folder. We've had thousands of pull requests the past few months and most of those specs are going to be useless almost immediately (e.g. typos, changing constant values, net additions). %%
 %% @agent 2026-11-11: tracker is now an interface (issue, domain, state) with GitHub as today's implementation; specs are tiered, so trivial work carries its criteria in the issue and never gets a file; merged specs are pruned %%
-Work starts only from approved acceptance criteria. Where they live depends on the work. A trivial change (typo, constant, copy, a net addition with no design) carries its criteria in the issue, and the card is made from the issue. Work that needs design gets a spec file in `docs/specs/`, merged by PR; the merge sets the issue's state, and a script generates the Bakery cards from it. You are the single approver. Nothing dispatches itself[^Q5].
+Work starts only from approved acceptance criteria. Where they live depends on the work. A trivial change (typo, constant, copy, a net addition with no design) carries its criteria in the issue, and its task is made from the issue. Work that needs design gets a spec file in `docs/specs/`, merged by PR; the merge sets the issue's state, and a script generates the tasks from it. You are the single approver. Nothing dispatches itself[^Q5].
 
 The tracker is an interface, not a tool: an issue has a domain, a state, and acceptance criteria, and the scripts read and write those through one thin adapter. GitHub Issues is today's implementation, the same way Pi is today's harness.
+
+A vessel is where one task is worked, after the alchemists' sealed *vas* that Jung read as the container of the work: one agent session, in one fresh worktree, sealed from the others, its result taken out for review. The runner that provides vessels is an interface too, with four verbs: start a task in a fresh worktree, make one task depend on another, report a finished task for review, retry a task in the same session. A plain agent session started by hand is a runner; Bakery is today's. Vessel is the name on paper. Scripts, prompts and the runner adapter say task.
 
 
 ## The cast
@@ -41,8 +43,8 @@ Jung named the Self, Shadow, Persona, Trickster, and a few others. The Explorer,
 | Archetype | Source  | On the wire        | May                                                                                      | Must not                                        |
 | --------- | ------- | ------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | Self      | Jung    | you                | approve specs, batches, merges                                                           | be delegated                                    |
-| Magician  | Pearson | `chief`            | read every `PROJECT.md` and `🌀 Now/` page, propose a batch, turn approved specs into cards | write specs or code, start cards                |
-| Ruler     | Pearson | `lead`             | hold one domain's Persona, dispatch, write specs, make small changes[^Q34]               | push, open PRs, hand-write Ready cards          |
+| Magician  | Pearson | `chief`            | read every `PROJECT.md` and `🌀 Now/` page, propose a batch, turn approved specs into tasks | write specs or code, start vessels              |
+| Ruler     | Pearson | `lead`             | hold one domain's Persona, dispatch, write specs, make small changes[^Q34]               | push, open PRs, hand-write ready tasks          |
 | Explorer  | Pearson | `researcher`       | read anything, return paths and lines, answer questions                                  | write                                           |
 | Sage      | Pearson | `planner`          | propose steps and order, with a reason                                                   | choose and then pretend to compare              |
 | Creator   | Pearson | `worker`           | change files, run tests, report                                                          | review its own work                             |
@@ -73,18 +75,18 @@ A boundary earns its place only when one of these differs across it. Domain, rep
 | Authorization     | Self from everyone. Ruler and Magician stop at proposing                        |
 | Model tier        | Ruler and Magician on the strongest model; Creator and Explorer on `auto`[^Q29] |
 
-Explorer and Sage differ only on output contract when dispatched alone. They earn separate existence when sequenced: the Sage plans on the Explorer's facts rather than on facts it chose to look for. Ruler and Sage both propose; the Sage proposes a plan for one task, the Ruler proposes within a domain's law with the Self in the room. Shadow and Trickster are the only two roles whose isolation is enforced by something other than a prompt: a fresh delegate context, a separate card.
+Explorer and Sage differ only on output contract when dispatched alone. They earn separate existence when sequenced: the Sage plans on the Explorer's facts rather than on facts it chose to look for. Ruler and Sage both propose; the Sage proposes a plan for one task, the Ruler proposes within a domain's law with the Self in the room. Shadow and Trickster are the only two roles whose isolation is enforced by something other than a prompt: a fresh delegate context, a separate vessel.
 
 ### Two global rules
 
-No tool is a dependency except files and scripts. The contract is Markdown (Personas, `PROJECT.md`, specs, `🌀 Now/` pages, `AGENTS.md`), skills, and scripts (`check-spec`, `spec-to-cards`, the label workflow). Everything runs from a plain agent session or a Bakery card. herdr may add a tab or shortcut on top; Pi is the harness today; neither may be named in a charter, spec, or skill. Role prompts are the one place a harness's delegation tool appears, and the file to rewrite if the harness changes.
+No tool is a dependency except files and scripts. The contract is Markdown (Personas, `PROJECT.md`, specs, `🌀 Now/` pages, `AGENTS.md`), skills, and scripts (`check-spec`, `spec-to-tasks`, the label workflow). Everything runs from a plain agent session or a vessel on any runner. herdr may add a tab or shortcut on top; Pi is the harness today; neither may be named in a charter, spec, or skill. Role prompts are the one place a harness's delegation tool appears, and the file to rewrite if the harness changes.
 
 The cast owns the subagent namespace. Any harness or extension that ships its own subagent presets competes for the same names and delegation surface. Those presets get disabled or overridden so only the cast is reachable.
 
 
 ### Triggers
 
-Nothing in the cast runs on its own. The Magician's method is the `briefing` skill, and a trigger is whatever invokes it. Today that is you, typing `/briefing silk` in a session; the skill reads the tracker, the cards and the previous `🌀 Now/silk.md`, rewrites the page, and names at its top who asked and when. That is the whole mechanism, and it is enough to test the Magician before any role exists.
+Nothing in the cast runs on its own. The Magician's method is the `briefing` skill, and a trigger is whatever invokes it. Today that is you, typing `/briefing silk` in a session; the skill reads the tracker, the runner's tasks and the previous `🌀 Now/silk.md`, rewrites the page, and names at its top who asked and when. That is the whole mechanism, and it is enough to test the Magician before any role exists.
 
 The other kinds are the same skill invoked by something other than you:
 
@@ -92,7 +94,7 @@ The other kinds are the same skill invoked by something other than you:
 |---|---|---|
 | request | you, `/briefing <project>` | whatever you asked |
 | scheduled | a cron running `pi -p "/briefing silk"` | what should run next |
-| event | a hook on a card reaching Review or a spec merging | does this unblock anything |
+| event | a hook on a vessel reaching review or a spec merging | does this unblock anything |
 
 Only the first exists until its proposals have been right for a while. The page's `trigger` line is what tells a later reader why a proposal was made.
 
@@ -106,9 +108,9 @@ Ticket: silk-remix #412, "Bulk archive from the orders list", labelled `domain:o
                                        ▼
                               PR, check-spec, merge, label flips
                                        │
- Magician ──spec-to-cards──▶ Creator card ──▶ Shadow (fresh) ──▶ Review
+ Magician ──spec-to-tasks──▶ Creator vessel ──▶ Shadow (fresh) ──▶ Review
                                        │
-                              Trickster card (needs-run criteria only) ──▶ Self approves, merge
+                              Trickster vessel (needs-run criteria only) ──▶ Self approves, merge
 ```
 
 %%Not sure what headless, morning really is. There should be a general trigger for these. Needs to be more abstract but also defined. %%
@@ -116,12 +118,12 @@ Ticket: silk-remix #412, "Bulk archive from the orders list", labelled `domain:o
 1. Noticing. Magician. On a trigger (here, you ran `/briefing silk`) the Magician reads `PROJECT.md`, open issues, CI state, and yesterday's `🌀 Now/silk.md`. It appends a proposal to the page: #412 is small, the orders Persona exists, spec it today.
 2. Approval. Self. You read the page and say yes. First authorization point.
 3. Spec. Self and Ruler, together. Interactive session on `spec/412`. The Ruler wears `docs/personas/orders.md`. It sends an Explorer for the facts (where the list query lives, how single archive works, whether a soft-delete flag exists). It sends a Sage for the shape (client loop, one mutation, or background job; recommends one, with a reason). You argue with the Ruler, pick the mutation, and the Ruler writes `docs/specs/412-bulk-archive.md` with acceptance criteria and a setup note. PR opened, `check-spec` passes, you merge, label flips to `ready-for-agent`.
-4. Cards. Magician. `spec-to-cards` turns the spec into cards. One task, one Creator card; the body names the Persona path and the criteria.
-5. Making. Creator with Shadow. Bakery starts a session in a fresh worktree. The Creator reads the Persona, implements, runs tests. Before reporting it summons a Shadow with the criteria copied from the card body. The Shadow returns `criteria: [{id, verdict, evidence}]`: the 500-id limit `met`, the audit-log entry `met`, "list shows 20 after archiving 30" `needs-run`. The Creator reports with the array attached. Card moves to Review.
-6. Verifying. Trickster. Because one criterion is `needs-run`, a dependent card gets that criterion and the setup note: seed 50 orders, archive 30, assert the list shows 20. Pass or fail, nothing else. Had every criterion been `met`, this step would not exist.
+4. Tasks. Magician. `spec-to-tasks` turns the spec into tasks. One task, one Creator vessel; the task body names the Persona path and the criteria.
+5. Making. Creator with Shadow. The runner starts a session in a fresh worktree. The Creator reads the Persona, implements, runs tests. Before reporting it summons a Shadow with the criteria copied from the task body. The Shadow returns `criteria: [{id, verdict, evidence}]`: the 500-id limit `met`, the audit-log entry `met`, "list shows 20 after archiving 30" `needs-run`. The Creator reports with the array attached. The vessel reaches Review.
+6. Verifying. Trickster. Because one criterion is `needs-run`, a dependent vessel gets that criterion and the setup note: seed 50 orders, archive 30, assert the list shows 20. Pass or fail, nothing else. Had every criterion been `met`, this step would not exist.
 7. Approval. Self. One diff, a verdict array, a verify result. Approve, merge. Second and last authorization point.
 
-What the walk shows: the Ruler appears once, at spec time, where you are present, and never inside a one-task card. Explorer and Sage appear only in the spec session. The Magician proposes twice (what to do, how to split it) and you approve twice.
+What the walk shows: the Ruler appears once, at spec time, where you are present, and never inside a one-task vessel. Explorer and Sage appear only in the spec session. The Magician proposes twice (what to do, how to split it) and you approve twice.
 
 
 ## Verification scope
@@ -132,31 +134,31 @@ The spec says what must be true. Who checks each claim is a property of the clai
 criteria: [{ id, verdict: met | unmet | needs-run, evidence }]
 ```
 
-`met` and `unmet` need evidence from the diff. `needs-run` means the claim cannot be known by reading, and the evidence field says what would have to run. Any `needs-run` produces a Trickster card with exactly those criteria and the spec's setup note. None means the Shadow's verdict is the whole verification. A package bump comes out as all `met` with no Trickster, without anyone labelling it trivial.
+`met` and `unmet` need evidence from the diff. `needs-run` means the claim cannot be known by reading, and the evidence field says what would have to run. Any `needs-run` produces a Trickster vessel with exactly those criteria and the spec's setup note. None means the Shadow's verdict is the whole verification. A package bump comes out as all `met` with no Trickster, without anyone labelling it trivial.
 
 Tests and lint are not verification. The Creator runs them before it reports; CI runs them before merge. Neither reviews the change.
 
 Advice to spec authors, not a rule: write a criterion as a statement about the code ("the mutation rejects more than 500 ids") when reading can settle it, and as given/when/then ("given 50 orders, when 30 are archived, the list shows 20") when only running can. The second shape is what the Trickster will get.
 
-Control: a lazy Shadow marks everything `needs-run`. The evidence requirement and your eye on the ratio over the first cards are the check.
+Control: a lazy Shadow marks everything `needs-run`. The evidence requirement and your eye on the ratio over the first vessels are the check.
 
 
-## Compositions inside a card
+## Compositions inside a vessel
 
-Bakery constraints: one card is one agent session in one worktree; a finished run reaches Review only; retry continues the same session; `depend` cuts the next worktree from a `main` holding the earlier card; card runs see only the repo's `AGENTS.md` and the global one, so the Persona must be named in the card body.
+What any runner must guarantee: one vessel is one agent session in one worktree; a finished run reaches Review only; retry continues the same session; a dependency cuts the next worktree from a `main` holding the earlier task; a vessel sees only the repo's `AGENTS.md` and the global one, so the Persona must be named in the task body.
 
-|                              | A Creator + Shadow                      | B Ruler's court                                        | C journey of cards                            | D Magician + Self                    |
+|                              | A Creator + Shadow                      | B Ruler's court                                        | C journey of vessels                          | D Magician + Self                    |
 | ---------------------------- | --------------------------------------- | ------------------------------------------------------ | --------------------------------------------- | ------------------------------------ |
-| Shape                        | Creator summons Shadow before reporting | Ruler in the card dispatches Explorer, Creator, Shadow | Explorer card → Creator card → Trickster card | Magician outside; A inside each card |
+| Shape                        | Creator summons Shadow before reporting | Ruler in the vessel dispatches Explorer, Creator, Shadow | Explorer vessel → Creator vessel → Trickster vessel | Magician outside; A inside each vessel |
 | Sessions per task            | 1                                       | 1                                                      | 3                                             | 1                                    |
 | Strong-model layers          | 1                                       | 2                                                      | 1                                             | 1 (+Magician)                        |
-| Trickster                    | only via `needs-run`                    | only via `needs-run`                                   | always a card                                 | via `needs-run`                      |
+| Trickster                    | only via `needs-run`                    | only via `needs-run`                                   | always a vessel                               | via `needs-run`                      |
 | Review stops                 | 1                                       | 1                                                      | 3                                             | 1                                    |
-| Persona loaded by            | card body                               | Ruler                                                  | each card body                                | card body                            |
+| Persona loaded by            | task body                               | Ruler                                                  | each task body                                | task body                            |
 | Needs an interactive session | no                                      | no                                                     | no                                            | for approval only                    |
 | Build-order step             | 2                                       | 1 and 2                                                | 3                                             | 4                                    |
 
-A is the default and needs nothing new. The Shadow's task must read criteria from the card body, never from the Creator's message; a Shadow briefed by the Creator is a mirror. B is for a domain whose specs keep coming back thin; its risk is a Ruler whose context fills with the Creator's transcript and starts judging, so the Shadow stays a separate delegate. C is Bakery-only and gives each stage its own diff and cost line; its cost is three Review stops unless unattended review passes the read-only cards. D is the end state and composes with A or B inside the card. The walked ticket is D with A inside.
+A is the default and needs nothing new. The Shadow must read criteria from the task body, never from the Creator's message; a Shadow briefed by the Creator is a mirror. B is for a domain whose specs keep coming back thin; its risk is a Ruler whose context fills with the Creator's transcript and starts judging, so the Shadow stays a separate delegate. C needs a runner that records cost per vessel (Bakery does) and gives each stage its own diff and cost line; its cost is three Review stops unless unattended review passes the read-only vessels. D is the end state and composes with A or B inside the vessel. The walked ticket is D with A inside.
 
 
 ## Decisions
@@ -167,24 +169,24 @@ A is the default and needs nothing new. The Shadow's task must read criteria fro
 
 **Two new roles only.**[^Q14] Ruler and Magician. Specifying and briefing are skills those roles load.
 
-**The Magician is cross-domain and cross-project.**[^Q25][^Q36] It reads `PROJECT.md` in each repo (tracker, hosted Bakery server and board, CI, vault page), proposes a batch (issues, domain, order, rough spend), appends it to the vault page, and after approval runs `spec-to-cards`.
+**The Magician is cross-domain and cross-project.**[^Q25][^Q36] It reads `PROJECT.md` in each repo (tracker, runner, CI, vault page), proposes a batch (issues, domain, order, rough spend), appends it to the vault page, and after approval runs `spec-to-tasks`.
 
 **Dotfiles hold the generic parts; repos hold the specific parts.**[^Q8] Cast and skills: `~/.agents/skills` plus the harness's role config, both chezmoi-managed. Personas, `PROJECT.md`, specs: in each repo.
 
 ### Tracker and spec
 
-**Drop Linear. GitHub Issues as the first tracker adapter.**[^Q9][^Q19] The scripts (`check-spec`, `spec-to-cards`, the state flip) call a `tracker` adapter with four verbs: get issue, set state, add label, create issue. `gh` is the first implementation. Migrate only Linear Todo and In Progress, about 50 issues: title, body, `domain:*` labels, an `imported-from: SIL-nnn` line, one-shot script kept in the repo. Repo tooling that changes: `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, the PR-body Linear link rule, `linear-nuke`, Bakery card keys.
+**Drop Linear. GitHub Issues as the first tracker adapter.**[^Q9][^Q19] The scripts (`check-spec`, `spec-to-tasks`, the state flip) call a `tracker` adapter with four verbs: get issue, set state, add label, create issue. `gh` is the first implementation. Migrate only Linear Todo and In Progress, about 50 issues: title, body, `domain:*` labels, an `imported-from: SIL-nnn` line, one-shot script kept in the repo. Repo tooling that changes: `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, the PR-body Linear link rule, `linear-nuke`, task keys.
 
 **Issues carry domain and state.**[^Q20] One `domain:<name>` per issue. State: `needs-spec`, `ready-for-agent`, `ready-for-human`. On GitHub these are labels.
 
 **Specs are tiered.**[^Q3][^Q10] The Ruler decides at spec time.
 
-- Trivial: criteria in the issue body under an `## Acceptance criteria` heading. No file, no spec PR. `spec-to-cards` reads the issue. Typos, constants, copy, config flags, net additions with no design choice.
-- Designed: `docs/specs/<issue>-<slug>.md`, merged by PR. The issue links to it. The card body is generated from it.
+- Trivial: criteria in the issue body under an `## Acceptance criteria` heading. No file, no spec PR. `spec-to-tasks` reads the issue. Typos, constants, copy, config flags, net additions with no design choice.
+- Designed: `docs/specs/<issue>-<slug>.md`, merged by PR. The issue links to it. The task body is generated from it.
 
 `check-spec` validates both shapes. A trivial issue with more than one task, a schema change, or a new dependency is refused and sent to the designed tier.
 
-**Specs are pruned.** Once the work is merged and the code is the record, the spec is history. `docs/specs/` holds only open and recently merged specs; a merged spec moves to `docs/specs/done/` on merge of its last card and is deleted after 90 days by the same workflow. The issue and the PR keep the criteria array, so nothing is lost.
+**Specs are pruned.** Once the work is merged and the code is the record, the spec is history. `docs/specs/` holds only open and recently merged specs; a merged spec moves to `docs/specs/done/` on merge of its last task and is deleted after 90 days by the same workflow. The issue and the PR keep the criteria array, so nothing is lost.
 
 **Required spec sections (revised).**[^Q11] Goal; Non-goals; Acceptance criteria (each with an id); Setup note (data, device, environment a `needs-run` criterion would need; may say `none`); Surfaces touched; Constraints and invariants (from the Persona; may say `none`); Cost and scale (may say `none`). The former Verification section is gone; scope is decided per criterion by the Shadow.
 
@@ -192,9 +194,9 @@ A is the default and needs nothing new. The Shadow's task must read criteria fro
 
 **You and the Ruler draft together.**[^Q12][^Q21] Interactive agent session, `spec/<issue>` branch, same worktree, you edit the file directly. Lands by PR, Codiff for the walkthrough. Merging is the approval.
 
-**Merge flips the state.**[^Q32] A CI job on merge to `main` that touches a spec with `status: approved` moves the issue from `needs-spec` to `ready-for-agent` through the tracker adapter and comments the spec path. For trivial issues you flip the state by hand after reading the criteria. `spec-to-cards` refuses anything not `ready-for-agent`.
+**Merge flips the state.**[^Q32] A CI job on merge to `main` that touches a spec with `status: approved` moves the issue from `needs-spec` to `ready-for-agent` through the tracker adapter and comments the spec path. For trivial issues you flip the state by hand after reading the criteria. `spec-to-tasks` refuses anything not `ready-for-agent`.
 
-**One card per task.**[^Q22][^Q23] `spec-to-cards <issue>` creates cards with `--key gh-<issue>/<task>` and `depend` edges. Never one card per surface.
+**One vessel per task.**[^Q22][^Q23] `spec-to-tasks <issue>` creates tasks keyed `gh-<issue>/<task>` with dependency edges, through the runner adapter. Never one task per surface.
 
 **Out-of-scope findings become issues.**[^Q33] Created through the tracker adapter with `needs-spec` and the domain, linked from the PR body.
 
@@ -202,15 +204,15 @@ A is the default and needs nothing new. The Shadow's task must read criteria fro
 
 **One vault page per project.**[^Q4][^Q17][^Q35] `🌀 Now/<project>.md` plus `🌀 Now/index.md`. Frontmatter `last_briefed`, `briefing_sources`. Sections: Priority now; In flight; Blocked on me; Decisions pending; Proposed batch (the Magician appends here); Last touched. Issues and PRs appear as bare GitHub URLs; the Obsidian plugin GitHub Link (`github-link`, with a token for private repos) draws each as a badge with title, state and checks, so the page carries only what the badge does not. Suggested, not required; the page reads fine as plain links.
 
-**Briefing is a skill, run on demand.**[^Q7][^Q27] Inputs: the tracker adapter (open PRs, CI state, issues by state), Bakery cards, runs, cost, and the page's previous state so it can say what changed. Grafana and Sentry join after two weeks of the cheap sources being right. Must work in print mode and never rely on a terminal UI to show its result.
+**Briefing is a skill, run on demand.**[^Q7][^Q27] Inputs: the tracker adapter (open PRs, CI state, issues by state), the runner (tasks, runs, cost), and the page's previous state so it can say what changed. Grafana and Sentry join after two weeks of the cheap sources being right. Must work in print mode and never rely on a terminal UI to show its result.
 
-**The Magician is a resumed agent session.**[^Q26][^Q42] Its contract is its inputs and the `🌀 Now/` page it writes. Where it runs is a choice per day: a resumed session in a terminal, a herdr tab, a headless cron on mochi, later a Bakery room. A Ruler you collaborate with is the same kind of session. Rulers inside a card run are ephemeral delegates.
+**The Magician is a resumed agent session.**[^Q26][^Q42] Its contract is its inputs and the `🌀 Now/` page it writes. Where it runs is a choice per day: a resumed session in a terminal, a herdr tab, a headless cron on mochi, later a Bakery room. A Ruler you collaborate with is the same kind of session. Rulers inside a vessel are ephemeral delegates.
 
-**Hosted Bakery on mochi is canonical.**[^Q41] `http://mochi:4317`, every project. Local boards are scratch and the Magician ignores them.
+**Bakery is the first runner.**[^Q41] A Bakery card is a vessel. `bakery-cli` covers the four verbs (`create --key`, idempotent; `depend`; Review; retry in the same session) and adds a cost line per run (`runs`) and a spend cap (`pickup --budget`). Hosted Bakery on mochi, `http://mochi:4317`, is canonical for every project. Local boards are scratch and the Magician ignores them.
 
 ### Tooling home
 
-**Tooling home.**[^Q43] `check-spec`, the spec, Persona, and `PROJECT.md` templates, and the label-flip workflow: a new package in `~/code/clearstack`. `spec-to-cards`: in Bakery as `bakery-cli spec-to-cards`.
+**Tooling home.**[^Q43] `check-spec`, the spec, Persona, and `PROJECT.md` templates, and the label-flip workflow: a new package in `~/code/clearstack`. `spec-to-tasks` and the `runner` adapter live there too, so no runner owns the script; Bakery is the adapter's first implementation.
 
 **Names.**[^Q40] Files: `docs/personas/<domain>.md`, `PROJECT.md`. Roles: see decision 5.
 
@@ -219,9 +221,9 @@ A is the default and needs nothing new. The Shadow's task must read criteria fro
 
 Dotfiles: Ruler and Magician roles; `spec` skill (the spec format[^Q11]); `briefing` skill (the briefing inputs[^Q27]); the Shadow's verdict contract in its role prompt.
 
-clearstack, new package: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; spec, Persona, `PROJECT.md` templates; state-flip and spec-prune workflows.
+clearstack, new package: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; `spec-to-tasks` and the `runner` adapter with a Bakery implementation; spec, Persona, `PROJECT.md` templates; state-flip and spec-prune workflows.
 
-Bakery: `bakery-cli spec-to-cards`; store the `criteria` array on the card; emit a Trickster card when any verdict is `needs-run`.
+Bakery, as a runner: store the `criteria` array on the task; start a Trickster vessel when any verdict is `needs-run`.
 
 silk-remix: six Personas under `docs/personas/` (ingestion-search, mobile, web, api-contracts-shared, infra-ci-release, billing-insights-console), drafted by an Explorer from `docs/agent-map/`, `CODEBASE_OVERVIEW.md`, ADRs, `notes/03 Landscape/`; you edit invariants and standing questions[^Q28]. `PROJECT.md`. Linear migration script.
 
@@ -235,20 +237,20 @@ Vault: `🌀 Now/index.md`, `🌀 Now/silk.md`, `🌀 Now/impression.md`, `🌀 
 From the interview.[^Q30]
 
 1. Ruler role, `spec` skill, ingestion-search Persona.
-2. SIL-258 (SSE connections cut at about 125 s) through the loop by hand, composition A: spec PR, one card by hand, Creator, Shadow with criteria. Measure reconnects per hour before and after, and how often the Shadow's `unmet` and `needs-run` are right.
-3. `check-spec`, label-flip workflow, `spec-to-cards`. Redo step 2's card creation through the script.
+2. SIL-258 (SSE connections cut at about 125 s) through the loop by hand, composition A: spec PR, one vessel by hand (a plain session will do), Creator, Shadow with criteria. Measure reconnects per hour before and after, and how often the Shadow's `unmet` and `needs-run` are right.
+3. `check-spec`, label-flip workflow, `spec-to-tasks`. Redo step 2's task creation through the script.
 4. Magician role, `briefing` skill, Silk `PROJECT.md`, its vault page. Use the Magician for one week.
 5. Migrate Linear, add labels, retire `linear-nuke`.
 6. The other five Silk Personas.
 7. `PROJECT.md`, `docs/specs/`, mochi board for impression and bakery[^Q38].
-8. Bakery stores criteria; Trickster card on first `needs-run`; later, block Done on `unmet`.
+8. Bakery stores criteria; Trickster vessel on first `needs-run`; later, block Done on `unmet`.
 
 
 ## Decide
 
 1. Which composition for step 2. Proposed: A.
 2. Whether a spec author may pre-mark a criterion `needs-run` for known device or data needs, or only the Shadow may.
-3. Whether the Trickster is a role or only a card.
+3. Whether the Trickster is a role or only a vessel.
 4. Whether Ruler is a role or a skill a Creator loads, pending the check on whether the harness's role config accepts new names and on disabling competing presets.
 5. Whether archetype names replace the wire names in role prompts. Agents following `clear-voice` will push back on metaphor in prompts; wire names may be better on the wire and archetypes on paper.
 
@@ -257,8 +259,8 @@ From the interview.[^Q30]
 
 - Where the current harness defines subagent roles, and whether third
 party presets there are disabled. A lookup.
-- How a card run loads the Ruler when a card needs domain context.
-Probably the card body names the Persona path.
+- How a vessel loads the Ruler when its task needs domain context.
+Probably the task body names the Persona path.
 - Whether silk-remix's `ops-alert` issues get a `domain:*` label or stay
 outside the taxonomy.
 
