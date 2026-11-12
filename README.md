@@ -1,7 +1,5 @@
 # Unconscious Development
 
-Work that happens below your attention, surfaced only at approval points.
-
 <table>
   <tr>
     <td align="center"><img src="assets/tarot/RWS_Tarot_21_World.jpg" width="100" alt="The World"></td>
@@ -27,11 +25,15 @@ Work that happens below your attention, surfaced only at approval points.
   </tr>
 </table>
 
-A cast of agent archetypes (Self, Magician, Ruler, Explorer, Sage, Creator,
-Shadow, Trickster, Persona) runs a loop from approved spec to reviewed
-diff. The contract is files and scripts: charters, specs, `🌀 Now/` pages,
-`check-spec`, `spec-to-tasks`. Each task runs in a vessel: one
-session in one fresh worktree, on any runner. No harness or UI is a dependency.
+A cast of agent archetypes takes an issue from approved spec to reviewed
+diff. You approve the spec and the merge. In between, `spec-to-tasks` splits
+the spec into tasks, a Creator implements each task in its own session and
+worktree (a vessel), a Shadow checks the diff against the spec's acceptance
+criteria, and a Trickster runs the criteria that reading can't settle.
+
+The contract is files and scripts: Personas, specs, `PROJECT.md`, `🌀 Now/`
+pages, `check-spec`, `spec-to-tasks`. No harness, tracker or runner is a
+dependency.
 
 Opt-in. Nothing here is loaded by default.
 
