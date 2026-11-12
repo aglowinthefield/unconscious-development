@@ -21,8 +21,8 @@ Written for you, not for agents. Agents get smaller documents derived from this 
 %% @agent 2026-11-11: transcript exported from the pi session to archive/Interview 2026-11-10.md; every Qn is now a footnote linking to that question's heading %%
 An agent is three layers[^Q1]. Any one alone collapses the other two.
 
-1. a skill: the method, portable, in dotfiles
-2. a role: a subagent definition that loads the skill, in dotfiles
+1. a skill: the method, portable, in this repo
+2. a role: a subagent definition that loads the skill, in this repo
 3. a place it runs: a vessel, an agent session in any terminal, or a scheduled headless run
 
 None of the three is tied to one harness. Skills follow the Agent Skills spec, roles are subagent definitions in whatever form the harness reads, the run place is a session or a vessel. Pi is the harness today; the design must survive swapping it. `herdr` is one way to open and watch sessions, not a requirement.
@@ -171,7 +171,7 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 **The Magician is cross-domain and cross-project.**[^Q25][^Q36] It reads `PROJECT.md` in each repo (tracker, runner, CI, vault page), proposes a batch (issues, domain, order, rough spend), appends it to the vault page, and after approval runs `spec-to-tasks`.
 
-**Dotfiles hold the generic parts; repos hold the specific parts.**[^Q8] Cast and skills: `~/.agents/skills` plus the harness's role config, both chezmoi-managed. Personas, `PROJECT.md`, specs: in each repo.
+**UD holds the generic parts; each project repo holds the specific parts.**[^Q8] (revised) Every generic piece lives here, versioned and reviewed by PR, so the whole method can be audited in one place: the cast's role definitions, the skills (`spec`, `briefing`), the scripts, adapters and templates. An install step links the skills and roles into wherever the harness reads them; dotfiles at most call that step and never hold a copy. Personas, `PROJECT.md`, specs: in each project repo.
 
 ### Tracker and spec
 
@@ -221,7 +221,7 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 ## What gets built
 
-Dotfiles: Ruler and Magician roles; `spec` skill (the spec format[^Q11]); `briefing` skill (the briefing inputs[^Q27]); the Shadow's verdict contract in its role prompt.
+This repo, the cast: role definitions for all of it, with the Shadow's verdict contract in its prompt; `spec` skill (the spec format[^Q11]); `briefing` skill (the briefing inputs[^Q27]), moved here from `~/.agents/skills/briefing`; an install step that links them into the harness.
 
 This repo: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; `spec-to-tasks` and the `runner` adapter with a Bakery implementation; spec, Persona, `PROJECT.md` templates; state-flip and spec-prune workflows.
 
