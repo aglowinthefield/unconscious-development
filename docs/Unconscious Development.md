@@ -41,7 +41,7 @@ Jung named the Self, Shadow, Persona, Trickster, and a few others. The Explorer,
 | Archetype | Source  | On the wire        | May                                                                                      | Must not                                        |
 | --------- | ------- | ------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | Self      | Jung    | you                | approve specs, batches, merges                                                           | be delegated                                    |
-| Magician  | Pearson | `chief`            | read every `PROJECT.md` and `Now/` page, propose a batch, turn approved specs into cards | write specs or code, start cards                |
+| Magician  | Pearson | `chief`            | read every `PROJECT.md` and `🌀 Now/` page, propose a batch, turn approved specs into cards | write specs or code, start cards                |
 | Ruler     | Pearson | `lead`             | hold one domain's Persona, dispatch, write specs, make small changes[^Q34]               | push, open PRs, hand-write Ready cards          |
 | Explorer  | Pearson | `researcher`       | read anything, return paths and lines, answer questions                                  | write                                           |
 | Sage      | Pearson | `planner`          | propose steps and order, with a reason                                                   | choose and then pretend to compare              |
@@ -77,14 +77,14 @@ Explorer and Sage differ only on output contract when dispatched alone. They ear
 
 ### Two global rules
 
-No tool is a dependency except files and scripts. The contract is Markdown (Personas, `PROJECT.md`, specs, `Now/` pages, `AGENTS.md`), skills, and scripts (`check-spec`, `spec-to-cards`, the label workflow). Everything runs from a plain agent session or a Bakery card. herdr may add a tab or shortcut on top; Pi is the harness today; neither may be named in a charter, spec, or skill. Role prompts are the one place a harness's delegation tool appears, and the file to rewrite if the harness changes.
+No tool is a dependency except files and scripts. The contract is Markdown (Personas, `PROJECT.md`, specs, `🌀 Now/` pages, `AGENTS.md`), skills, and scripts (`check-spec`, `spec-to-cards`, the label workflow). Everything runs from a plain agent session or a Bakery card. herdr may add a tab or shortcut on top; Pi is the harness today; neither may be named in a charter, spec, or skill. Role prompts are the one place a harness's delegation tool appears, and the file to rewrite if the harness changes.
 
 The cast owns the subagent namespace. Any harness or extension that ships its own subagent presets competes for the same names and delegation surface. Those presets get disabled or overridden so only the cast is reachable.
 
 
 ### Triggers
 
-Nothing in the cast runs on its own. The Magician's method is the `briefing` skill, and a trigger is whatever invokes it. Today that is you, typing `/briefing silk` in a session; the skill reads the tracker, the cards and the previous `Now/silk.md`, rewrites the page, and names at its top who asked and when. That is the whole mechanism, and it is enough to test the Magician before any role exists.
+Nothing in the cast runs on its own. The Magician's method is the `briefing` skill, and a trigger is whatever invokes it. Today that is you, typing `/briefing silk` in a session; the skill reads the tracker, the cards and the previous `🌀 Now/silk.md`, rewrites the page, and names at its top who asked and when. That is the whole mechanism, and it is enough to test the Magician before any role exists.
 
 The other kinds are the same skill invoked by something other than you:
 
@@ -113,7 +113,7 @@ Ticket: silk-remix #412, "Bulk archive from the orders list", labelled `domain:o
 
 %%Not sure what headless, morning really is. There should be a general trigger for these. Needs to be more abstract but also defined. %%
 %% @agent 2026-11-11: replaced with "on a trigger" and added a Triggers paragraph after the two global rules; three kinds, no infrastructure %%
-1. Noticing. Magician. On a trigger (here, you ran `/briefing silk`) the Magician reads `PROJECT.md`, open issues, CI state, and yesterday's `Now/silk.md`. It appends a proposal to the page: #412 is small, the orders Persona exists, spec it today.
+1. Noticing. Magician. On a trigger (here, you ran `/briefing silk`) the Magician reads `PROJECT.md`, open issues, CI state, and yesterday's `🌀 Now/silk.md`. It appends a proposal to the page: #412 is small, the orders Persona exists, spec it today.
 2. Approval. Self. You read the page and say yes. First authorization point.
 3. Spec. Self and Ruler, together. Interactive session on `spec/412`. The Ruler wears `docs/personas/orders.md`. It sends an Explorer for the facts (where the list query lives, how single archive works, whether a soft-delete flag exists). It sends a Sage for the shape (client loop, one mutation, or background job; recommends one, with a reason). You argue with the Ruler, pick the mutation, and the Ruler writes `docs/specs/412-bulk-archive.md` with acceptance criteria and a setup note. PR opened, `check-spec` passes, you merge, label flips to `ready-for-agent`.
 4. Cards. Magician. `spec-to-cards` turns the spec into cards. One task, one Creator card; the body names the Persona path and the criteria.
@@ -200,11 +200,11 @@ A is the default and needs nothing new. The Shadow's task must read criteria fro
 
 ### Memory and switching
 
-**One vault page per project.**[^Q4][^Q17][^Q35] `Now/<project>.md` plus `Now/index.md`. Frontmatter `last_briefed`, `briefing_sources`. Sections: Priority now; In flight; Blocked on me; Decisions pending; Proposed batch (the Magician appends here); Last touched. Issues and PRs appear as bare GitHub URLs; the Obsidian plugin GitHub Link (`github-link`, with a token for private repos) draws each as a badge with title, state and checks, so the page carries only what the badge does not. Suggested, not required; the page reads fine as plain links.
+**One vault page per project.**[^Q4][^Q17][^Q35] `🌀 Now/<project>.md` plus `🌀 Now/index.md`. Frontmatter `last_briefed`, `briefing_sources`. Sections: Priority now; In flight; Blocked on me; Decisions pending; Proposed batch (the Magician appends here); Last touched. Issues and PRs appear as bare GitHub URLs; the Obsidian plugin GitHub Link (`github-link`, with a token for private repos) draws each as a badge with title, state and checks, so the page carries only what the badge does not. Suggested, not required; the page reads fine as plain links.
 
 **Briefing is a skill, run on demand.**[^Q7][^Q27] Inputs: the tracker adapter (open PRs, CI state, issues by state), Bakery cards, runs, cost, and the page's previous state so it can say what changed. Grafana and Sentry join after two weeks of the cheap sources being right. Must work in print mode and never rely on a terminal UI to show its result.
 
-**The Magician is a resumed agent session.**[^Q26][^Q42] Its contract is its inputs and the `Now/` page it writes. Where it runs is a choice per day: a resumed session in a terminal, a herdr tab, a headless cron on mochi, later a Bakery room. A Ruler you collaborate with is the same kind of session. Rulers inside a card run are ephemeral delegates.
+**The Magician is a resumed agent session.**[^Q26][^Q42] Its contract is its inputs and the `🌀 Now/` page it writes. Where it runs is a choice per day: a resumed session in a terminal, a herdr tab, a headless cron on mochi, later a Bakery room. A Ruler you collaborate with is the same kind of session. Rulers inside a card run are ephemeral delegates.
 
 **Hosted Bakery on mochi is canonical.**[^Q41] `http://mochi:4317`, every project. Local boards are scratch and the Magician ignores them.
 
@@ -227,7 +227,7 @@ silk-remix: six Personas under `docs/personas/` (ingestion-search, mobile, web, 
 
 impression, bakery: `PROJECT.md`, `docs/specs/`, a mochi board for impression.
 
-Vault: `Now/index.md`, `Now/silk.md`, `Now/impression.md`, `Now/bakery.md`.
+Vault: `🌀 Now/index.md`, `🌀 Now/silk.md`, `🌀 Now/impression.md`, `🌀 Now/bakery.md`.
 
 
 ## Build order

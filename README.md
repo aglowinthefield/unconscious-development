@@ -29,7 +29,7 @@ Work that happens below your attention, surfaced only at approval points.
 
 A cast of agent archetypes (Self, Magician, Ruler, Explorer, Sage, Creator,
 Shadow, Trickster, Persona) runs a loop from approved spec to reviewed
-diff. The contract is files and scripts: charters, specs, `Now/` pages,
+diff. The contract is files and scripts: charters, specs, `🌀 Now/` pages,
 `check-spec`, `spec-to-cards`. No harness or UI is a dependency.
 
 Opt-in. Nothing here is loaded by default.
@@ -42,7 +42,7 @@ Opt-in. Nothing here is loaded by default.
 | Card | Archetype | Role |
 | --- | --- | --- |
 | <img src="assets/tarot/RWS_Tarot_21_World.jpg" width="80" alt="The World"> | Self | You. Approves specs, batches, merges. |
-| <img src="assets/tarot/RWS_Tarot_01_Magician.jpg" width="80" alt="The Magician"> | Magician | `chief`. Reads every `PROJECT.md` and `Now/` page, proposes a batch, turns approved specs into cards. |
+| <img src="assets/tarot/RWS_Tarot_01_Magician.jpg" width="80" alt="The Magician"> | Magician | `chief`. Reads every `PROJECT.md` and `🌀 Now/` page, proposes a batch, turns approved specs into cards. |
 | <img src="assets/tarot/RWS_Tarot_04_Emperor.jpg" width="80" alt="The Emperor"> | Ruler | `lead`. Holds one domain's charter, dispatches, writes specs, makes small changes. |
 | <img src="assets/tarot/RWS_Tarot_00_Fool.jpg" width="80" alt="The Fool"> | Explorer | `researcher`. Reads anything, returns paths and lines, answers questions. |
 | <img src="assets/tarot/RWS_Tarot_09_Hermit.jpg" width="80" alt="The Hermit"> | Sage | `planner`. Proposes steps and order, with a reason. |
