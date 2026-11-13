@@ -10,9 +10,12 @@ status: draft
 
 ## Invariants
 
-What this domain refuses. Ids are permanent; a retired invariant keeps its id out of use.
+What this domain refuses. Each id is written in full as `<domain>/I1` elsewhere. Ids are permanent; a retired invariant keeps its id out of use.
 
-- <domain>/I1: <A rule every change here must keep.> (source: <path>)
+### I1
+<The rule, in one sentence. Then the why, if it isn't obvious.>
+
+Sources: [<file>](<link>)
 
 ## Standing questions
 
