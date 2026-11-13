@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Turn the Unconscious Development cast on or off in pi.
+#   ud enable   link roles/*.md into ~/.pi/agent/agents/ud, hide pi-subagents' builtin
+#               presets, and switch off billion-context's acp_delegate
+#   ud disable  undo all three
+#   ud status   show what is on
+# Both commands touch only the keys they own, so running either twice is safe.
+# Changes apply to new pi sessions.
+set -euo pipefail
+
+ud_root="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
+agents_dir="${PI_AGENTS_DIR:-$HOME/.pi/agent/agents}/ud"
+pi_settings="${PI_SETTINGS:-$HOME/.pi/agent/settings.json}"
+bili_config="${BILI_CONFIG:-$HOME/.config/billion-context/billion-context.json}"
+
+json_set() { # file, python statement on dict d
+  python3 - "$1" "$2" <<'PY'
+import json, os, sys
+path, stmt = sys.argv[1], sys.argv[2]
+d = json.load(open(path)) if os.path.exists(path) else {}
+exec(stmt)
+json.dump(d, open(path, "w"), indent=2)
+open(path, "a").write("\n")
+PY
+}
+
+enable() {
+  mkdir -p "$agents_dir"
+  for f in "$ud_root"/roles/*.md; do
+    [ "$(basename "$f")" = README.md ] && continue
+    ln -sfn "$f" "$agents_dir/$(basename "$f")"
+  done
+  json_set "$pi_settings" 'd.setdefault("subagents", {})["disableBuiltins"] = True'
+  json_set "$bili_config" 'd.setdefault("pi", {})["subagents"] = False'
+  grep -q 'pi-subagents' "$pi_settings" || echo "warning: pi-subagents isn't in $pi_settings packages; the roles have no harness to run them" >&2
+  status
+}
+
+disable() {
+  rm -rf "$agents_dir"
+  json_set "$pi_settings" '
+s = d.get("subagents", {}); s.pop("disableBuiltins", None)
+if not s: d.pop("subagents", None)'
+  json_set "$bili_config" '
+p = d.get("pi", {}); p.pop("subagents", None)
+if not p: d.pop("pi", None)'
+  status
+}
+
+status() {
+  if [ -d "$agents_dir" ]; then echo "roles: $(cd "$agents_dir" && ls *.md | tr '\n' ' ')"; else echo "roles: off"; fi
+  python3 - "$pi_settings" "$bili_config" <<'PY'
+import json, os, sys
+load = lambda p: json.load(open(p)) if os.path.exists(p) else {}
+s, b = load(sys.argv[1]), load(sys.argv[2])
+print("pi-subagents builtins hidden:", s.get("subagents", {}).get("disableBuiltins", False))
+print("pi-subagents installed:", any("pi-subagents" in p for p in s.get("packages", [])))
+print("billion-context acp_delegate:", "off" if b.get("pi", {}).get("subagents") is False else "on")
+PY
+}
+
+case "${1:-status}" in
+  enable) enable ;;
+  disable) disable ;;
+  status) status ;;
+  *) echo "usage: ud enable|disable|status" >&2; exit 2 ;;
+esac

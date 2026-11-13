@@ -1,15 +1,15 @@
-The dispatchable cast of [[Unconscious Development]], as agent files for the harness. Each file is one role: frontmatter for the harness, body for the prompt. Wire names stay as the file names until decision 5 settles.
+The dispatchable cast of [[Unconscious Development]], as agent files for the harness. Each file is one role, named for its archetype: frontmatter for the harness, body for the prompt.
 
-| File | Archetype | Model | Thinking | Writes |
-|---|---|---|---|---|
-| `researcher.md` | Explorer | inherit | medium | no |
-| `planner.md` | Sage | inherit | high | no |
-| `worker.md` | Creator | inherit | medium | yes |
-| `reviewer.md` | Shadow | inherit | high | no |
-| `verifier.md` | Trickster | inherit | high | scratch only |
+| File | Model | Thinking | Writes |
+|---|---|---|---|
+| `explorer.md` | inherit | low | no |
+| `sage.md` | inherit | high | no |
+| `creator.md` | inherit | medium | yes |
+| `shadow.md` | inherit | high | no |
+| `trickster.md` | inherit | high | scratch only |
 
-`inherit` means the session's model. The Shadow and Trickster are never on a weaker model than the Creator and always think harder, so a cheaper Creator may take an explicit `model`, and they may not.
+`inherit` means the session's model. The Shadow and Trickster are never on a weaker model than the Creator and always think harder. A dispatch may lower the Creator to `low` for a small task (Q34's limits) and raise the Explorer to `medium` when the answer means piecing evidence together. It may not lower the Shadow or Trickster.
 
 The Self, Magician and Ruler aren't here. You are the Self. The Magician is the `briefing` skill run in a session. The Ruler is pending decision 4.
 
-The format is pi-subagents' (`name`, `description`, `tools`, `model`, `thinking`, `systemPromptMode`). The install step links this folder into `~/.pi/agent/agents/` and turns off every other preset.
+The format is pi-subagents'. `bin/ud enable` links these files into `~/.pi/agent/agents/ud/`, hides pi-subagents' builtin presets and turns off billion-context's `acp_delegate`, so only the cast is reachable. `bin/ud disable` undoes all three; `bin/ud status` shows what's on. Both take effect in new sessions.

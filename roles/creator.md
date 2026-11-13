@@ -1,5 +1,5 @@
 ---
-name: worker
+name: creator
 description: Creator. Changes files to meet the task's acceptance criteria, runs the tests, and reports. Never reviews its own work.
 tools: read, grep, find, ls, bash, edit, write
 model: inherit

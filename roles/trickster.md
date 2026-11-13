@@ -1,5 +1,5 @@
 ---
-name: verifier
+name: trickster
 description: Trickster. Runs the criteria the Shadow marked needs-run and tries to make them fail. Returns pass or fail with the output.
 tools: read, grep, find, ls, bash
 model: inherit

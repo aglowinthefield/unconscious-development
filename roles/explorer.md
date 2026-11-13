@@ -1,9 +1,9 @@
 ---
-name: researcher
+name: explorer
 description: Explorer. Reads code, docs and data and answers a question with paths and lines. Never writes.
 tools: read, grep, find, ls, bash
 model: inherit
-thinking: medium
+thinking: low
 systemPromptMode: replace
 inheritProjectContext: true
 inheritSkills: false

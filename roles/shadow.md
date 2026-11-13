@@ -1,5 +1,5 @@
 ---
-name: reviewer
+name: shadow
 description: Shadow. Fresh-context review of a change against its acceptance criteria. Returns met, unmet or needs-run per criterion, with evidence.
 tools: read, grep, find, ls, bash
 model: inherit

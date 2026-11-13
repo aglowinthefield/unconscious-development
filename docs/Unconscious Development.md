@@ -45,11 +45,11 @@ Jung named the Self, Shadow, Persona, Trickster, and a few others. The Explorer,
 | Self      | Jung    | you                | approve specs, batches, merges                                                           | be delegated                                    |
 | Magician  | Pearson | `chief`            | read every `PROJECT.md` and `🌀 Now/` page, propose a batch, turn approved specs into tasks | write specs or code, start vessels              |
 | Ruler     | Pearson | `lead`             | hold one domain's Persona, dispatch, write specs, make small changes[^Q34]               | push, open PRs, hand-write ready tasks          |
-| Explorer  | Pearson | `researcher`       | read anything, return paths and lines, answer questions                                  | write                                           |
-| Sage      | Pearson | `planner`          | propose steps and order, with a reason                                                   | choose and then pretend to compare              |
-| Creator   | Pearson | `worker`           | change files, run tests, report                                                          | review its own work                             |
-| Shadow    | Jung    | `reviewer`         | see what the Creator did not want seen; return per-criterion verdicts with evidence      | see the Creator's reasoning. Fresh context only |
-| Trickster | Jung    | verifier (new)     | run the criteria the Shadow marked `needs-run` and try to make them fail                 | judge code it has not run                       |
+| Explorer  | Pearson | `explorer`         | read anything, return paths and lines, answer questions                                  | write                                           |
+| Sage      | Pearson | `sage`             | propose steps and order, with a reason                                                   | choose and then pretend to compare              |
+| Creator   | Pearson | `creator`          | change files, run tests, report                                                          | review its own work                             |
+| Shadow    | Jung    | `shadow`           | see what the Creator did not want seen; return per-criterion verdicts with evidence      | see the Creator's reasoning. Fresh context only |
+| Trickster | Jung    | `trickster`        | run the criteria the Shadow marked `needs-run` and try to make them fail                 | judge code it has not run                       |
 | Persona   | Jung    | `docs/personas/<domain>.md` | hold one domain's context: what it refuses, what it costs, where its files are, how to run it | be dispatched. A file, read first by whoever works in the domain                 |
 
 %%We should be more clear about what a charter is, and maybe decide if there are alternative names that are more Jungian for it to match. Even I'm not totally clear where a charter lives or what it does.%%
@@ -61,7 +61,7 @@ A Persona holds: owner; scope (which agent-map areas); invariants (what this dom
 %%No need for this.%%
 %% @agent 2026-11-11: removed the oracle paragraph %%
 
-Whether the archetype names replace the wire names in role prompts is undecided (decision 5). Until then: archetypes on paper, wire names in the harness config.
+Archetype names are the wire names too (decision 5): `shadow`, `creator` and the rest are what you dispatch, so a transcript shows which role ran. The role files live in `roles/`, and `bin/ud enable|disable` switches the cast on and off.
 
 ### Boundaries
 
@@ -226,7 +226,7 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 **Discovered first, configured second.** Every setting has a default found from the repo, and `PROJECT.md` frontmatter overrides it. Tracker: from the git remote (a GitHub remote means `gh`). Runner: Bakery when `bakery-cli` is on the path and a board is configured, else a plain agent session. Personas: `docs/personas/*.md`. Specs: `docs/specs/`. Domains: the Persona filenames. The vault page: a `now_dir` setting, with no default, so nothing writes outside the repo until asked. Runner settings, such as a Bakery server URL, belong to the adapter's own block in `PROJECT.md`. An adapter is a module implementing its four verbs, chosen by name, so a new tracker or runner is added without touching the scripts.
 
-**Names.**[^Q40] Files: `docs/personas/<domain>.md`, `PROJECT.md`. Roles: see decision 5.
+**Names.**[^Q40] Files: `docs/personas/<domain>.md`, `PROJECT.md`. Roles: the archetype, lowercase (`roles/shadow.md`).
 
 
 ## What gets built
@@ -264,7 +264,7 @@ From the interview.[^Q30]
 2. Whether a spec author may pre-mark a criterion `needs-run` for known device or data needs, or only the Shadow may.
 3. Whether the Trickster is a role or only a vessel.
 4. Whether Ruler is a role or a skill a Creator loads, pending the check on whether the harness's role config accepts new names and on disabling competing presets.
-5. Whether archetype names replace the wire names in role prompts. Agents following `clear-voice` will push back on metaphor in prompts; wire names may be better on the wire and archetypes on paper.
+5. ~~Whether archetype names replace the wire names.~~ Decided 2026-11-12: archetype names on the wire, so you can see which role ran and check it behaves as set up.
 
 
 ## Open, not decided

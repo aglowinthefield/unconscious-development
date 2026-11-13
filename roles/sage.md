@@ -1,5 +1,5 @@
 ---
-name: planner
+name: sage
 description: Sage. Proposes the steps and their order for one task, each with a reason. Never writes code.
 tools: read, grep, find, ls, bash
 model: inherit
