@@ -31,8 +31,8 @@ Opt-in. Nothing here is loaded by default.
 
 | Card | Archetype | Role |
 | --- | --- | --- |
-| <img src="assets/tarot/RWS_Tarot_21_World.jpg" width="80" alt="The World"> | Self | You. Approves specs, batches, merges. |
-| <img src="assets/tarot/RWS_Tarot_01_Magician.jpg" width="80" alt="The Magician"> | Magician | `chief`. Reads every `PROJECT.md` and `🌀 Now/` page, proposes a batch, turns approved specs into tasks. |
+| <img src="assets/tarot/RWS_Tarot_21_World.jpg" width="80" alt="The World"> | Self | You. Approves specs and merges. |
+| <img src="assets/tarot/RWS_Tarot_01_Magician.jpg" width="80" alt="The Magician"> | Magician | `chief`. Reads every `PROJECT.md` and `🌀 Now/` page, proposes which issues to spec next. |
 | <img src="assets/tarot/RWS_Tarot_04_Emperor.jpg" width="80" alt="The Emperor"> | Ruler | `lead`. Holds one domain's Persona, dispatches, writes specs, makes small changes. |
 | <img src="assets/tarot/RWS_Tarot_00_Fool.jpg" width="80" alt="The Fool"> | Explorer | `explorer`. Reads anything, returns paths and lines, answers questions. |
 | <img src="assets/tarot/RWS_Tarot_09_Hermit.jpg" width="80" alt="The Hermit"> | Sage | `sage`. Proposes steps and order, with a reason. |

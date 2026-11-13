@@ -29,7 +29,7 @@ None of the three is tied to one harness. Skills follow the Agent Skills spec, r
 
 %%We don't want strict reliance on GitHub for this flow. I'm also nervous about unbounded growth of the docs/specs folder. We've had thousands of pull requests the past few months and most of those specs are going to be useless almost immediately (e.g. typos, changing constant values, net additions). %%
 %% @agent 2026-11-11: tracker is now an interface (issue, domain, state) with GitHub as today's implementation; specs are tiered, so trivial work carries its criteria in the issue and never gets a file; merged specs are pruned %%
-Work starts only from approved acceptance criteria. Where they live depends on the work. A trivial change (typo, constant, copy, a net addition with no design) carries its criteria in the issue, and its task is made from the issue. Work that needs design creates or edits the spec for the behaviour it changes, in `docs/specs/`, merged by PR; the merge sets the issue's state, and a script generates the tasks from it. You are the single approver. Nothing dispatches itself[^Q5].
+Work starts only from approved acceptance criteria. Where they live depends on the work. A trivial change (typo, constant, copy, a net addition with no design) carries its criteria in the issue, and its task is made from the issue. Work that needs design creates or edits the spec for the behaviour it changes, in `docs/specs/`, merged by PR; the merge sets the issue's state, and a script generates the tasks from it. You are the single approver. Once a spec is approved its tasks dispatch themselves; nothing dispatches without one[^Q5] (revised 2026-11-12).
 
 The tracker is an interface, not a tool: an issue has a domain, a state, and acceptance criteria, and the scripts read and write those through one thin adapter. GitHub Issues is today's implementation, the same way Pi is today's harness.
 
@@ -42,8 +42,8 @@ Jung named the Self, Shadow, Persona, Trickster, and a few others. The Explorer,
 
 | Archetype | Source  | On the wire        | May                                                                                      | Must not                                        |
 | --------- | ------- | ------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Self      | Jung    | you                | approve specs, batches, merges                                                           | be delegated                                    |
-| Magician  | Pearson | `chief`            | read every `PROJECT.md` and `🌀 Now/` page, propose a batch, turn approved specs into tasks | write specs or code, start vessels              |
+| Self      | Jung    | you                | approve specs and merges                                                                 | be delegated                                    |
+| Magician  | Pearson | `chief`            | read every `PROJECT.md` and `🌀 Now/` page, propose which issues to spec next | write specs or code, start vessels              |
 | Ruler     | Pearson | `lead`             | hold one domain's Persona, dispatch, write specs, make small changes[^Q34]               | push, open PRs, hand-write ready tasks          |
 | Explorer  | Pearson | `explorer`         | read anything, return paths and lines, answer questions                                  | write                                           |
 | Sage      | Pearson | `sage`             | propose steps and order, with a reason                                                   | choose and then pretend to compare              |
@@ -84,19 +84,20 @@ No tool is a dependency except files and scripts. The contract is Markdown (Pers
 The cast owns the subagent namespace. Any harness or extension that ships its own subagent presets competes for the same names and delegation surface. Those presets get disabled or overridden so only the cast is reachable.
 
 
-### Triggers
+### Dispatch and interrupts
 
-Nothing in the cast runs on its own. The Magician's method is the `briefing` skill, and a trigger is whatever invokes it. Today that is you, typing `/briefing silk` in a session; the skill reads the tracker, the runner's tasks and the previous `🌀 Now/silk.md`, rewrites the page, and names at its top who asked and when. That is the whole mechanism, and it is enough to test the Magician before any role exists.
+Approving the spec is the last thing you do before something is ready. Merging a spec and plan flips the issue to `ready-for-agent`, and the same merge job runs `spec-to-tasks`; the runner starts the vessels, and each Creator, Shadow and Trickster runs without you. Nothing dispatches itself without an approved spec, and nothing else needs your yes.
 
-The other kinds are the same skill invoked by something other than you:
+The loop interrupts you for two things only:
 
-| Kind | Invoked by | The Magician asks |
-|---|---|---|
-| request | you, `/briefing <project>` | whatever you asked |
-| scheduled | a cron running `pi -p "/briefing silk"` | what should run next |
-| event | a hook on a vessel reaching review or a spec merging | does this unblock anything |
+- Ready: every task of a spec has passed its Shadow, and its Trickster where one was needed. One notice per spec, not per task, with the diffs, verdict arrays and verify results.
+- Stuck: a vessel cannot continue without you. A criterion or invariant still `unmet` after one retry, the plan's `budget_usd` spent, or a gap the spec does not cover. The vessel stops and asks rather than guessing; a gap in the spec comes back as a `[NEEDS CLARIFICATION]` on a spec PR.
 
-Only the first exists until its proposals have been right for a while. The page's `trigger` line is what tells a later reader why a proposal was made.
+No proposals, digests or progress pings reach you unasked. How the notice travels (the tracker, a chat message, the runner's own notification) is a setting in `PROJECT.md`.
+
+To see how things are going, you look. The status page, `🌀 Now/<project>.md`, is regenerated by a script on every stage change: each approved spec, its tasks, where each one is (making, Shadow, Trickster, ready, stuck), and spend against budget. It is built from the tracker and the runner, needs no agent, and is the same every time for the same state. The runner's own board shows the vessels in more detail.
+
+The Magician has one job left: proposing which issues to spec next, the one point before work where your attention is needed anyway. Its proposals go in a section of the status page and never interrupt you.
 
 ## A feature ticket, walked
 
@@ -104,26 +105,28 @@ Ticket: silk-remix #412, "Bulk archive from the orders list", labelled `domain:o
 
 ```
  Magician ──proposes──▶ Self ──yes──▶ Ruler session (spec/412)
- (/briefing silk)                      │  Explorer ──facts──▶ Sage ──shape──▶ Ruler + Self write spec
+                                       │  Explorer ──facts──▶ Sage ──shape──▶ Ruler + Self write spec
                                        ▼
-                              PR, check-spec, merge, label flips
+                              PR, check-spec, Self merges (approval 1)
+                                       │  merge job: label flips, spec-to-tasks
+                                       ▼
+                              Creator vessel ──▶ Shadow (fresh) ──▶ Trickster vessel (needs-run only)
                                        │
- Magician ──spec-to-tasks──▶ Creator vessel ──▶ Shadow (fresh) ──▶ Review
-                                       │
-                              Trickster vessel (needs-run criteria only) ──▶ Self approves, merge
+                                       ▼
+                              ready notice ──▶ Self merges (approval 2)
 ```
 
 %%Not sure what headless, morning really is. There should be a general trigger for these. Needs to be more abstract but also defined. %%
 %% @agent 2026-11-11: replaced with "on a trigger" and added a Triggers paragraph after the two global rules; three kinds, no infrastructure %%
-1. Noticing. Magician. On a trigger (here, you ran `/briefing silk`) the Magician reads `PROJECT.md`, open issues, CI state, and yesterday's `🌀 Now/silk.md`. It appends a proposal to the page: #412 is small, the orders Persona exists, spec it today.
-2. Approval. Self. You read the page and say yes. First authorization point.
-3. Spec. Self and Ruler, together. Interactive session on `spec/412`. The Ruler wears `docs/personas/orders.md`. It sends an Explorer for the facts (where the list query lives, how single archive works, whether a soft-delete flag exists). It sends a Sage for the shape (client loop, one mutation, or background job; recommends one, with a reason). You argue with the Ruler, pick the mutation, and no spec for bulk archive exists yet, so the Ruler writes `docs/specs/orders/bulk-archive.md` with acceptance criteria and a setup note, and beside it `bulk-archive.plan.md` with the chosen mutation, the Sage's reason, and the tasks. A later issue that changes bulk archive edits the spec and gets a new plan. PR opened, `check-spec` passes, you merge, label flips to `ready-for-agent`.
-4. Tasks. Magician. `spec-to-tasks` turns the spec into tasks. One task, one Creator vessel; the task body names the Persona path and the criteria.
+1. Noticing. Magician. It reads `PROJECT.md`, open issues and the status page, and adds a proposal to the page: #412 is small, the orders Persona exists, spec it next.
+2. Choosing. Self. When you next look at the page you pick #412 and open a spec session. Not an authorization; nothing runs yet.
+3. Spec. Self and Ruler, together. Interactive session on `spec/412`. The Ruler wears `docs/personas/orders.md`. It sends an Explorer for the facts (where the list query lives, how single archive works, whether a soft-delete flag exists). It sends a Sage for the shape (client loop, one mutation, or background job; recommends one, with a reason). You argue with the Ruler, pick the mutation, and no spec for bulk archive exists yet, so the Ruler writes `docs/specs/orders/bulk-archive.md` with acceptance criteria and a setup note, and beside it `bulk-archive.plan.md` with the chosen mutation, the Sage's reason, and the tasks. A later issue that changes bulk archive edits the spec and gets a new plan. PR opened, `check-spec` passes, you merge. First authorization point. The merge job flips the label to `ready-for-agent`.
+4. Tasks. The merge job. `spec-to-tasks` turns the plan into tasks and the runner starts them. One task, one Creator vessel; the task body names the Persona path and the criteria.
 5. Making. Creator with Shadow. The runner starts a session in a fresh worktree. The Creator reads the Persona, implements, runs tests. Before reporting it summons a Shadow with the criteria copied from the task body. The Shadow returns `criteria: [{id, verdict, evidence}]`: the 500-id limit `met`, the audit-log entry `met`, "list shows 20 after archiving 30" `needs-run`. The Creator reports with the array attached. The vessel reaches Review.
 6. Verifying. Trickster. Because one criterion is `needs-run`, a dependent vessel gets that criterion and the setup note: seed 50 orders, archive 30, assert the list shows 20. Pass or fail, nothing else. Had every criterion been `met`, this step would not exist.
-7. Approval. Self. One diff, a verdict array, a verify result. Approve, merge. Second and last authorization point.
+7. Approval. Self. The ready notice is the first you hear since the merge: one diff, a verdict array, a verify result. Approve, merge. Second and last authorization point.
 
-What the walk shows: the Ruler appears once, at spec time, where you are present, and never inside a one-task vessel. Explorer and Sage appear only in the spec session. The Magician proposes twice (what to do, how to split it) and you approve twice.
+What the walk shows: the Ruler appears once, at spec time, where you are present, and never inside a one-task vessel. Explorer and Sage appear only in the spec session. The Magician proposes once, what to spec; the plan says how to split it; you approve twice, and hear nothing in between unless a vessel is stuck.
 
 
 ## Verification scope
@@ -171,11 +174,11 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 **The Shadow is never weaker than the Creator.** It runs on the same model or a stronger one, at a higher thinking level. To cut cost, inline the diff in the task instead of downgrading the model: on the first trial (silk-remix #6746) that cut one review from $6.41 to $1.30 on the same model. The inlined run saw the deploy blocker but marked its criterion `met`, so the prompt must say that anything stopping a criterion from holding in production makes it `unmet`, not a risk.
 
-**Two new roles only.**[^Q14] Ruler and Magician. Specifying and briefing are skills those roles load.
+**Two new roles only.**[^Q14] Ruler and Magician. Specifying and proposing are skills those roles load.
 
-**The Magician is cross-domain and cross-project.**[^Q25][^Q36] It reads `PROJECT.md` in each repo (tracker, runner, CI, vault page), proposes a batch (issues, domain, order, rough spend), appends it to the vault page, and after approval runs `spec-to-tasks`.
+**The Magician is cross-domain and cross-project.**[^Q25][^Q36] It reads `PROJECT.md` in each repo (tracker, runner, CI, vault page) and proposes which issues to spec next, with domain, order and rough spend, on the status page. It no longer runs `spec-to-tasks`; the merge job does.
 
-**UD holds the generic parts; each project repo holds the specific parts.**[^Q8] (revised) Every generic piece lives here, versioned and reviewed by PR, so the whole method can be audited in one place: the cast's role definitions, the skills (`spec`, `briefing`), the scripts, adapters and templates. An install step links the skills and roles into wherever the harness reads them; dotfiles at most call that step and never hold a copy. Personas, `PROJECT.md`, specs: in each project repo.
+**UD holds the generic parts; each project repo holds the specific parts.**[^Q8] (revised) Every generic piece lives here, versioned and reviewed by PR, so the whole method can be audited in one place: the cast's role definitions, the skills (`spec`, `propose`), the scripts, adapters and templates. An install step links the skills and roles into wherever the harness reads them; dotfiles at most call that step and never hold a copy. Personas, `PROJECT.md`, specs: in each project repo.
 
 ### Tracker and spec
 
@@ -204,7 +207,7 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 **You and the Ruler draft together.**[^Q12][^Q21] Interactive agent session, `spec/<issue>` branch, same worktree, you edit the file directly. Lands by PR, Codiff for the walkthrough. Merging is the approval.
 
-**Merge flips the state.**[^Q32] A CI job on merge to `main` that touches a spec with `status: approved` moves the issue the PR names from `needs-spec` to `ready-for-agent` through the tracker adapter and comments the spec path. For trivial issues you flip the state by hand after reading the criteria. `spec-to-tasks` refuses anything not `ready-for-agent`.
+**Merge flips the state.**[^Q32] A CI job on merge to `main` that touches a spec with `status: approved` moves the issue the PR names from `needs-spec` to `ready-for-agent` through the tracker adapter and comments the spec path. The same job then runs `spec-to-tasks`. For trivial issues you flip the state by hand after reading the criteria, and the flip triggers `spec-to-tasks` the same way. `spec-to-tasks` refuses anything not `ready-for-agent`.
 
 **One vessel per task.**[^Q22][^Q23] `spec-to-tasks <issue>` creates tasks keyed `gh-<issue>/<task>` with dependency edges, through the runner adapter. Never one task per surface.
 
@@ -212,9 +215,9 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 ### Memory and switching
 
-**One vault page per project.**[^Q4][^Q17][^Q35] `🌀 Now/<project>.md` plus `🌀 Now/index.md`. Frontmatter `last_briefed`, `briefing_sources`. Sections: Priority now; In flight; Blocked on me; Decisions pending; Proposed batch (the Magician appends here); Last touched. Issues and PRs appear as bare GitHub URLs; the Obsidian plugin GitHub Link (`github-link`, with a token for private repos) draws each as a badge with title, state and checks, so the page carries only what the badge does not. Suggested, not required; the page reads fine as plain links.
+**One vault page per project.**[^Q4][^Q17][^Q35] `🌀 Now/<project>.md` plus `🌀 Now/index.md`. The status page described under Dispatch and interrupts. Sections: Stuck; Ready; In flight (each approved spec, its tasks and stages, spend against budget); Proposed next (the Magician's section); Last updated. Issues and PRs appear as bare GitHub URLs; the Obsidian plugin GitHub Link (`github-link`, with a token for private repos) draws each as a badge with title, state and checks, so the page carries only what the badge does not. Suggested, not required; the page reads fine as plain links.
 
-**Briefing is a skill, run on demand.**[^Q7][^Q27] Inputs: the tracker adapter (open PRs, CI state, issues by state), the runner (tasks, runs, cost), and the page's previous state so it can say what changed. Grafana and Sentry join after two weeks of the cheap sources being right. Must work in print mode and never rely on a terminal UI to show its result.
+**The status page is a script; proposing is a skill.**[^Q7][^Q27] (revised 2026-11-12) `status` rebuilds the page from the tracker adapter (open PRs, CI state, issues by state) and the runner (tasks, runs, cost) on every stage change, with no agent in it. The Magician's `propose` skill writes only the Proposed next section, from the same inputs plus `PROJECT.md`. Grafana and Sentry join later. Both work headless; neither relies on a terminal UI.
 
 **The Magician is a resumed agent session.**[^Q26][^Q42] Its contract is its inputs and the `🌀 Now/` page it writes. Where it runs is a choice per day: a resumed session in a terminal, a herdr tab, a headless cron on mochi, later a Bakery room. A Ruler you collaborate with is the same kind of session. Rulers inside a vessel are ephemeral delegates.
 
@@ -231,7 +234,7 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 ## What gets built
 
-This repo, the cast: role definitions for all of it, with the Shadow's verdict contract in its prompt; `spec` skill (the spec format[^Q11]); `briefing` skill (the briefing inputs[^Q27]), moved here from `~/.agents/skills/briefing`; an install step that links them into the harness.
+This repo, the cast: role definitions for all of it, with the Shadow's verdict contract in its prompt; `spec` skill (the spec format[^Q11]); `propose` skill (the Magician's inputs[^Q27]), replacing `~/.agents/skills/briefing`; the `status` script; the merge job that runs `spec-to-tasks`; the ready and stuck notices; an install step that links them into the harness.
 
 This repo: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; `spec-to-tasks` and the `runner` adapter with a Bakery implementation; spec, Persona, `PROJECT.md` templates; state-flip workflow.
 
@@ -251,7 +254,7 @@ From the interview.[^Q30]
 1. Ruler role, `spec` skill, ingestion-search Persona.
 2. SIL-258 (SSE connections cut at about 125 s) through the loop by hand, composition A: spec PR, one vessel by hand (a plain session will do), Creator, Shadow with criteria. Measure reconnects per hour before and after, and how often the Shadow's `unmet` and `needs-run` are right.
 3. `check-spec`, label-flip workflow, `spec-to-tasks`. Redo step 2's task creation through the script.
-4. Magician role, `briefing` skill, Silk `PROJECT.md`, its vault page. Use the Magician for one week.
+4. `status` script, ready and stuck notices, the merge job running `spec-to-tasks`. Magician role and `propose` skill, Silk `PROJECT.md`, its status page. Use it for one week.
 5. Migrate Linear, add labels, retire `linear-nuke`.
 6. The other five Silk Personas.
 7. `PROJECT.md`, `docs/specs/`, mochi board for impression and bakery[^Q38].
