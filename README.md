@@ -46,12 +46,12 @@ Opt-in. Nothing here is loaded by default.
 | --- | --- | --- |
 | <img src="assets/tarot/RWS_Tarot_21_World.jpg" width="80" alt="The World"> | Self | You. Approves specs, batches, merges. |
 | <img src="assets/tarot/RWS_Tarot_01_Magician.jpg" width="80" alt="The Magician"> | Magician | `chief`. Reads every `PROJECT.md` and `🌀 Now/` page, proposes a batch, turns approved specs into tasks. |
-| <img src="assets/tarot/RWS_Tarot_04_Emperor.jpg" width="80" alt="The Emperor"> | Ruler | `lead`. Holds one domain's charter, dispatches, writes specs, makes small changes. |
-| <img src="assets/tarot/RWS_Tarot_00_Fool.jpg" width="80" alt="The Fool"> | Explorer | `researcher`. Reads anything, returns paths and lines, answers questions. |
-| <img src="assets/tarot/RWS_Tarot_09_Hermit.jpg" width="80" alt="The Hermit"> | Sage | `planner`. Proposes steps and order, with a reason. |
-| <img src="assets/tarot/RWS_Tarot_03_Empress.jpg" width="80" alt="The Empress"> | Creator | `worker`. Changes files, runs tests, reports. |
-| <img src="assets/tarot/RWS_Tarot_18_Moon.jpg" width="80" alt="The Moon"> | Shadow | `reviewer`. Sees what the Creator did not want seen; returns per-criterion verdicts with evidence. |
-| <img src="assets/tarot/RWS_Tarot_10_Wheel_of_Fortune.jpg" width="80" alt="Wheel of Fortune"> | Trickster | verifier. Runs the criteria the Shadow marked `needs-run` and tries to make them fail. |
-| <img src="assets/tarot/RWS_Tarot_02_High_Priestess.jpg" width="80" alt="The High Priestess"> | Persona | A charter or skill. The mask any archetype wears to become a specialist. |
+| <img src="assets/tarot/RWS_Tarot_04_Emperor.jpg" width="80" alt="The Emperor"> | Ruler | `lead`. Holds one domain's Persona, dispatches, writes specs, makes small changes. |
+| <img src="assets/tarot/RWS_Tarot_00_Fool.jpg" width="80" alt="The Fool"> | Explorer | `explorer`. Reads anything, returns paths and lines, answers questions. |
+| <img src="assets/tarot/RWS_Tarot_09_Hermit.jpg" width="80" alt="The Hermit"> | Sage | `sage`. Proposes steps and order, with a reason. |
+| <img src="assets/tarot/RWS_Tarot_03_Empress.jpg" width="80" alt="The Empress"> | Creator | `creator`. Changes files, runs tests, reports. |
+| <img src="assets/tarot/RWS_Tarot_18_Moon.jpg" width="80" alt="The Moon"> | Shadow | `shadow`. Sees what the Creator did not want seen; returns per-criterion verdicts with evidence. |
+| <img src="assets/tarot/RWS_Tarot_Swords_07.jpg" width="80" alt="Seven of Swords"> | Trickster | `trickster`. Runs the criteria the Shadow marked `needs-run` and tries to make them fail. |
+| <img src="assets/tarot/RWS_Tarot_02_High_Priestess.jpg" width="80" alt="The High Priestess"> | Persona | `docs/personas/<domain>.md`. The file any archetype reads first to become a specialist in that domain. |
 
 Card images: Rider-Waite deck, 1909, public domain, via Wikimedia Commons.
