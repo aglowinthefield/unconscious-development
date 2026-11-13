@@ -9,7 +9,7 @@
     <td align="center"><img src="assets/tarot/RWS_Tarot_09_Hermit.jpg" width="100" alt="The Hermit"></td>
     <td align="center"><img src="assets/tarot/RWS_Tarot_03_Empress.jpg" width="100" alt="The Empress"></td>
     <td align="center"><img src="assets/tarot/RWS_Tarot_18_Moon.jpg" width="100" alt="The Moon"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_10_Wheel_of_Fortune.jpg" width="100" alt="Wheel of Fortune"></td>
+    <td align="center"><img src="assets/tarot/RWS_Tarot_Swords_07.jpg" width="100" alt="Seven of Swords"></td>
     <td align="center"><img src="assets/tarot/RWS_Tarot_02_High_Priestess.jpg" width="100" alt="The High Priestess"></td>
   </tr>
   <tr>
