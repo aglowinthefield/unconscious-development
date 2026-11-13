@@ -1,29 +1,16 @@
 # Unconscious Development
 
-<table>
-  <tr>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_21_World.jpg" width="52" alt="The World"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_01_Magician.jpg" width="52" alt="The Magician"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_04_Emperor.jpg" width="52" alt="The Emperor"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_00_Fool.jpg" width="52" alt="The Fool"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_09_Hermit.jpg" width="52" alt="The Hermit"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_03_Empress.jpg" width="52" alt="The Empress"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_18_Moon.jpg" width="52" alt="The Moon"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_Swords_07.jpg" width="52" alt="Seven of Swords"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_02_High_Priestess.jpg" width="52" alt="The High Priestess"></td>
-  </tr>
-  <tr>
-    <td align="center">Self</td>
-    <td align="center">Magician</td>
-    <td align="center">Ruler</td>
-    <td align="center">Explorer</td>
-    <td align="center">Sage</td>
-    <td align="center">Creator</td>
-    <td align="center">Shadow</td>
-    <td align="center">Trickster</td>
-    <td align="center">Persona</td>
-  </tr>
-</table>
+<p align="center">
+  <img src="assets/tarot/RWS_Tarot_21_World.jpg" width="80" alt="Self: The World" title="Self: The World">
+  <img src="assets/tarot/RWS_Tarot_01_Magician.jpg" width="80" alt="Magician: The Magician" title="Magician: The Magician">
+  <img src="assets/tarot/RWS_Tarot_04_Emperor.jpg" width="80" alt="Ruler: The Emperor" title="Ruler: The Emperor">
+  <img src="assets/tarot/RWS_Tarot_00_Fool.jpg" width="80" alt="Explorer: The Fool" title="Explorer: The Fool">
+  <img src="assets/tarot/RWS_Tarot_09_Hermit.jpg" width="80" alt="Sage: The Hermit" title="Sage: The Hermit">
+  <img src="assets/tarot/RWS_Tarot_03_Empress.jpg" width="80" alt="Creator: The Empress" title="Creator: The Empress">
+  <img src="assets/tarot/RWS_Tarot_18_Moon.jpg" width="80" alt="Shadow: The Moon" title="Shadow: The Moon">
+  <img src="assets/tarot/RWS_Tarot_Swords_07.jpg" width="80" alt="Trickster: Seven of Swords" title="Trickster: Seven of Swords">
+  <img src="assets/tarot/RWS_Tarot_02_High_Priestess.jpg" width="80" alt="Persona: The High Priestess" title="Persona: The High Priestess">
+</p>
 
 A cast of agent archetypes takes an issue from approved spec to reviewed
 diff. You approve the spec and the merge. In between, `spec-to-tasks` splits
