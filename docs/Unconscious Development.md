@@ -56,7 +56,7 @@ Jung named the Self, Shadow, Persona, Trickster, and a few others. The Explorer,
 %% @agent 2026-11-11: charter is gone; the Persona is the file, docs/personas/<domain>.md, and this paragraph now says what it holds, who reads it, who writes it %%
 Archetypes are generic; a Persona makes them specialists[^Q2][^Q15]. The Persona is the one cast member that is a file rather than a role: `docs/personas/<domain>.md`, one per domain, in the repo it describes. Whoever works in that domain reads it first, so the mobile Ruler and the mobile Creator are the plain Ruler and Creator wearing `docs/personas/mobile.md`. Flexibility comes from the Persona, not from more roles[^Q6][^Q24]: a thin Persona behaves like a Sage, a rich one like a specialist.
 
-A Persona holds: owner; scope (which agent-map areas); invariants (what this domain refuses); standing questions; cost model; key files; recent decisions (ADR links); how to run things here (which db-tests, which device, which dashboard; the Trickster's setup source). An Explorer drafts it from the repo's existing docs; you and a Ruler edit the invariants and standing questions; it changes by PR like any other file.
+A Persona holds: owner; scope (which agent-map areas); invariants (what this domain refuses, each with an id such as `orders/I3`); standing questions; cost model; key files; recent decisions (ADR links); how to run things here (which db-tests, which device, which dashboard; the Trickster's setup source). An Explorer drafts it from the repo's existing docs; you and a Ruler edit the invariants and standing questions; it changes by PR like any other file.
 
 %%No need for this.%%
 %% @agent 2026-11-11: removed the oracle paragraph %%
@@ -134,6 +134,8 @@ The spec says what must be true. Who checks each claim is a property of the clai
 criteria: [{ id, verdict: met | unmet | needs-run, evidence }]
 ```
 
+The Shadow returns the same array for the Persona's invariants, keyed by invariant id, so a plan that claims an invariant holds while the diff breaks it comes back `unmet`.
+
 `met` and `unmet` need evidence from the diff. `needs-run` means the claim cannot be known by reading, and the evidence field says what would have to run. Any `needs-run` produces a Trickster vessel with exactly those criteria and the spec's setup note. None means the Shadow's verdict is the whole verification. A package bump comes out as all `met` with no Trickster, without anyone labelling it trivial.
 
 Tests and lint are not verification. The Creator runs them before it reports; CI runs them before merge. Neither reviews the change.
@@ -190,13 +192,15 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 **Specs are living, one per behaviour.** (revised 2026-11-12, after comparing with Spec Driven Development) A spec describes a capability, such as bulk archive, not a change to it. Every later change to that behaviour edits the same file, so the spec is always the current truth and the next Ruler reads it instead of reconstructing intent from code. Acceptance criteria keep their ids across edits; a removed criterion is deleted, not struck through, because git holds the history. Growth tracks the number of behaviours, not the number of PRs: trivial work never gets a file, and a hundred changes to bulk archive are still one file. Nothing is pruned.
 
-**Required spec sections (revised).**[^Q11] Goal; Non-goals; Acceptance criteria (each with an id); Setup note (data, device, environment a `needs-run` criterion would need; may say `none`); Surfaces touched; Constraints and invariants (from the Persona; may say `none`); Cost and scale (may say `none`). The former Verification section is gone; scope is decided per criterion by the Shadow.
+**Required spec sections (revised).**[^Q11] Goal; Non-goals; Acceptance criteria (each with an id); Setup note (data, device, environment a `needs-run` criterion would need; may say `none`); Surfaces touched; Cost and scale (may say `none`). The former Verification section is gone; scope is decided per criterion by the Shadow.
 
 **Spec format.**[^Q31] Frontmatter `domain`, `status`, `issues` (every issue that shaped it), `surfaces`; fixed headings. A spec says what and why, never how. `check-spec` validates `docs/specs/**` in CI and refuses a spec without acceptance criteria.
 
 **Open questions are marked, and block merge.** (added 2026-11-12, from Spec Driven Development) Wherever the Ruler cannot decide alone it writes `[NEEDS CLARIFICATION: <question>]` in the spec or plan instead of guessing. You answer in the spec session or in PR review, and the answer replaces the marker. A question that turns out not to matter becomes a Non-goal. `check-spec` fails while any marker remains, so no spec or plan merges with an open question, and no Creator inherits a guess.
 
 **The how goes in a plan, one per change.** (added 2026-11-12, from Spec Driven Development) The designed tier's spec PR also adds `docs/specs/<domain>/<behaviour>.plan.md`: the approach and why (the Sage's recommendation and the options it beat), data model and contracts, frontmatter `issue` and `budget_usd`, and the tasks as a checklist where an item may carry `after: <task-id>`. You review spec and plan in the same PR. `spec-to-tasks` reads tasks from the plan. A plan describes one change, so it is deleted when the change's last task merges; git and the PR keep it. The trivial tier has no plan.
+
+**Every plan is gated on its Persona's invariants.** (added 2026-11-12, after Spec Kit's constitution check) The plan has an `## Invariants` section listing every invariant id from its domain's Persona, each marked `holds` or `exception: <reason>`. `check-spec` fails if any id is missing. An exception is yours to approve in the PR, never the Ruler's. The Shadow then judges each invariant against the diff, so the gate covers both what was planned and what was built. The trivial tier is checked by the Shadow only.
 
 **You and the Ruler draft together.**[^Q12][^Q21] Interactive agent session, `spec/<issue>` branch, same worktree, you edit the file directly. Lands by PR, Codiff for the walkthrough. Merging is the approval.
 
