@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Turn the Unconscious Development cast on or off in pi.
-#   unconscious enable   link docs/roles/*.md into ~/.pi/agent/agents/unconscious, hide pi-subagents' builtin
+#   unconscious enable   link docs/roles/*.md into ~/.pi/agent/agents/unconscious and skills/* into
+#               ~/.agents/skills, hide pi-subagents' builtin
 #               presets, and switch off billion-context's acp_delegate
 #   unconscious disable  undo all three
 #   unconscious status   show what is on
@@ -10,6 +11,7 @@ set -euo pipefail
 
 ud_root="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
 agents_dir="${PI_AGENTS_DIR:-$HOME/.pi/agent/agents}/unconscious"
+skills_dir="${UD_SKILLS_DIR:-$HOME/.agents/skills}"
 pi_settings="${PI_SETTINGS:-$HOME/.pi/agent/settings.json}"
 bili_config="${BILI_CONFIG:-$HOME/.config/billion-context/billion-context.json}"
 
@@ -30,6 +32,11 @@ enable() {
     grep -q '^name: ' "$f" || continue  # role files only, not Roles.md
     ln -sfn "$f" "$agents_dir/$(basename "$f")"
   done
+  for s in "$ud_root"/skills/*/; do
+    s="${s%/}"; dest="$skills_dir/$(basename "$s")"
+    if [ -e "$dest" ] && [ ! -L "$dest" ]; then echo "warning: $dest exists and isn't ours; skipped" >&2; continue; fi
+    ln -sfn "$s" "$dest"
+  done
   json_set "$pi_settings" 'd.setdefault("subagents", {})["disableBuiltins"] = True'
   json_set "$bili_config" 'd.setdefault("pi", {})["subagents"] = False'
   grep -q 'pi-subagents' "$pi_settings" || echo "warning: pi-subagents isn't in $pi_settings packages; the roles have no harness to run them" >&2
@@ -38,6 +45,10 @@ enable() {
 
 disable() {
   rm -rf "$agents_dir"
+  for s in "$ud_root"/skills/*/; do
+    dest="$skills_dir/$(basename "${s%/}")"
+    [ -L "$dest" ] && [ "$(readlink "$dest")" = "${s%/}" ] && rm "$dest"
+  done
   json_set "$pi_settings" '
 s = d.get("subagents", {}); s.pop("disableBuiltins", None)
 if not s: d.pop("subagents", None)'
@@ -49,6 +60,8 @@ if not p: d.pop("pi", None)'
 
 status() {
   if [ -d "$agents_dir" ]; then echo "roles: $(cd "$agents_dir" && ls *.md | tr '\n' ' ')"; else echo "roles: off"; fi
+  local on=""; for s in "$ud_root"/skills/*/; do [ -L "$skills_dir/$(basename "${s%/}")" ] && on="$on $(basename "${s%/}")"; done
+  echo "skills:${on:- off}"
   python3 - "$pi_settings" "$bili_config" <<'PY'
 import json, os, sys
 load = lambda p: json.load(open(p)) if os.path.exists(p) else {}

@@ -44,7 +44,7 @@ Jung named the Self, Shadow, Persona, Trickster, and a few others. The Explorer,
 | --------- | ------- | ------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | Self      | Jung    | you                | approve specs and merges                                                                 | be delegated                                    |
 | Magician  | Pearson | `chief`            | read every `PROJECT.md` and `🌀 Now/` page, propose which issues to spec next | write specs or code, start vessels              |
-| Ruler     | Pearson | `lead`             | hold one domain's Persona, dispatch, write specs, make small changes[^Q34]               | push, open PRs, hand-write ready tasks          |
+| Ruler     | Pearson | `ruler`            | hold one domain's Persona, dispatch, write specs, make small changes[^Q34]               | push, open PRs, hand-write ready tasks          |
 | Explorer  | Pearson | `explorer`         | read anything, return paths and lines, answer questions                                  | write                                           |
 | Sage      | Pearson | `sage`             | propose steps and order, with a reason                                                   | choose and then pretend to compare              |
 | Creator   | Pearson | `creator`          | change files, run tests, report                                                          | review its own work                             |
@@ -229,6 +229,8 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 **Discovered first, configured second.** Every setting has a default found from the repo, and `PROJECT.md` frontmatter overrides it. Tracker: from the git remote (a GitHub remote means `gh`). Runner: Bakery when `bakery-cli` is on the path and a board is configured, else a plain agent session. Personas: `docs/personas/*.md`. Specs: `docs/specs/`. Domains: the Persona filenames. The vault page: a `now_dir` setting, with no default, so nothing writes outside the repo until asked. Runner settings, such as a Bakery server URL, belong to the adapter's own block in `PROJECT.md`. An adapter is a module implementing its four verbs, chosen by name, so a new tracker or runner is added without touching the scripts.
 
+**Layout.** (added 2026-11-13) `docs/roles/` holds the cast, one Markdown file per role, frontmatter for the harness and body for the prompt; they sit under `docs/` so they read as notes in the vault. `skills/<name>/SKILL.md` holds the skills, each with its templates beside it (`skills/spec/templates/`). `bin/unconscious` is the one CLI: today `enable`, `disable` and `status` install the cast into the harness; `check-spec`, `spec-to-tasks` and `status-page` join as subcommands, in TypeScript on Node once they need real parsing, under `src/` with the adapters. The first harness target is Pi with the pi-subagents package.
+
 **Names.**[^Q40] Files: `docs/personas/<domain>.md`, `PROJECT.md`. Roles: the archetype, lowercase ([[shadow]], in `docs/roles/`).
 
 
@@ -266,14 +268,12 @@ From the interview.[^Q30]
 1. Which composition for step 2. Proposed: A.
 2. Whether a spec author may pre-mark a criterion `needs-run` for known device or data needs, or only the Shadow may.
 3. Whether the Trickster is a role or only a vessel.
-4. Whether Ruler is a role or a skill a Creator loads, pending the check on whether the harness's role config accepts new names and on disabling competing presets.
+4. ~~Whether Ruler is a role or a skill a Creator loads.~~ Decided 2026-11-13: a role, `docs/roles/ruler.md`, loading the `spec` skill. pi-subagents takes custom roles with their own prompt and tools; `bin/unconscious enable` hides its builtins and billion-context's `acp_delegate`, whose five roles are hard-coded.
 5. ~~Whether archetype names replace the wire names.~~ Decided 2026-11-12: archetype names on the wire, so you can see which role ran and check it behaves as set up.
 
 
 ## Open, not decided
 
-- Where the current harness defines subagent roles, and whether third
-party presets there are disabled. A lookup.
 - How a vessel loads the Ruler when its task needs domain context.
 Probably the task body names the Persona path.
 - Whether silk-remix's `ops-alert` issues get a `domain:*` label or stay
