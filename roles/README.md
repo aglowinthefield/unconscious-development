@@ -12,4 +12,4 @@ The dispatchable cast of [[Unconscious Development]], as agent files for the har
 
 The Self, Magician and Ruler aren't here. You are the Self. The Magician is the `briefing` skill run in a session. The Ruler is pending decision 4.
 
-The format is pi-subagents'. `bin/ud enable` links these files into `~/.pi/agent/agents/ud/`, hides pi-subagents' builtin presets and turns off billion-context's `acp_delegate`, so only the cast is reachable. `bin/ud disable` undoes all three; `bin/ud status` shows what's on. Both take effect in new sessions.
+The format is pi-subagents'. `bin/unconscious enable` links these files into `~/.pi/agent/agents/unconscious/`, hides pi-subagents' builtin presets and turns off billion-context's `acp_delegate`, so only the cast is reachable. `bin/unconscious disable` undoes all three; `bin/unconscious status` shows what's on. Both take effect in new sessions.

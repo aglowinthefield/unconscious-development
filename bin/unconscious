@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # Turn the Unconscious Development cast on or off in pi.
-#   ud enable   link roles/*.md into ~/.pi/agent/agents/ud, hide pi-subagents' builtin
+#   unconscious enable   link roles/*.md into ~/.pi/agent/agents/unconscious, hide pi-subagents' builtin
 #               presets, and switch off billion-context's acp_delegate
-#   ud disable  undo all three
-#   ud status   show what is on
+#   unconscious disable  undo all three
+#   unconscious status   show what is on
 # Both commands touch only the keys they own, so running either twice is safe.
 # Changes apply to new pi sessions.
 set -euo pipefail
 
 ud_root="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
-agents_dir="${PI_AGENTS_DIR:-$HOME/.pi/agent/agents}/ud"
+agents_dir="${PI_AGENTS_DIR:-$HOME/.pi/agent/agents}/unconscious"
 pi_settings="${PI_SETTINGS:-$HOME/.pi/agent/settings.json}"
 bili_config="${BILI_CONFIG:-$HOME/.config/billion-context/billion-context.json}"
 
@@ -63,5 +63,5 @@ case "${1:-status}" in
   enable) enable ;;
   disable) disable ;;
   status) status ;;
-  *) echo "usage: ud enable|disable|status" >&2; exit 2 ;;
+  *) echo "usage: unconscious enable|disable|status" >&2; exit 2 ;;
 esac

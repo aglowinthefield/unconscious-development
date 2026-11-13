@@ -61,7 +61,7 @@ A Persona holds: owner; scope (which agent-map areas); invariants (what this dom
 %%No need for this.%%
 %% @agent 2026-11-11: removed the oracle paragraph %%
 
-Archetype names are the wire names too (decision 5): `shadow`, `creator` and the rest are what you dispatch, so a transcript shows which role ran. The role files live in `roles/`, and `bin/ud enable|disable` switches the cast on and off.
+Archetype names are the wire names too (decision 5): `shadow`, `creator` and the rest are what you dispatch, so a transcript shows which role ran. The role files live in `roles/`, and `bin/unconscious enable|disable` switches the cast on and off.
 
 ### Boundaries
 
