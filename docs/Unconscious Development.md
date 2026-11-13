@@ -61,7 +61,7 @@ A Persona holds: owner; scope (which agent-map areas); invariants (what this dom
 %%No need for this.%%
 %% @agent 2026-11-11: removed the oracle paragraph %%
 
-Archetype names are the wire names too (decision 5): `shadow`, `creator` and the rest are what you dispatch, so a transcript shows which role ran. The role files live in `roles/`, and `bin/unconscious enable|disable` switches the cast on and off.
+Archetype names are the wire names too (decision 5): `shadow`, `creator` and the rest are what you dispatch, so a transcript shows which role ran. The role files live in [[Roles]], and `bin/unconscious enable|disable` switches the cast on and off.
 
 ### Boundaries
 
@@ -226,7 +226,7 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 **Discovered first, configured second.** Every setting has a default found from the repo, and `PROJECT.md` frontmatter overrides it. Tracker: from the git remote (a GitHub remote means `gh`). Runner: Bakery when `bakery-cli` is on the path and a board is configured, else a plain agent session. Personas: `docs/personas/*.md`. Specs: `docs/specs/`. Domains: the Persona filenames. The vault page: a `now_dir` setting, with no default, so nothing writes outside the repo until asked. Runner settings, such as a Bakery server URL, belong to the adapter's own block in `PROJECT.md`. An adapter is a module implementing its four verbs, chosen by name, so a new tracker or runner is added without touching the scripts.
 
-**Names.**[^Q40] Files: `docs/personas/<domain>.md`, `PROJECT.md`. Roles: the archetype, lowercase (`roles/shadow.md`).
+**Names.**[^Q40] Files: `docs/personas/<domain>.md`, `PROJECT.md`. Roles: the archetype, lowercase ([[shadow]], in `docs/roles/`).
 
 
 ## What gets built

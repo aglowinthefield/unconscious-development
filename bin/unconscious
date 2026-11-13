@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Turn the Unconscious Development cast on or off in pi.
-#   unconscious enable   link roles/*.md into ~/.pi/agent/agents/unconscious, hide pi-subagents' builtin
+#   unconscious enable   link docs/roles/*.md into ~/.pi/agent/agents/unconscious, hide pi-subagents' builtin
 #               presets, and switch off billion-context's acp_delegate
 #   unconscious disable  undo all three
 #   unconscious status   show what is on
@@ -26,8 +26,8 @@ PY
 
 enable() {
   mkdir -p "$agents_dir"
-  for f in "$ud_root"/roles/*.md; do
-    [ "$(basename "$f")" = README.md ] && continue
+  for f in "$ud_root"/docs/roles/*.md; do
+    grep -q '^name: ' "$f" || continue  # role files only, not Roles.md
     ln -sfn "$f" "$agents_dir/$(basename "$f")"
   done
   json_set "$pi_settings" 'd.setdefault("subagents", {})["disableBuiltins"] = True'

@@ -2,11 +2,11 @@ The dispatchable cast of [[Unconscious Development]], as agent files for the har
 
 | File | Model | Thinking | Writes |
 |---|---|---|---|
-| `explorer.md` | inherit | low | no |
-| `sage.md` | inherit | high | no |
-| `creator.md` | inherit | medium | yes |
-| `shadow.md` | inherit | high | no |
-| `trickster.md` | inherit | high | scratch only |
+| [[explorer]] | inherit | low | no |
+| [[sage]] | inherit | high | no |
+| [[creator]] | inherit | medium | yes |
+| [[shadow]] | inherit | high | no |
+| [[trickster]] | inherit | high | scratch only |
 
 `inherit` means the session's model. The Shadow and Trickster are never on a weaker model than the Creator and always think harder. A dispatch may lower the Creator to `low` for a small task (Q34's limits) and raise the Explorer to `medium` when the answer means piecing evidence together. It may not lower the Shadow or Trickster.
 
