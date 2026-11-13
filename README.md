@@ -2,26 +2,26 @@
 
 <table>
   <tr>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_21_World.jpg" width="64" alt="The World"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_01_Magician.jpg" width="64" alt="The Magician"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_04_Emperor.jpg" width="64" alt="The Emperor"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_00_Fool.jpg" width="64" alt="The Fool"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_09_Hermit.jpg" width="64" alt="The Hermit"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_03_Empress.jpg" width="64" alt="The Empress"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_18_Moon.jpg" width="64" alt="The Moon"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_Swords_07.jpg" width="64" alt="Seven of Swords"></td>
-    <td align="center"><img src="assets/tarot/RWS_Tarot_02_High_Priestess.jpg" width="64" alt="The High Priestess"></td>
+    <td align="center"><img src="assets/tarot/RWS_Tarot_21_World.jpg" width="52" alt="The World"></td>
+    <td align="center"><img src="assets/tarot/RWS_Tarot_01_Magician.jpg" width="52" alt="The Magician"></td>
+    <td align="center"><img src="assets/tarot/RWS_Tarot_04_Emperor.jpg" width="52" alt="The Emperor"></td>
+    <td align="center"><img src="assets/tarot/RWS_Tarot_00_Fool.jpg" width="52" alt="The Fool"></td>
+    <td align="center"><img src="assets/tarot/RWS_Tarot_09_Hermit.jpg" width="52" alt="The Hermit"></td>
+    <td align="center"><img src="assets/tarot/RWS_Tarot_03_Empress.jpg" width="52" alt="The Empress"></td>
+    <td align="center"><img src="assets/tarot/RWS_Tarot_18_Moon.jpg" width="52" alt="The Moon"></td>
+    <td align="center"><img src="assets/tarot/RWS_Tarot_Swords_07.jpg" width="52" alt="Seven of Swords"></td>
+    <td align="center"><img src="assets/tarot/RWS_Tarot_02_High_Priestess.jpg" width="52" alt="The High Priestess"></td>
   </tr>
   <tr>
-    <td align="center"><sub>Self</sub></td>
-    <td align="center"><sub>Magician</sub></td>
-    <td align="center"><sub>Ruler</sub></td>
-    <td align="center"><sub>Explorer</sub></td>
-    <td align="center"><sub>Sage</sub></td>
-    <td align="center"><sub>Creator</sub></td>
-    <td align="center"><sub>Shadow</sub></td>
-    <td align="center"><sub>Trickster</sub></td>
-    <td align="center"><sub>Persona</sub></td>
+    <td align="center">Self</td>
+    <td align="center">Magician</td>
+    <td align="center">Ruler</td>
+    <td align="center">Explorer</td>
+    <td align="center">Sage</td>
+    <td align="center">Creator</td>
+    <td align="center">Shadow</td>
+    <td align="center">Trickster</td>
+    <td align="center">Persona</td>
   </tr>
 </table>
 
