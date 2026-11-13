@@ -42,6 +42,6 @@ Where the answer belongs to the Self, or the facts don't settle it, write `[NEED
 - Every criterion is covered by at least one task.
 - List the open markers and exceptions for the Self.
 
-A domain with no Persona yet gets one first, from `templates/persona.md`, with `status: draft`. Its invariants are the Self's to confirm: give each one its own `### I<n>` heading, the rule in one sentence, and a `Sources:` line. Link each source to the repo's remote when it has one (`https://github.com/<owner>/<repo>/blob/<default-branch>/<path>`, named for the file), else give the path, and keep `[NEEDS CLARIFICATION]` for questions you really couldn't settle. The Self sets `status: confirmed` after reviewing them. Don't write a plan against a draft Persona's invariants.
+A domain with no Persona yet gets one first, from `templates/persona.md`, with `status: draft`. Its invariants are the Self's to confirm: write them as a table, one row per invariant: id, the rule in one sentence plus its why, and sources (several joined with `<br>`). Link each source to the repo's remote when it has one (`https://github.com/<owner>/<repo>/blob/<default-branch>/<path>`, named for the file), else give the path, and keep `[NEEDS CLARIFICATION]` for questions you really couldn't settle. The Self sets `status: confirmed` after reviewing them. Don't write a plan against a draft Persona's invariants.
 
 The spec and plan land in one PR on `spec/<issue>`. Merging it is the approval; the merge job flips the issue and creates the tasks.
