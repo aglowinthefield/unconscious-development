@@ -1,6 +1,7 @@
 ---
 domain: <domain>
 owner: <person>
+status: draft
 ---
 
 ## Scope
@@ -11,7 +12,7 @@ owner: <person>
 
 What this domain refuses. Ids are permanent; a retired invariant keeps its id out of use.
 
-- <domain>/I1: <A rule every change here must keep.>
+- <domain>/I1: <A rule every change here must keep.> (source: <path>)
 
 ## Standing questions
 

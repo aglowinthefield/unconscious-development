@@ -42,6 +42,6 @@ Where the answer belongs to the Self, or the facts don't settle it, write `[NEED
 - Every criterion is covered by at least one task.
 - List the open markers and exceptions for the Self.
 
-A domain with no Persona yet gets one first, from `templates/persona.md`. Its invariants are the Self's to write; draft them and mark each `[NEEDS CLARIFICATION]` until the Self confirms it.
+A domain with no Persona yet gets one first, from `templates/persona.md`, with `status: draft`. Its invariants are the Self's to confirm: give each one its source in a trailing `(source: <path>)`, and keep `[NEEDS CLARIFICATION]` for questions you really couldn't settle. The Self sets `status: confirmed` after reviewing them. Don't write a plan against a draft Persona's invariants.
 
 The spec and plan land in one PR on `spec/<issue>`. Merging it is the approval; the merge job flips the issue and creates the tasks.
