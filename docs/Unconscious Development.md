@@ -167,7 +167,7 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 **A Ruler may implement small changes itself.**[^Q34] At most 3 files, no schema or migration, no `.tsx` or mobile UI, no new dependency, no paid-API path. It still writes a short spec and still gets a Shadow. Skip the dispatch, not the record.
 
-**The Shadow is never weaker than the Creator.** It runs on the same model or a stronger one, at a higher thinking level. A cheaper Shadow is a false saving: on the first trial (silk-remix #6746) a cheaper-briefed rerun saw the deploy blocker but marked its criterion `met`. To cut cost, inline the diff in the task (about 5x cheaper on that trial) instead of downgrading the model. Anything that stops a criterion holding in production makes it `unmet`, not a risk.
+**The Shadow is never weaker than the Creator.** It runs on the same model or a stronger one, at a higher thinking level. To cut cost, inline the diff in the task instead of downgrading the model: on the first trial (silk-remix #6746) that cut one review from $6.41 to $1.30 on the same model. The inlined run saw the deploy blocker but marked its criterion `met`, so the prompt must say that anything stopping a criterion from holding in production makes it `unmet`, not a risk.
 
 **Two new roles only.**[^Q14] Ruler and Magician. Specifying and briefing are skills those roles load.
 
