@@ -29,7 +29,7 @@ None of the three is tied to one harness. Skills follow the Agent Skills spec, r
 
 %%We don't want strict reliance on GitHub for this flow. I'm also nervous about unbounded growth of the docs/specs folder. We've had thousands of pull requests the past few months and most of those specs are going to be useless almost immediately (e.g. typos, changing constant values, net additions). %%
 %% @agent 2026-11-11: tracker is now an interface (issue, domain, state) with GitHub as today's implementation; specs are tiered, so trivial work carries its criteria in the issue and never gets a file; merged specs are pruned %%
-Work starts only from approved acceptance criteria. Where they live depends on the work. A trivial change (typo, constant, copy, a net addition with no design) carries its criteria in the issue, and its task is made from the issue. Work that needs design gets a spec file in `docs/specs/`, merged by PR; the merge sets the issue's state, and a script generates the tasks from it. You are the single approver. Nothing dispatches itself[^Q5].
+Work starts only from approved acceptance criteria. Where they live depends on the work. A trivial change (typo, constant, copy, a net addition with no design) carries its criteria in the issue, and its task is made from the issue. Work that needs design creates or edits the spec for the behaviour it changes, in `docs/specs/`, merged by PR; the merge sets the issue's state, and a script generates the tasks from it. You are the single approver. Nothing dispatches itself[^Q5].
 
 The tracker is an interface, not a tool: an issue has a domain, a state, and acceptance criteria, and the scripts read and write those through one thin adapter. GitHub Issues is today's implementation, the same way Pi is today's harness.
 
@@ -117,7 +117,7 @@ Ticket: silk-remix #412, "Bulk archive from the orders list", labelled `domain:o
 %% @agent 2026-11-11: replaced with "on a trigger" and added a Triggers paragraph after the two global rules; three kinds, no infrastructure %%
 1. Noticing. Magician. On a trigger (here, you ran `/briefing silk`) the Magician reads `PROJECT.md`, open issues, CI state, and yesterday's `🌀 Now/silk.md`. It appends a proposal to the page: #412 is small, the orders Persona exists, spec it today.
 2. Approval. Self. You read the page and say yes. First authorization point.
-3. Spec. Self and Ruler, together. Interactive session on `spec/412`. The Ruler wears `docs/personas/orders.md`. It sends an Explorer for the facts (where the list query lives, how single archive works, whether a soft-delete flag exists). It sends a Sage for the shape (client loop, one mutation, or background job; recommends one, with a reason). You argue with the Ruler, pick the mutation, and the Ruler writes `docs/specs/412-bulk-archive.md` with acceptance criteria and a setup note. PR opened, `check-spec` passes, you merge, label flips to `ready-for-agent`.
+3. Spec. Self and Ruler, together. Interactive session on `spec/412`. The Ruler wears `docs/personas/orders.md`. It sends an Explorer for the facts (where the list query lives, how single archive works, whether a soft-delete flag exists). It sends a Sage for the shape (client loop, one mutation, or background job; recommends one, with a reason). You argue with the Ruler, pick the mutation, and no spec for bulk archive exists yet, so the Ruler writes `docs/specs/orders/bulk-archive.md` with acceptance criteria and a setup note. A later issue that changes bulk archive edits that file. PR opened, `check-spec` passes, you merge, label flips to `ready-for-agent`.
 4. Tasks. Magician. `spec-to-tasks` turns the spec into tasks. One task, one Creator vessel; the task body names the Persona path and the criteria.
 5. Making. Creator with Shadow. The runner starts a session in a fresh worktree. The Creator reads the Persona, implements, runs tests. Before reporting it summons a Shadow with the criteria copied from the task body. The Shadow returns `criteria: [{id, verdict, evidence}]`: the 500-id limit `met`, the audit-log entry `met`, "list shows 20 after archiving 30" `needs-run`. The Creator reports with the array attached. The vessel reaches Review.
 6. Verifying. Trickster. Because one criterion is `needs-run`, a dependent vessel gets that criterion and the setup note: seed 50 orders, archive 30, assert the list shows 20. Pass or fail, nothing else. Had every criterion been `met`, this step would not exist.
@@ -182,19 +182,19 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 **Specs are tiered.**[^Q3][^Q10] The Ruler decides at spec time.
 
 - Trivial: criteria in the issue body under an `## Acceptance criteria` heading. No file, no spec PR. `spec-to-tasks` reads the issue. Typos, constants, copy, config flags, net additions with no design choice.
-- Designed: `docs/specs/<issue>-<slug>.md`, merged by PR. The issue links to it. The task body is generated from it.
+- Designed: the issue's spec PR creates or edits `docs/specs/<domain>/<behaviour>.md`. The issue links to it. The task body is generated from it.
 
 `check-spec` validates both shapes. A trivial issue with more than one task, a schema change, or a new dependency is refused and sent to the designed tier.
 
-**Specs are pruned.** Once the work is merged and the code is the record, the spec is history. `docs/specs/` holds only open and recently merged specs; a merged spec moves to `docs/specs/done/` on merge of its last task and is deleted after 90 days by the same workflow. The issue and the PR keep the criteria array, so nothing is lost.
+**Specs are living, one per behaviour.** (revised 2026-11-12, after comparing with Spec Driven Development) A spec describes a capability, such as bulk archive, not a change to it. Every later change to that behaviour edits the same file, so the spec is always the current truth and the next Ruler reads it instead of reconstructing intent from code. Acceptance criteria keep their ids across edits; a removed criterion is deleted, not struck through, because git holds the history. Growth tracks the number of behaviours, not the number of PRs: trivial work never gets a file, and a hundred changes to bulk archive are still one file. Nothing is pruned.
 
 **Required spec sections (revised).**[^Q11] Goal; Non-goals; Acceptance criteria (each with an id); Setup note (data, device, environment a `needs-run` criterion would need; may say `none`); Surfaces touched; Constraints and invariants (from the Persona; may say `none`); Cost and scale (may say `none`). The former Verification section is gone; scope is decided per criterion by the Shadow.
 
-**Spec format.**[^Q31] Frontmatter `issue`, `domain`, `status`, `budget_usd`, `surfaces`; fixed headings; tasks as a checklist, an item may carry `after: <task-id>`. `check-spec` validates `docs/specs/**` in CI and refuses a spec without acceptance criteria.
+**Spec format.**[^Q31] Frontmatter `domain`, `status`, `issues` (every issue that shaped it), `surfaces`; fixed headings. The tasks checklist and `budget_usd` belong to the open change only: an item may carry `after: <task-id>`, and the checklist is emptied when the change's last task merges. `check-spec` validates `docs/specs/**` in CI and refuses a spec without acceptance criteria.
 
 **You and the Ruler draft together.**[^Q12][^Q21] Interactive agent session, `spec/<issue>` branch, same worktree, you edit the file directly. Lands by PR, Codiff for the walkthrough. Merging is the approval.
 
-**Merge flips the state.**[^Q32] A CI job on merge to `main` that touches a spec with `status: approved` moves the issue from `needs-spec` to `ready-for-agent` through the tracker adapter and comments the spec path. For trivial issues you flip the state by hand after reading the criteria. `spec-to-tasks` refuses anything not `ready-for-agent`.
+**Merge flips the state.**[^Q32] A CI job on merge to `main` that touches a spec with `status: approved` moves the issue the PR names from `needs-spec` to `ready-for-agent` through the tracker adapter and comments the spec path. For trivial issues you flip the state by hand after reading the criteria. `spec-to-tasks` refuses anything not `ready-for-agent`.
 
 **One vessel per task.**[^Q22][^Q23] `spec-to-tasks <issue>` creates tasks keyed `gh-<issue>/<task>` with dependency edges, through the runner adapter. Never one task per surface.
 
@@ -212,7 +212,7 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 ### Tooling home
 
-**UD ships its own tooling.**[^Q43] (revised) `check-spec`, `spec-to-tasks`, the `tracker` and `runner` adapters, the spec, Persona and `PROJECT.md` templates, and the state-flip and spec-prune workflows live in this repo. No tracker or runner owns any of it. It is meant for public release, so nothing in it assumes this machine, these projects or these tools.
+**UD ships its own tooling.**[^Q43] (revised) `check-spec`, `spec-to-tasks`, the `tracker` and `runner` adapters, the spec, Persona and `PROJECT.md` templates, and the state-flip workflow live in this repo. No tracker or runner owns any of it. It is meant for public release, so nothing in it assumes this machine, these projects or these tools.
 
 **Discovered first, configured second.** Every setting has a default found from the repo, and `PROJECT.md` frontmatter overrides it. Tracker: from the git remote (a GitHub remote means `gh`). Runner: Bakery when `bakery-cli` is on the path and a board is configured, else a plain agent session. Personas: `docs/personas/*.md`. Specs: `docs/specs/`. Domains: the Persona filenames. The vault page: a `now_dir` setting, with no default, so nothing writes outside the repo until asked. Runner settings, such as a Bakery server URL, belong to the adapter's own block in `PROJECT.md`. An adapter is a module implementing its four verbs, chosen by name, so a new tracker or runner is added without touching the scripts.
 
@@ -223,7 +223,7 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 This repo, the cast: role definitions for all of it, with the Shadow's verdict contract in its prompt; `spec` skill (the spec format[^Q11]); `briefing` skill (the briefing inputs[^Q27]), moved here from `~/.agents/skills/briefing`; an install step that links them into the harness.
 
-This repo: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; `spec-to-tasks` and the `runner` adapter with a Bakery implementation; spec, Persona, `PROJECT.md` templates; state-flip and spec-prune workflows.
+This repo: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; `spec-to-tasks` and the `runner` adapter with a Bakery implementation; spec, Persona, `PROJECT.md` templates; state-flip workflow.
 
 Bakery, as a runner: store the `criteria` array on the task; start a Trickster vessel when any verdict is `needs-run`.
 
