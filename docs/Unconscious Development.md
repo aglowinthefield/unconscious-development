@@ -192,6 +192,8 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 **Spec format.**[^Q31] Frontmatter `domain`, `status`, `issues` (every issue that shaped it), `surfaces`; fixed headings. A spec says what and why, never how. `check-spec` validates `docs/specs/**` in CI and refuses a spec without acceptance criteria.
 
+**Open questions are marked, and block merge.** (added 2026-11-12, from Spec Driven Development) Wherever the Ruler cannot decide alone it writes `[NEEDS CLARIFICATION: <question>]` in the spec or plan instead of guessing. You answer in the spec session or in PR review, and the answer replaces the marker. A question that turns out not to matter becomes a Non-goal. `check-spec` fails while any marker remains, so no spec or plan merges with an open question, and no Creator inherits a guess.
+
 **The how goes in a plan, one per change.** (added 2026-11-12, from Spec Driven Development) The designed tier's spec PR also adds `docs/specs/<domain>/<behaviour>.plan.md`: the approach and why (the Sage's recommendation and the options it beat), data model and contracts, frontmatter `issue` and `budget_usd`, and the tasks as a checklist where an item may carry `after: <task-id>`. You review spec and plan in the same PR. `spec-to-tasks` reads tasks from the plan. A plan describes one change, so it is deleted when the change's last task merges; git and the PR keep it. The trivial tier has no plan.
 
 **You and the Ruler draft together.**[^Q12][^Q21] Interactive agent session, `spec/<issue>` branch, same worktree, you edit the file directly. Lands by PR, Codiff for the walkthrough. Merging is the approval.
