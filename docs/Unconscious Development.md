@@ -254,7 +254,7 @@ Vault: `🌀 Now/index.md`, `🌀 Now/silk.md`, `🌀 Now/impression.md`, `🌀 
 From the interview.[^Q30]
 
 1. Ruler role, `spec` skill, ingestion-search Persona.
-2. SIL-258 (SSE connections cut at about 125 s) through the loop by hand, composition A: spec PR, one vessel by hand (a plain session will do), Creator, Shadow with criteria. Measure reconnects per hour before and after, and how often the Shadow's `unmet` and `needs-run` are right.
+2. silk-remix #6571 (SSE connections cut at about 125 s; was SIL-258) through the loop by hand, composition A: spec PR, one vessel by hand (a plain session will do), Creator, Shadow with criteria. Measure reconnects per hour before and after, and how often the Shadow's `unmet` and `needs-run` are right.
 3. `check-spec`, label-flip workflow, `spec-to-tasks`. Redo step 2's task creation through the script.
 4. `status` script, ready and stuck notices, the merge job running `spec-to-tasks`. Magician role and `propose` skill, Silk `PROJECT.md`, its status page. Use it for one week.
 5. Migrate Linear, add labels, retire `linear-nuke`.
