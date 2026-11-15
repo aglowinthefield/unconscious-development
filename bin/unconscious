@@ -6,7 +6,8 @@
 #   unconscious disable  undo all three
 #   unconscious status   show what is on
 #   unconscious check-spec|spec-to-tasks|on-merge|status-page   the scripts in src/ (run with -h)
-#   unconscious schedule on|off   run status-page every 15 minutes with launchd
+#   unconscious propose          run the Magician headless over every Now page
+#   unconscious schedule on|off   status-page every 15 minutes, propose daily, with launchd
 # Both commands touch only the keys they own, so running either twice is safe.
 # Changes apply to new pi sessions.
 set -euo pipefail
@@ -74,9 +75,19 @@ print("billion-context acp_delegate:", "off" if b.get("pi", {}).get("subagents")
 PY
 }
 
-# Run status-page every 15 minutes, and at login, as a launchd agent. The agent keeps the PATH and
+# Run status-page every 15 minutes (and at login) and propose daily at 07:00, as launchd agents. The agent keeps the PATH and
 # Now folder of the shell that turned it on, so gh, git and node resolve the same way.
 plist="$HOME/Library/LaunchAgents/dev.unconscious.status-page.plist"
+propose_plist="$HOME/Library/LaunchAgents/dev.unconscious.propose.plist"
+
+# The Magician, headless: one pi run with the propose skill over every project page.
+propose() {
+  echo "== $(date -u +%FT%TZ) propose"
+  "$ud_root/bin/unconscious" status-page || true
+  pi -p --no-session --no-skills --skill "$ud_root/skills/propose" --tools read,bash,edit,write \
+    "Use the propose skill headless: write Proposed next on every project page in ${UD_NOW_DIR:-the Now folder}. Today is $(date +%F)."
+  "$ud_root/bin/unconscious" status-page
+}
 schedule() {
   case "${1:-}" in
     on)
@@ -102,13 +113,36 @@ schedule() {
 </dict>
 </plist>
 PLIST
-      launchctl bootout "gui/$(id -u)" "$plist" 2>/dev/null || true
-      launchctl bootstrap "gui/$(id -u)" "$plist"
-      echo "status-page runs every 15 minutes into $dir; log: ~/Library/Logs/unconscious-status-page.log" ;;
+      cat > "$propose_plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>dev.unconscious.propose</string>
+  <key>ProgramArguments</key>
+  <array><string>$ud_root/bin/unconscious</string><string>propose</string></array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>$PATH</string>
+    <key>UD_NOW_DIR</key><string>$dir</string>
+  </dict>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>${UD_PROPOSE_HOUR:-7}</integer><key>Minute</key><integer>0</integer></dict>
+  <key>StandardOutPath</key><string>$HOME/Library/Logs/unconscious-propose.log</string>
+  <key>StandardErrorPath</key><string>$HOME/Library/Logs/unconscious-propose.log</string>
+</dict>
+</plist>
+PLIST
+      for p in "$plist" "$propose_plist"; do
+        launchctl bootout "gui/$(id -u)" "$p" 2>/dev/null || true
+        launchctl bootstrap "gui/$(id -u)" "$p"
+      done
+      echo "status-page runs every 15 minutes into $dir; log: ~/Library/Logs/unconscious-status-page.log"
+      echo "propose runs daily at ${UD_PROPOSE_HOUR:-7}:00; log: ~/Library/Logs/unconscious-propose.log" ;;
     off)
-      launchctl bootout "gui/$(id -u)" "$plist" 2>/dev/null || true
-      rm -f "$plist"; echo "status-page schedule off" ;;
-    *) [ -f "$plist" ] && echo "schedule: on ($plist)" || echo "schedule: off" ;;
+      for p in "$plist" "$propose_plist"; do launchctl bootout "gui/$(id -u)" "$p" 2>/dev/null || true; rm -f "$p"; done
+      echo "schedule off" ;;
+    *) [ -f "$plist" ] && echo "schedule: on ($plist, $propose_plist)" || echo "schedule: off" ;;
   esac
 }
 
@@ -117,6 +151,7 @@ case "${1:-status}" in
   disable) disable ;;
   status) status; schedule ;;
   schedule) schedule "${2:-}" ;;
+  propose) propose ;;
   check-spec|spec-to-tasks|on-merge|status-page) exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$@" ;;
-  *) echo "usage: unconscious enable|disable|status|check-spec|spec-to-tasks|on-merge|status-page|schedule" >&2; exit 2 ;;
+  *) echo "usage: unconscious enable|disable|status|check-spec|spec-to-tasks|on-merge|status-page|propose|schedule" >&2; exit 2 ;;
 esac

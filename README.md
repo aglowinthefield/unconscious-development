@@ -37,7 +37,8 @@ Node 24, no dependencies. Run from a project repo; `-h` for options.
 - `workflows/unconscious.yml`: the CI workflow a project repo copies to run all three.
 - `bin/unconscious status-page`: rebuilds each `🌀 Now/<project>.md` page (any page with `repo:` in its frontmatter; `path:` to read specs, `ci:` to name the main workflow) and the Projects table in `🌀 Now/index.md`, whose Next column is each page's first proposal. Sections it doesn't write, like Proposed next, stay as they are.
 - `skills/propose`: the Magician. Writes the Proposed next section of a Now page; run it in a session with "propose".
-- `bin/unconscious schedule on|off`: runs `status-page` every 15 minutes with launchd.
+- `bin/unconscious propose`: runs the Magician headless in `pi` over every Now page.
+- `bin/unconscious schedule on|off`: runs `status-page` every 15 minutes and `propose` daily at 07:00 (`UD_PROPOSE_HOUR`), with launchd.
 - `npm test`: the tests.
 
 ## The cast

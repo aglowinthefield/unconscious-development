@@ -15,6 +15,7 @@ Run `unconscious status-page <page name>` first, so Waiting on you, Stuck, In fl
 
 - The page itself. Anything in Stuck or Waiting on you comes before new work; say so rather than proposing around it.
 - Open issues with no state label: `gh issue list -R <repo> --search "is:open -label:needs-spec,ready-for-agent,ready-for-human,verifying" --limit 100 --json number,url,title,labels,createdAt,updatedAt,comments`. Read the body of every issue you might propose.
+- What merged since the section's date (or the last 7 days): `gh pr list -R <repo> --state merged --search "merged:>=<date>" --json number,title,mergedAt`, and `git log origin/main` in `<path>` after `git fetch`. Anything merged is done; never propose it, and don't trust a spec's `status` over a merge.
 - `needs-spec` issues. These were already judged worth a spec; prefer them.
 - Personas in `<path>/docs/personas/` and their `status`. A domain whose Persona is `confirmed` can be specced today; a `draft` one needs the Self to confirm invariants first, and one with no Persona needs a Persona first.
 - Specs in `<path>/docs/specs/`, so you don't propose what an approved or built spec already covers.
@@ -47,6 +48,8 @@ Not now: https://github.com/o/r/issues/398 waits on the pricing decision in #390
 ```
 
 Issues as bare URLs. One proposal per numbered line, under 40 words. No headings inside the section.
+
+Run headless (`unconscious propose`), you write every project page and reply with one line per page. Don't ask questions; put what you'd ask under "Not now".
 
 ## 4. Reply
 
