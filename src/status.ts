@@ -227,13 +227,26 @@ export function renderPage(previous: string, s: Snapshot): string {
 
 // ---- the index ---------------------------------------------------------------------------------
 
-export interface Row { name: string; file: string; snapshot: Snapshot | null; error?: string }
+export interface Row { name: string; file: string; snapshot: Snapshot | null; error?: string; next?: string }
+
+// The first proposal in a page's Proposed next section, shortened for a table cell:
+// "[#6680](url): safety.ts prices Gemini at retired flash-lite rates".
+export function firstProposal(page: string): string | undefined {
+  const body = section(parseDoc(page), "Proposed next")?.body;
+  const line = body && /^1\.\s+(.+)$/m.exec(body)?.[1];
+  if (!line) return undefined;
+  const url = /https:\/\/github\.com\/[^\s,)]+\/(?:issues|pull)\/(\d+)/.exec(line);
+  const reason = (line.split(/:\s+/).slice(1).join(": ") || line).split(/(?<=[^.]{12})\.\s/)[0].replace(/\.$/, "");
+  const text = reason.length > 90 ? reason.slice(0, 89).trimEnd() + "…" : reason;
+  return `${url ? `[#${url[1]}](${url[0]}): ` : ""}${text}`.replace(/\|/g, "\\|");
+}
 
 export function renderProjects(rows: Row[]): string {
-  const head = "| Project | Waiting on you | Stuck | In flight | Main |\n| --- | --- | --- | --- | --- |";
+  const head = "| Project | Waiting on you | Stuck | In flight | Main | Next |\n| --- | --- | --- | --- | --- | --- |";
   const body = rows.map(r => {
     const link = `[[${basename(r.file, ".md")}\\|${r.name}]]`; // escaped: a bare | splits the table cell
-    if (!r.snapshot) return `| ${link} | | | | not read: ${r.error ?? "unknown error"} |`;
+    const next = r.next ?? "run `propose`";
+    if (!r.snapshot) return `| ${link} | | | | not read: ${r.error ?? "unknown error"} | ${next} |`;
     const o = r.snapshot;
     const waiting = o.mine.filter(p => prStage(p) === "yours").length + o.reviewRequested.length
       + o.issues.filter(i => has(i, "ready-for-human") || has(i, "needs-spec")).length;
@@ -241,7 +254,7 @@ export function renderProjects(rows: Row[]): string {
     const flight = o.specs.length + o.mine.filter(p => prStage(p) === "waiting").length + o.issues.filter(i => has(i, "verifying")).length;
     const main = !o.main ? "unknown" : o.main.status !== "completed" ? "running" : o.main.conclusion === "success" ? "green" : o.main.conclusion;
     const n = (x: number) => (x ? String(x) : "");
-    return `| ${link} | ${n(waiting)} | ${n(stuck)} | ${n(flight)} | ${main} |`;
+    return `| ${link} | ${n(waiting)} | ${n(stuck)} | ${n(flight)} | ${main} | ${next} |`;
   });
   return `${head}\n${body.join("\n")}\n\nRebuilt by \`unconscious status-page\`. A project is any page here with \`repo:\` in its frontmatter.`;
 }
@@ -278,9 +291,9 @@ export function statusPage(dir: string, only?: string): Row[] {
     try {
       const snapshot = gather(fm);
       write(path, renderPage(text, snapshot));
-      rows.push({ name, file: f, snapshot });
+      rows.push({ name, file: f, snapshot, next: firstProposal(text) });
     } catch (e: any) {
-      rows.push({ name, file: f, snapshot: null, error: String(e.stderr || e.message).split("\n")[0] });
+      rows.push({ name, file: f, snapshot: null, error: String(e.stderr || e.message).split("\n")[0], next: firstProposal(text) });
     }
   }
   const index = join(dir, "index.md");

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { checksOf, prStage, renderPage, renderProjects, replaceSection, type PR, type Snapshot } from "../src/status.ts";
+import { checksOf, firstProposal, prStage, renderPage, renderProjects, replaceSection, type PR, type Snapshot } from "../src/status.ts";
 
 const at = "2026-11-15T15:00:00.000Z";
 const pr = (over: Partial<PR>): PR => ({
@@ -55,9 +55,18 @@ test("the index table counts per project, and only its section is replaced", () 
     { name: "Silk", file: "silk.md", snapshot: snap({ mine: [pr({ checks: "failing" })] }) },
     { name: "Mu", file: "mu.md", snapshot: null, error: "HTTP 404" },
   ]);
-  assert.match(table, /\| \[\[silk\\\|Silk\]\] \|  \| 1 \|  \| green \|/);
+  assert.match(table, /\| \[\[silk\\\|Silk\]\] \|  \| 1 \|  \| green \| run `propose` \|/);
   assert.match(table, /\| \[\[mu\\\|Mu\]\] \| \| \| \| not read: HTTP 404 \|/);
   const index = "## This session\n\nmine\n\n## Projects\n\nold table\n\n## Notes\n\nkeep\n";
   assert.equal(replaceSection(index, "Projects", "new"), "## This session\n\nmine\n\n## Projects\n\nnew\n\n## Notes\n\nkeep\n");
   assert.equal(replaceSection("## A\n\nx\n", "Projects", "new"), "## A\n\nx\n\n## Projects\n\nnew\n");
+});
+
+test("the index shows each page's first proposal, short and table-safe", () => {
+  const page = "## Proposed next\n\n2026-11-15, by the Magician.\n\n1. https://github.com/o/r/issues/6680, ingestion-search, trivial: `safety.ts` prices Gemini at retired rates, so the ledger is short. Constants only.\n2. other\n";
+  assert.equal(firstProposal(page), "[#6680](https://github.com/o/r/issues/6680): `safety.ts` prices Gemini at retired rates, so the ledger is short");
+  assert.equal(firstProposal("## Proposed next\n\n1. a | b\n"), "a \\| b");
+  assert.equal(firstProposal("## Ready\n\nx\n"), undefined);
+  const table = renderProjects([{ name: "Silk", file: "silk.md", snapshot: snap(), next: firstProposal(page) }]);
+  assert.match(table, /\| green \| \[#6680\]/);
 });
