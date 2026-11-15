@@ -39,7 +39,7 @@ Where the answer belongs to the Self, or the facts don't settle it, write `[NEED
 - Every criterion has an id and a settleable claim.
 - No how in the spec: no file names, functions, libraries.
 - Every Persona invariant id appears in the plan's Invariants section.
-- Every criterion is covered by at least one task.
+- Every criterion is covered by at least one task, except `(after deploy)` ones, which no task makes true; the after-deploy job runs them.
 - List the open markers and exceptions for the Self.
 
 A domain with no Persona yet gets one first, from `templates/persona.md`, with `status: draft`. Its invariants are the Self's to confirm: write them as a table, one row per invariant: id, the rule in one sentence plus its why, and sources (several joined with `<br>`). Link each source to the repo's remote when it has one (`https://github.com/<owner>/<repo>/blob/<default-branch>/<path>`, named for the file), else give the path, and keep `[NEEDS CLARIFICATION]` for questions you really couldn't settle. The Self sets `status: confirmed` after reviewing them. Don't write a plan against a draft Persona's invariants.
