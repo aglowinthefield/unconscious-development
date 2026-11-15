@@ -91,7 +91,7 @@ Approving the spec is the last thing you do before something is ready. Merging a
 The loop interrupts you for two things only:
 
 - Ready: every task of a spec has passed its Shadow, and its Trickster where one was needed. One notice per spec, not per task, with the diffs, verdict arrays and verify results.
-- Stuck: a vessel cannot continue without you. A criterion or invariant still `unmet` after one retry, the plan's `budget_usd` spent, or a gap the spec does not cover. The vessel stops and asks rather than guessing; a gap in the spec comes back as a `[NEEDS CLARIFICATION]` on a spec PR.
+- Stuck: a vessel cannot continue without you. A criterion or invariant still `unmet` after one retry, an after-deploy criterion that fails or can't run, the plan's `budget_usd` spent, or a gap the spec does not cover. The vessel stops and asks rather than guessing; a gap in the spec comes back as a `[NEEDS CLARIFICATION]` on a spec PR.
 
 No proposals, digests or progress pings reach you unasked. How the notice travels (the tracker, a chat message, the runner's own notification) is a setting in `PROJECT.md`.
 
@@ -114,6 +114,9 @@ Ticket: silk-remix #412, "Bulk archive from the orders list", labelled `domain:o
                                        │
                                        ▼
                               ready notice ──▶ Self merges (approval 2)
+                                       │  merge job: spec built; issue closed, or verifying
+                                       ▼
+                              deploy + window ──▶ Trickster vessel (after-deploy only) ──▶ issue closed
 ```
 
 %%Not sure what headless, morning really is. There should be a general trigger for these. Needs to be more abstract but also defined. %%
@@ -125,8 +128,9 @@ Ticket: silk-remix #412, "Bulk archive from the orders list", labelled `domain:o
 5. Making. Creator with Shadow. The runner starts a session in a fresh worktree. The Creator reads the Persona, implements, runs tests. Before reporting it summons a Shadow with the criteria copied from the task body. The Shadow returns `criteria: [{id, verdict, evidence}]`: the 500-id limit `met`, the audit-log entry `met`, "list shows 20 after archiving 30" `needs-run`. The Creator reports with the array attached. The vessel reaches Review.
 6. Verifying. Trickster. Because one criterion is `needs-run`, a dependent vessel gets that criterion and the setup note: seed 50 orders, archive 30, assert the list shows 20. Pass or fail, nothing else. Had every criterion been `met`, this step would not exist.
 7. Approval. Self. The ready notice is the first you hear since the merge: one diff, a verdict array, a verify result. Approve, merge. Second and last authorization point.
+8. Closing. The merge job. This was the spec's last task, so the job sets the spec to `built`. No criterion is after-deploy, so it closes #412 with the verdict arrays and PR links. Had one been, #412 would move to `verifying` and close when a Trickster settled it against production.
 
-What the walk shows: the Ruler appears once, at spec time, where you are present, and never inside a one-task vessel. Explorer and Sage appear only in the spec session. The Magician proposes once, what to spec; the plan says how to split it; you approve twice, and hear nothing in between unless a vessel is stuck.
+What the walk shows: the Ruler appears once, at spec time, where you are present, and never inside a one-task vessel. Explorer and Sage appear only in the spec session. The Magician proposes once, what to spec; the plan says how to split it; you approve twice, and hear nothing in between or after unless something is stuck. Merging the last task is the end of your part: nothing waits for you to close the issue.
 
 
 ## Verification scope
@@ -134,7 +138,7 @@ What the walk shows: the Ruler appears once, at spec time, where you are present
 The spec says what must be true. Who checks each claim is a property of the claim, decided when the diff exists, not a mode the spec picks. The Shadow's verdict has three states[^Q13][^Q37] (revised):
 
 ```
-criteria: [{ id, verdict: met | unmet | needs-run, evidence }]
+criteria: [{ id, verdict: met | unmet | needs-run | after-deploy, evidence }]
 ```
 
 The Shadow returns the same array for the Persona's invariants, keyed by invariant id, so a plan that claims an invariant holds while the diff breaks it comes back `unmet`.
@@ -144,6 +148,8 @@ The Shadow returns the same array for the Persona's invariants, keyed by invaria
 Tests and lint are not verification. The Creator runs them before it reports; CI runs them before merge. Neither reviews the change.
 
 Advice to spec authors, not a rule: write a criterion as a statement about the code ("the mutation rejects more than 500 ids") when reading can settle it, and as given/when/then ("given 50 orders, when 30 are archived, the list shows 20") when only running can. The second shape is what the Trickster will get.
+
+Some claims can only be settled in production after the deploy: a rate over 24 h, a count in Sentry. The spec author marks these `(after deploy)` after the criterion id, and the setup note names the window and the query that settle them. The Shadow returns `after-deploy` for them without judging. They don't hold the ready notice or the merge. After the deploy and the window, a Trickster runs them against production telemetry, read-only, and its result closes the issue or makes it stuck.
 
 Control: a lazy Shadow marks everything `needs-run`. The evidence requirement and your eye on the ratio over the first vessels are the check.
 
@@ -184,7 +190,7 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 **Drop Linear. GitHub Issues as the first tracker adapter.**[^Q9][^Q19] The scripts (`check-spec`, `spec-to-tasks`, the state flip) call a `tracker` adapter with four verbs: get issue, set state, add label, create issue. `gh` is the first implementation. Migrate only Linear Todo and In Progress, about 50 issues: title, body, `domain:*` labels, an `imported-from: SIL-nnn` line, one-shot script kept in the repo. Repo tooling that changes: `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, the PR-body Linear link rule, `linear-nuke`, task keys.
 
-**Issues carry domain and state.**[^Q20] One `domain:<name>` per issue. State: `needs-spec`, `ready-for-agent`, `ready-for-human`. On GitHub these are labels.
+**Issues carry domain and state.**[^Q20] One `domain:<name>` per issue. State: `needs-spec`, `ready-for-agent`, `ready-for-human`, `verifying`. On GitHub these are labels.
 
 **Specs are tiered.**[^Q3][^Q10] The Ruler decides at spec time.
 
@@ -208,6 +214,10 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 **You and the Ruler draft together.**[^Q12][^Q21] Interactive agent session, `spec/<issue>` branch, same worktree, you edit the file directly. Lands by PR, Codiff for the walkthrough. Merging is the approval.
 
 **Merge flips the state.**[^Q32] A CI job on merge to `main` that touches a spec with `status: approved` moves the issue the PR names from `needs-spec` to `ready-for-agent` through the tracker adapter and comments the spec path. The same job then runs `spec-to-tasks`. For trivial issues you flip the state by hand after reading the criteria, and the flip triggers `spec-to-tasks` the same way. `spec-to-tasks` refuses anything not `ready-for-agent`.
+
+**The last task's merge closes the issue.** (added 2026-11-15, after #6571 stayed open with its fix merged) Task PRs say `Refs #<issue>`, never `Closes`, because a spec can have more tasks. A CI job on merge of a task PR asks the runner whether every task of the plan has merged. When the last one has, the job sets the spec's `status: built` on `main`. If the repo's rules refuse a bot push, it opens a one-line PR that merges itself. Then, if no criterion is after-deploy, it closes the issue with the verdict arrays and PR links. Otherwise it moves the issue to `verifying` and comments the after-deploy criteria.
+
+**After-deploy criteria run on a schedule.** (added 2026-11-15) A scheduled job looks at each `verifying` issue. When the merge commit is in production and the setup note's window has passed since that deploy, it starts a Trickster vessel with only the after-deploy criteria. How to tell a commit is in production is a `PROJECT.md` setting, discovered from the deploy workflow by default. All pass: the job closes the issue with the Trickster's numbers. Any fail or blocked: a stuck notice, and the issue stays `verifying` until you decide.
 
 **One vessel per task.**[^Q22][^Q23] `spec-to-tasks <issue>` creates tasks keyed `gh-<issue>/<task>` with dependency edges, through the runner adapter. Never one task per surface.
 
@@ -236,7 +246,7 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 ## What gets built
 
-This repo, the cast: role definitions for all of it, with the Shadow's verdict contract in its prompt; `spec` skill (the spec format[^Q11]); `propose` skill (the Magician's inputs[^Q27]), replacing `~/.agents/skills/briefing`; the `status` script; the merge job that runs `spec-to-tasks`; the ready and stuck notices; an install step that links them into the harness.
+This repo, the cast: role definitions for all of it, with the Shadow's verdict contract in its prompt; `spec` skill (the spec format[^Q11]); `propose` skill (the Magician's inputs[^Q27]), replacing `~/.agents/skills/briefing`; the `status` script; the merge job that runs `spec-to-tasks`; the task merge job that sets `built` and closes or moves the issue to `verifying`; the scheduled after-deploy job; the ready and stuck notices; an install step that links them into the harness.
 
 This repo: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; `spec-to-tasks` and the `runner` adapter with a Bakery implementation; spec, Persona, `PROJECT.md` templates; state-flip workflow.
 
@@ -256,7 +266,7 @@ From the interview.[^Q30]
 1. Ruler role, `spec` skill, ingestion-search Persona.
 2. silk-remix #6571 (SSE connections cut at about 125 s; was SIL-258) through the loop by hand, composition A: spec PR, one vessel by hand (a plain session will do), Creator, Shadow with criteria. Measure reconnects per hour before and after, and how often the Shadow's `unmet` and `needs-run` are right.
 3. `check-spec`, label-flip workflow, `spec-to-tasks`. Redo step 2's task creation through the script.
-4. `status` script, ready and stuck notices, the merge job running `spec-to-tasks`. Magician role and `propose` skill, Silk `PROJECT.md`, its status page. Use it for one week.
+4. `status` script, ready and stuck notices, the merge job running `spec-to-tasks`, the task merge job, the after-deploy job. Magician role and `propose` skill, Silk `PROJECT.md`, its status page. Use it for one week.
 5. Migrate Linear, add labels, retire `linear-nuke`.
 6. The other five Silk Personas.
 7. `PROJECT.md`, `docs/specs/`, mochi board for impression and bakery[^Q38].
@@ -266,7 +276,7 @@ From the interview.[^Q30]
 ## Decide
 
 1. Which composition for step 2. Proposed: A.
-2. Whether a spec author may pre-mark a criterion `needs-run` for known device or data needs, or only the Shadow may.
+2. Whether a spec author may pre-mark a criterion `needs-run` for known device or data needs, or only the Shadow may. After-deploy criteria are settled: the author marks them, since no reading or pre-merge run can.
 3. Whether the Trickster is a role or only a vessel.
 4. ~~Whether Ruler is a role or a skill a Creator loads.~~ Decided 2026-11-13: a role, `docs/roles/ruler.md`, loading the `spec` skill. pi-subagents takes custom roles with their own prompt and tools; `bin/unconscious enable` hides its builtins and billion-context's `acp_delegate`, whose five roles are hard-coded.
 5. ~~Whether archetype names replace the wire names.~~ Decided 2026-11-12: archetype names on the wire, so you can see which role ran and check it behaves as set up.

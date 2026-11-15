@@ -18,6 +18,7 @@ surfaces:
 ## Acceptance criteria
 
 - AC1: <One observable claim, settleable from the diff or one run.>
+- AC2 (after deploy): <Only if production must settle it: a rate, a count, over a named window.>
 
 ## Setup note
 
