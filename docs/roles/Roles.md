@@ -11,6 +11,6 @@ The dispatchable cast of [[Unconscious Development]], as agent files for the har
 
 `inherit` means the session's model. The Shadow and Trickster are never on a weaker model than the Creator and always think harder. A dispatch may lower the Creator to `low` for a small task (Q34's limits) and raise the Explorer to `medium` when the answer means piecing evidence together. It may not lower the Shadow or Trickster.
 
-The Self and Magician aren't here. You are the Self. The Magician is the `propose` skill run in a session. The Ruler loads the `spec` skill from `skills/spec/` and may send only an Explorer, a Sage or a Shadow.
+The Self and Magician aren't here. You are the Self. The Magician is the `propose` skill (`skills/propose/`) run in a session. The Ruler loads the `spec` skill from `skills/spec/` and may send only an Explorer, a Sage or a Shadow.
 
 The format is pi-subagents'. `bin/unconscious enable` links these files into `~/.pi/agent/agents/unconscious/` and each `skills/<name>/` into `~/.agents/skills/`, hides pi-subagents' builtin presets and turns off billion-context's `acp_delegate`, so only the cast is reachable. `bin/unconscious disable` undoes all three; `bin/unconscious status` shows what's on. Both take effect in new sessions.
