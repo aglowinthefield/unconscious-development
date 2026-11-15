@@ -17,7 +17,7 @@ Everything else is designed: a spec in `docs/specs/<domain>/<behaviour>.md` and 
 
 Specs are living, one per behaviour (bulk archive, not "add a limit to bulk archive"). Search `docs/specs/<domain>/` first. If the behaviour has a spec, edit it: keep criterion ids, delete removed criteria outright, add new ids after the highest one. Otherwise copy `templates/spec.md` from this skill's directory.
 
-Required sections, in order: Goal; Non-goals; Acceptance criteria; Setup note; Surfaces touched; Cost and scale. Frontmatter: `domain`, `status` (`draft` until the Self approves, then `approved`, then `built` once its last task merges), `issues` (every issue that shaped it, append yours), `surfaces`.
+Required sections, in order: Goal; Non-goals; Acceptance criteria; Setup note; Surfaces touched; Cost and scale. Frontmatter: `domain`, `status` (`draft` while you and the Self work on it, `approved` once the Self has no open questions, `built` once its last task merges), `issues` (every issue that shaped it, append yours), `surfaces`.
 
 Each criterion has an id (`AC1`, `AC2`, …) and one observable claim that a reader of the diff, or one run, could settle. Not "works well", "fast", "handles errors". Name the number, the state, the response. Setup note says what data, device or environment a criterion would need to be run, or `none`.
 
@@ -44,4 +44,4 @@ Where the answer belongs to the Self, or the facts don't settle it, write `[NEED
 
 A domain with no Persona yet gets one first, from `templates/persona.md`, with `status: draft`. Its invariants are the Self's to confirm: write them as a table, one row per invariant: id, the rule in one sentence plus its why, and sources (several joined with `<br>`). Link each source to the repo's remote when it has one (`https://github.com/<owner>/<repo>/blob/<default-branch>/<path>`, named for the file), else give the path, and keep `[NEEDS CLARIFICATION]` for questions you really couldn't settle. The Self sets `status: confirmed` after reviewing them. Don't write a plan against a draft Persona's invariants.
 
-The spec and plan land in one PR on `spec/<issue>`. Merging it is the approval; the merge job flips the issue and creates the tasks. When the last task merges, the spec's `status` becomes `built`. The Self sees every spec by status in the vault's `🌀 Now/Specs.base`.
+The spec and plan land in one PR on `spec/<issue>`. When the Self has answered every marker, set `status: approved` in that PR before they merge it, so `main` never holds an approved spec marked `draft`. Merging it is the approval; the merge job flips the issue and creates the tasks. When the last task merges, the spec's `status` becomes `built`. The Self sees every spec by status in the vault's `🌀 Now/Specs.base`.
