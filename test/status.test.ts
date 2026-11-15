@@ -65,7 +65,7 @@ test("the index table counts per project, and only its section is replaced", () 
 test("the index shows each page's first proposal, short and table-safe", () => {
   const page = "## Proposed next\n\n2026-11-15, by the Magician.\n\n1. https://github.com/o/r/issues/6680, ingestion-search, trivial: `safety.ts` prices Gemini at retired rates, so the ledger is short. Constants only.\n2. other\n";
   assert.equal(firstProposal(page), "[#6680](https://github.com/o/r/issues/6680): `safety.ts` prices Gemini at retired rates, so the ledger is short");
-  assert.equal(firstProposal("## Proposed next\n\n1. a | b\n"), "a \\| b");
+  assert.equal(firstProposal("## Proposed next\n\n1. [[Token sources]], designed: tokens | sources.\n"), "[[Token sources]]: tokens \\| sources");
   assert.equal(firstProposal("## Ready\n\nx\n"), undefined);
   const table = renderProjects([{ name: "Silk", file: "silk.md", snapshot: snap(), next: firstProposal(page) }]);
   assert.match(table, /\| green \| \[#6680\]/);

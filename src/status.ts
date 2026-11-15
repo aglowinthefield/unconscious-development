@@ -238,7 +238,9 @@ export function firstProposal(page: string): string | undefined {
   const url = /https:\/\/github\.com\/[^\s,)]+\/(?:issues|pull)\/(\d+)/.exec(line);
   const reason = (line.split(/:\s+/).slice(1).join(": ") || line).split(/(?<=[^.]{12})\.\s/)[0].replace(/\.$/, "");
   const text = reason.length > 90 ? reason.slice(0, 89).trimEnd() + "…" : reason;
-  return `${url ? `[#${url[1]}](${url[0]}): ` : ""}${text}`.replace(/\|/g, "\\|");
+  // Without an issue link, the proposal's own lead ("[[Token sources]]", "Fix red main") names it.
+  const lead = url ? `[#${url[1]}](${url[0]})` : line.split(/[,:]\s/)[0];
+  return `${lead}: ${text}`.replace(/\|/g, "\\|");
 }
 
 export function renderProjects(rows: Row[]): string {
