@@ -27,6 +27,16 @@ Opt-in. Nothing here is loaded by default.
 - [docs/Unconscious Development.md](docs/Unconscious%20Development.md): the working doc and current source of truth. As practices get their own file under `docs/`, the matching decisions leave it.
 - `docs/archive/`: the interview doc and the composition drafts it grew from. Reference only.
 
+## Scripts
+
+Node 24, no dependencies. Run from a project repo; `-h` for options.
+
+- `bin/unconscious check-spec`: checks every spec and plan under `docs/specs/`, or a trivial issue's criteria with `--issue N`.
+- `bin/unconscious spec-to-tasks N`: turns issue N's plan (or its body, for the trivial tier) into tasks keyed `gh-N/t1`, through Bakery when `bakery-cli` is on the path, else printed for a plain session. `--dry-run` shows them without the state check.
+- `bin/unconscious on-merge --base SHA`: flips the issue of each approved spec the merge touched to `ready-for-agent` and runs `spec-to-tasks`.
+- `workflows/unconscious.yml`: the CI workflow a project repo copies to run all three.
+- `npm test`: the tests.
+
 ## The cast
 
 | Card | Archetype | Role |

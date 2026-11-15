@@ -5,6 +5,7 @@
 #               presets, and switch off billion-context's acp_delegate
 #   unconscious disable  undo all three
 #   unconscious status   show what is on
+#   unconscious check-spec|spec-to-tasks|on-merge   the spec scripts, in src/ (run with -h)
 # Both commands touch only the keys they own, so running either twice is safe.
 # Changes apply to new pi sessions.
 set -euo pipefail
@@ -76,5 +77,6 @@ case "${1:-status}" in
   enable) enable ;;
   disable) disable ;;
   status) status ;;
-  *) echo "usage: unconscious enable|disable|status" >&2; exit 2 ;;
+  check-spec|spec-to-tasks|on-merge) exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$@" ;;
+  *) echo "usage: unconscious enable|disable|status|check-spec|spec-to-tasks|on-merge" >&2; exit 2 ;;
 esac
