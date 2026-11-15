@@ -11,12 +11,14 @@ import { stateOf, type Issue, type Tracker } from "./tracker/tracker.ts";
 import { bakeryRunner } from "./runner/bakery.ts";
 import { sessionRunner } from "./runner/session.ts";
 import type { Runner, TaskInput } from "./runner/runner.ts";
+import { nowDir, statusPage } from "./status.ts";
 
 const USAGE = `usage:
   unconscious check-spec [--root DIR] [FILE...]       check docs/specs/** (or the files given)
   unconscious check-spec --issue N [--repo O/R]        check a trivial issue's criteria
   unconscious spec-to-tasks N [--dry-run] [--runner bakery|session] [--board ID] [--root DIR] [--repo O/R]
-  unconscious on-merge --base SHA [--head SHA] [--runner …] [--board ID] [--root DIR] [--repo O/R]`;
+  unconscious on-merge --base SHA [--head SHA] [--runner …] [--board ID] [--root DIR] [--repo O/R]
+  unconscious status-page [--dir DIR] [PROJECT]       rebuild the 🌀 Now pages (or one project's)`;
 
 class Refusal extends Error {}
 
@@ -113,7 +115,7 @@ function main(argv: string[]) {
     options: {
       root: { type: "string" }, repo: { type: "string" }, issue: { type: "string" },
       runner: { type: "string" }, board: { type: "string" }, "dry-run": { type: "boolean" },
-      base: { type: "string" }, head: { type: "string" }, help: { type: "boolean", short: "h" },
+      base: { type: "string" }, head: { type: "string" }, dir: { type: "string" }, help: { type: "boolean", short: "h" },
     },
   });
   if (!command || values.help) { console.log(USAGE); return 0; }
@@ -144,6 +146,14 @@ function main(argv: string[]) {
     if (!values.base) throw new Refusal("on-merge needs --base SHA");
     onMerge(root, tracker(), pickRunner(values.runner, root, values.board), values.base, values.head ?? "HEAD");
     return 0;
+  }
+  if (command === "status-page") {
+    const dir = values.dir ? resolve(values.dir) : nowDir();
+    const rows = statusPage(dir, positionals[0]);
+    const failed = rows.filter(r => !r.snapshot);
+    for (const r of failed) console.error(`${r.file}: ${r.error}`);
+    console.log(`status-page: ${rows.length - failed.length} of ${rows.length} project pages rebuilt in ${dir}`);
+    return failed.length ? 1 : 0;
   }
   console.error(USAGE);
   return 2;

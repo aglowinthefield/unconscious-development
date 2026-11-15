@@ -35,6 +35,8 @@ Node 24, no dependencies. Run from a project repo; `-h` for options.
 - `bin/unconscious spec-to-tasks N`: turns issue N's plan (or its body, for the trivial tier) into tasks keyed `gh-N/t1`, through Bakery when `bakery-cli` is on the path, else printed for a plain session. `--dry-run` shows them without the state check.
 - `bin/unconscious on-merge --base SHA`: flips the issue of each approved spec the merge touched to `ready-for-agent` and runs `spec-to-tasks`.
 - `workflows/unconscious.yml`: the CI workflow a project repo copies to run all three.
+- `bin/unconscious status-page`: rebuilds each `🌀 Now/<project>.md` page (any page with `repo:` in its frontmatter; `path:` to read specs, `ci:` to name the main workflow) and the Projects table in `🌀 Now/index.md`. Sections it doesn't write, like Proposed next, stay as they are.
+- `bin/unconscious schedule on|off`: runs `status-page` every 15 minutes with launchd.
 - `npm test`: the tests.
 
 ## The cast
