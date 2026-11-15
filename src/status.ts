@@ -232,7 +232,7 @@ export interface Row { name: string; file: string; snapshot: Snapshot | null; er
 export function renderProjects(rows: Row[]): string {
   const head = "| Project | Waiting on you | Stuck | In flight | Main |\n| --- | --- | --- | --- | --- |";
   const body = rows.map(r => {
-    const link = `[[${basename(r.file, ".md")}|${r.name}]]`;
+    const link = `[[${basename(r.file, ".md")}\\|${r.name}]]`; // escaped: a bare | splits the table cell
     if (!r.snapshot) return `| ${link} | | | | not read: ${r.error ?? "unknown error"} |`;
     const o = r.snapshot;
     const waiting = o.mine.filter(p => prStage(p) === "yours").length + o.reviewRequested.length
