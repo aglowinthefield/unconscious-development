@@ -4,7 +4,9 @@ proposed: 2026-11-16
 revises: "[[Unconscious Development]]"
 ---
 
-UD's state lives in the repo. Trackers and document tools are adapters that mirror it or render it, and none of them is needed to work. Today the same work shows up as GitHub labels, PR threads, Now-page sections written only in the vault, and `Specs.base` reading whatever branch the local clone has checked out. Nothing says which copy is current.
+UD's state lives in the repo. Trackers and document tools are adapters that mirror it or render it, and none of them is needed to work.
+
+Today the same work shows up as GitHub labels, PR threads, Now-page sections written only in the vault, and `Specs.base` reading whatever branch the local clone has checked out. Nothing says which copy is current.
 
 This note gives each kind of state one home and makes every view say how fresh it is.
 
@@ -35,7 +37,10 @@ A project with no tracker skips sync. Everything below still works from the repo
 `status` builds one view model per project: each item with its state, who it waits on, its age, its link, and why it is where it is. Adapters render that model and never read it back:
 
 - Terminal: `unconscious status` prints it.
-- Obsidian: one note per item under `🌀 Now/<project>/`, with the model's fields as frontmatter so Bases can group and filter across projects (Waiting on you, Stuck, In flight, Ready, Proposed). The Now page becomes a short summary that embeds those views. Generated notes carry `cssclasses: ud-generated` so they look different from notes you write, and anything typed into one is overwritten on the next run.
+- Obsidian: one note per item under `🌀 Now/<project>/`, with the model's fields as frontmatter.
+  - Bases group and filter those notes across projects: Waiting on you, Stuck, In flight, Ready, Proposed.
+  - The Now page becomes a short summary that embeds those views.
+  - Generated notes carry `cssclasses: ud-generated`, so they look different from notes you write. Anything typed into one is overwritten on the next run.
 
 Every view prints each source's last sync, so a stale cache is visible instead of silently wrong. `Specs.base` reads the Obsidian adapter's spec notes, rendered from `main`, instead of the symlinked working copy.
 
@@ -61,4 +66,4 @@ A `[NEEDS CLARIFICATION]` marker is answered by editing the file and committing,
 1. Which issues become items: only those UD manages (they carry a state), or every open issue? Proposed: only managed ones. Other issues stay in the tracker.
 2. When someone changes a repo-owned field on the tracker (relabels an issue on GitHub), does sync commit that change to the item file, or overwrite the label? Proposed: commit it, since teammates work in the tracker.
 3. Does a closed item's file stay with `state: closed`, or get deleted like a finished plan? Proposed: deleted; git keeps it, and the cache can still show recently closed items.
-4. How do the Magician's daily proposals land: a direct commit to `main`, or a PR you merge? A direct commit is a daily bookkeeping commit; a PR is one more thing to review.
+4. How do the Magician's daily proposals land: a direct commit to `main`, or a PR you merge? A direct commit adds a bookkeeping commit each day, and a PR adds one more review.
