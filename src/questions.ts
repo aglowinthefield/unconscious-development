@@ -1,6 +1,6 @@
 // Open questions on a spec change request, polled. Each [NEEDS CLARIFICATION] marker is asked as
 // a note on its line; a reply in that thread from someone who may answer is put in the file in
-// place of the marker and committed to the branch. Each question carries a tag naming the file and
+// place of the marker and committed to the branch, and the thread is resolved. Each question carries a tag naming the file and
 // the exact marker, and each reply this tool posts carries a tag naming the note it settled, so
 // the tracker itself is the record of what has been done.
 
@@ -122,10 +122,6 @@ export function questionBody(q: Question, opts: Pick<PollOptions, "rng" | "templ
 // Comments this tool posted carry a tag; a person's reply never does.
 const isOurs = (body: string) => TAG.test(body) || REPLY_TAG.test(body);
 
-const remainingText = (left: number) => left
-  ? `${left} open question${left === 1 ? "" : "s"} left on this change.`
-  : "No open questions left; set `status: approved` in the spec when you approve it.";
-
 // The card a thread's replies show: the question's own, from its tag or (for questions asked
 // before the tag named it) its image; a fresh draw only when the question shows none.
 function threadCard(question: string, rng?: () => number): Card {
@@ -141,6 +137,17 @@ function settle(
 ): { log: string; answered?: Settled } {
   const post = (kind: Kind, vars: Record<string, string | number>, s: Settled) => {
     if (!opts.dryRun) tracker.reply(cr, threadId, compose(kind, { ...vars, marker: tag.marker, path: tag.path }, replyTag(s), opts, c));
+  };
+  // The question is closed once its marker is gone from the file, so its thread is done. The reply
+  // is already posted, so a failure here is reported and not retried.
+  const close = (log: string) => {
+    if (opts.dryRun) return log;
+    try {
+      tracker.resolve(cr, threadId);
+      return log;
+    } catch (e: any) {
+      return `${log}; thread not resolved: ${String(e.stderr || e.message).split("\n")[0]}`;
+    }
   };
   const text = tracker.fileAt(tag.path, cr.head) ?? "";
   const lines = text.split("\n");
@@ -158,7 +165,7 @@ function settle(
   }
   if (index < 0) {
     post("gone", {}, { note: reply.id });
-    return { log: answered ? "the answered line has changed since; correction not applied" : "question already gone" };
+    return { log: answered ? "the answered line has changed since; correction not applied" : close("question already gone") };
   }
   const line = lines[index];
   const before = line.slice(0, at), after = line.slice(at + span.length);
@@ -178,13 +185,11 @@ function settle(
     message: `${answered ? "Correct the answer to" : "Answer"} an open question in ${tag.path}\n\n${tag.marker}\n\n→ ${verdict.text}\n\n${answered ? "Corrected" : "Answered"} by @${reply.author.login}.`,
   });
   cr.head = sha;
-  const left = openQuestions(tracker, cr).length;
   const s: Settled = { note: reply.id, line: newLine, at, inserted: verdict.text };
   post("answered", {
-    answer: verdict.text, before: line.trim(), after: newLine.trim(), sha: sha.slice(0, 7),
-    remaining: remainingText(left), left, author: reply.author.login,
+    answer: verdict.text, before: line.trim(), after: newLine.trim(), sha: sha.slice(0, 7), author: reply.author.login,
   }, s);
-  return { log: `${answered ? "corrected" : "answered"} in ${sha.slice(0, 7)}`, answered: s };
+  return { log: close(`${answered ? "corrected" : "answered"} in ${sha.slice(0, 7)}`), answered: s };
 }
 
 // One pass over a change request: apply each new answer, then ask each new question. Every comment
