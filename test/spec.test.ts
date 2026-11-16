@@ -126,6 +126,14 @@ test("every Persona invariant must be in the plan", () => {
   assert.deepEqual(m, ["invariant orders/I1 missing from \"## Invariants\""]);
 });
 
+test("an invariant holds, with or without a note, or is an exception with a reason", () => {
+  const plan = (v: string) => messages(base({ "docs/specs/orders/bulk-archive.plan.md": PLAN.replace("- orders/I1: holds\n", `- orders/I1: ${v}\n`) }));
+  assert.deepEqual(plan("holds. Archive is a soft delete."), []);
+  assert.deepEqual(plan("exception: the export runs nightly"), []);
+  assert.deepEqual(plan("probably fine"), ['invariant orders/I1 must start `holds` or `exception: <reason>`; got "probably fine"']);
+  assert.equal(plan("exception:").length, 1);
+});
+
 test("a draft Persona can't carry a plan", () => {
   const m = messages(base({ "docs/personas/orders.md": PERSONA.replace("confirmed", "draft") }));
   assert.deepEqual(m, ["Persona docs/personas/orders.md is draft; plans need confirmed invariants"]);

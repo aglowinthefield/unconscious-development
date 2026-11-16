@@ -9,7 +9,7 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export type Kind = "question" | "answered" | "unclear" | "gone";
+export type Kind = "question" | "answered" | "unclear" | "gone" | "check-failed" | "check-passed";
 
 const SHIPPED = join(dirname(fileURLToPath(import.meta.url)), "..", "templates", "comments");
 

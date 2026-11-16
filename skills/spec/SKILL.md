@@ -27,7 +27,7 @@ Copy `templates/plan.md` from this skill's directory to `docs/specs/<domain>/<be
 
 - Approach: what you chose and why, and the options it beat. Usually the Sage's recommendation.
 - Data model and contracts: types, endpoints, schema, events. Only what changes.
-- Invariants: every invariant id in the domain's Persona, each `holds` or `exception: <reason>`. Don't skip an id because it seems irrelevant; mark it `holds`. Only the Self approves an exception.
+- Invariants: every invariant id in the domain's Persona, each `holds` (a short note after it may say why) or `exception: <reason>`. Don't skip an id because it seems irrelevant; mark it `holds`. Only the Self approves an exception.
 - Tasks: a checklist. Each task is one Creator vessel, named by an id (`t1`, `t2`), may carry `after: <task-id>`, and lists the criteria it makes true. Never one task per surface.
 
 ## 4. Mark what you can't decide

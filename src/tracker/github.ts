@@ -102,6 +102,19 @@ export function githubTracker(repo: string): Tracker {
     reply(cr, threadId, body) {
       gh(["api", "-X", "POST", `repos/${repo}/pulls/${cr.number}/comments/${threadId}/replies`, "-f", `body=${body}`]);
     },
+    changeComments(cr) {
+      const out = gh(["api", "--paginate", `repos/${repo}/issues/${cr.number}/comments`, "--jq", ".[] | @json"]);
+      return out ? out.split("\n").map(l => toNote(JSON.parse(l))) : [];
+    },
+    commentOnChange(cr, body) {
+      gh(["api", "-X", "POST", `repos/${repo}/issues/${cr.number}/comments`, "-f", `body=${body}`]);
+    },
+    editComment(_cr, id, body) {
+      gh(["api", "-X", "PATCH", `repos/${repo}/issues/comments/${id}`, "-f", `body=${body}`]);
+    },
+    fileUrl(path, ref, line) {
+      return `https://github.com/${repo}/blob/${ref}/${enc(path)}${line ? `#L${line}` : ""}`;
+    },
     resolve(cr, threadId) {
       // Review threads are only addressable in GraphQL, by the database id of their first comment.
       const [owner, name] = repo.split("/");
