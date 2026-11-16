@@ -30,6 +30,7 @@ export interface IssueRef { number: number; url: string; title: string; labels: 
 
 export interface SpecState {
   path: string;
+  status: string; // "approved", or "draft" when tasks merged before anyone approved it
   issues: string[];
   done: number;
   total: number;
@@ -91,12 +92,14 @@ function specsOnMain(path: string): SpecState[] {
   const out: SpecState[] = [];
   for (const f of files.filter(f => f.endsWith(".md") && !f.endsWith(".plan.md"))) {
     const spec = parseDoc(show(f));
-    if (spec.frontmatter?.status !== "approved") continue;
+    const status = String(spec.frontmatter?.status ?? "");
+    if (status !== "approved" && status !== "draft") continue;
     const planFile = f.replace(/\.md$/, ".plan.md");
     const tasksBody = files.includes(planFile) ? section(parseDoc(show(planFile)), "Tasks")?.body ?? "" : "";
     const tasks = parseTasks(tasksBody);
+    if (status === "draft" && !tasks.some(t => t.done)) continue; // an ordinary draft
     const issues = spec.frontmatter.issues;
-    out.push({ path: f, issues: Array.isArray(issues) ? issues : issues ? [issues] : [], done: tasks.filter(t => t.done).length, total: tasks.length });
+    out.push({ path: f, status, issues: Array.isArray(issues) ? issues : issues ? [issues] : [], done: tasks.filter(t => t.done).length, total: tasks.length });
   }
   return out;
 }
@@ -164,6 +167,10 @@ export function mainLine(s: Snapshot): string {
   return `Main: ${m.workflow} ${result} at ${when(m.at, s.at)} (${m.url}).`;
 }
 
+// Task PRs merged against a draft spec: the approval was skipped, so nothing moves the spec or its issue on.
+export const draftWork = (s: Snapshot) => s.specs.filter(sp => sp.status === "draft");
+const approved = (s: Snapshot) => s.specs.filter(sp => sp.status !== "draft");
+
 export function renderOwned(s: Snapshot): Record<string, string> {
   const stuck = s.mine.filter(p => prStage(p) === "stuck");
   const yours = s.mine.filter(p => prStage(p) === "yours");
@@ -183,12 +190,13 @@ export function renderOwned(s: Snapshot): Record<string, string> {
   out["Stuck"] = block([
     ...(mainRed ? [`- ${mainLine(s)}`] : []),
     ...stuck.map(p => prLine(p, s.at)),
+    ...draftWork(s).map(sp => `- \`${sp.path}\`: ${sp.done} of ${sp.total} tasks done, but the spec is still \`draft\`. Approve it, or mark it built${sp.issues.length ? ` and move ${sp.issues.join(", ")} on` : ""}.`),
   ], "Nothing.");
 
   const flight: string[] = [];
-  if (s.specs.length) {
+  if (approved(s).length) {
     flight.push("### Specs", "");
-    for (const sp of s.specs) flight.push(`- \`${sp.path}\`: ${sp.done} of ${sp.total} tasks done${sp.issues.length ? `, ${sp.issues.join(", ")}` : ""}`);
+    for (const sp of approved(s)) flight.push(`- \`${sp.path}\`: ${sp.done} of ${sp.total} tasks done${sp.issues.length ? `, ${sp.issues.join(", ")}` : ""}`);
     flight.push("");
   }
   if (waiting.length) flight.push("### Your PRs", "", ...waiting.map(p => prLine(p, s.at)), "");
@@ -252,8 +260,8 @@ export function renderProjects(rows: Row[]): string {
     const o = r.snapshot;
     const waiting = o.mine.filter(p => prStage(p) === "yours").length + o.reviewRequested.length
       + o.issues.filter(i => has(i, "ready-for-human") || has(i, "needs-spec")).length;
-    const stuck = o.mine.filter(p => prStage(p) === "stuck").length;
-    const flight = o.specs.length + o.mine.filter(p => prStage(p) === "waiting").length + o.issues.filter(i => has(i, "verifying")).length;
+    const stuck = o.mine.filter(p => prStage(p) === "stuck").length + draftWork(o).length;
+    const flight = approved(o).length + o.mine.filter(p => prStage(p) === "waiting").length + o.issues.filter(i => has(i, "verifying")).length;
     const main = !o.main ? "unknown" : o.main.status !== "completed" ? "running" : o.main.conclusion === "success" ? "green" : o.main.conclusion;
     const n = (x: number) => (x ? String(x) : "");
     return `| ${link} | ${n(waiting)} | ${n(stuck)} | ${n(flight)} | ${main} | ${next} |`;

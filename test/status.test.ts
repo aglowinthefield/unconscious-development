@@ -44,7 +44,7 @@ test("the page replaces owned sections and keeps the rest", () => {
 test("a red main is stuck, and specs show task progress", () => {
   const page = renderPage("", snap({
     main: { workflow: "CI", conclusion: "failure", status: "completed", at: "2026-11-14T09:00:00Z", url: "https://x/run" },
-    specs: [{ path: "docs/specs/a/b.md", issues: ["https://github.com/o/r/issues/4"], done: 1, total: 3 }],
+    specs: [{ path: "docs/specs/a/b.md", status: "approved", issues: ["https://github.com/o/r/issues/4"], done: 1, total: 3 }],
   }));
   assert.match(page, /## Stuck\n\n- Main: CI failure at 2026-11-14 09:00Z/);
   assert.match(page, /- `docs\/specs\/a\/b.md`: 1 of 3 tasks done, https:\/\/github.com\/o\/r\/issues\/4/);
@@ -69,4 +69,11 @@ test("the index shows each page's first proposal, short and table-safe", () => {
   assert.equal(firstProposal("## Ready\n\nx\n"), undefined);
   const table = renderProjects([{ name: "Silk", file: "silk.md", snapshot: snap(), next: firstProposal(page) }]);
   assert.match(table, /\| green \| \[#6680\]/);
+});
+
+test("tasks merged against a draft spec are stuck, not in flight", () => {
+  const page = renderPage("", { ...snap(), specs: [{ path: "docs/specs/f/g.md", status: "draft", issues: ["https://github.com/o/r/issues/9"], done: 5, total: 6 }] });
+  const stuck = page.split("## Stuck")[1].split("## In flight")[0];
+  assert.match(stuck, /`docs\/specs\/f\/g.md`: 5 of 6 tasks done, but the spec is still `draft`/);
+  assert.match(page.split("## In flight")[1].split("## Ready")[0], /Nothing\./);
 });
