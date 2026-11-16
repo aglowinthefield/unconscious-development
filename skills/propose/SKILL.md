@@ -54,3 +54,7 @@ Run headless (`unconscious propose`), you write every project page and reply wit
 ## 4. Reply
 
 In the session, give the top proposal and why in two sentences, and the path of each page you wrote. Ask which one to spec; on a yes, the next step is a Ruler session on `spec/<issue>`.
+
+## Naming criteria and tasks
+
+Ids like `AC13` and `t5` mean nothing to a reader without the spec open. The first time you name one in anything a person reads (a reply, a vault page, a PR body, an issue comment), say what it is in a few words. Where Markdown renders, also link the id to its line in the spec on GitHub: `[AC13](https://github.com/<owner>/<repo>/blob/main/docs/specs/<domain>/<name>.md#L43) (a staff adoption report seven days after the gate opens)`. In a terminal reply the gloss alone is enough.
