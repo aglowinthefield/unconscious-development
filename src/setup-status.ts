@@ -17,6 +17,7 @@ const paths = (udRoot: string, env = process.env, home = env.HOME ?? homedir()) 
   skills: join(udRoot, "skills"),
   piAgents: join(env.PI_AGENTS_DIR ?? join(home, ".pi/agent/agents"), "unconscious"),
   piSkills: env.UD_SKILLS_DIR ?? join(home, ".agents/skills"),
+  piPrompts: env.PI_PROMPTS_DIR ?? join(home, ".pi/agent/prompts"),
   piSettings: env.PI_SETTINGS ?? join(home, ".pi/agent/settings.json"),
   bili: env.BILI_CONFIG ?? join(home, ".config/billion-context/billion-context.json"),
   claudeAgents: env.CLAUDE_AGENTS_DIR ?? join(home, ".claude/agents"),
@@ -53,7 +54,7 @@ function when(plist: string, fallback: string): string {
 }
 
 export interface SetupStatus {
-  pi: { roles: string[]; skills: string[]; from?: string; installed: boolean; builtinsHidden: boolean; acpOff: boolean };
+  pi: { roles: string[]; skills: string[]; prompts: string[]; from?: string; installed: boolean; builtinsHidden: boolean; acpOff: boolean };
   claude: { roles: string[]; skills: string[]; from?: string };
   jobs: { name: string; when: string; on: boolean; log: string }[];
 }
@@ -66,6 +67,7 @@ export function setupStatus(udRoot: string): SetupStatus {
     pi: {
       roles: ls(p.piAgents).filter(f => f.endsWith(".md")).map(f => basename(f, ".md")),
       ...linkedSkills(ours, p.piSkills, udRoot),
+      prompts: ls(join(udRoot, "prompts")).filter(f => f.endsWith(".md") && linkOf(join(p.piPrompts, f))).map(f => `/${basename(f, ".md")}`),
       installed: (settings.packages ?? []).some((x: unknown) => JSON.stringify(x).includes("pi-subagents")),
       builtinsHidden: settings.subagents?.disableBuiltins === true,
       acpOff: bili.pi?.subagents === false,
@@ -93,6 +95,7 @@ export function formatStatus(s: SetupStatus): string {
   line(piOn, "roles", list(s.pi.roles));
   line(s.pi.skills.length > 0, "skills", list(s.pi.skills));
   if (s.pi.from) out.push(`  ${c.dim(`  linked from ${s.pi.from}`)}`);
+  line(s.pi.prompts.length > 0, "prompts", list(s.pi.prompts));
   line(s.pi.installed, "pi-subagents installed", s.pi.installed ? "" : c.dim("the roles need it to run"));
   if (piOn) {
     line(s.pi.builtinsHidden, "builtin agents hidden");

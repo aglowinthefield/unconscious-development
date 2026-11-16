@@ -11,7 +11,7 @@ const udRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 function withHome(fn: (home: string) => void) {
   const home = mkdtempSync(join(tmpdir(), "ud-status-"));
   const saved = { ...process.env };
-  for (const k of ["PI_AGENTS_DIR", "UD_SKILLS_DIR", "PI_SETTINGS", "BILI_CONFIG", "CLAUDE_AGENTS_DIR", "CLAUDE_SKILLS_DIR"]) delete process.env[k];
+  for (const k of ["PI_AGENTS_DIR", "UD_SKILLS_DIR", "PI_SETTINGS", "BILI_CONFIG", "CLAUDE_AGENTS_DIR", "CLAUDE_SKILLS_DIR", "PI_PROMPTS_DIR"]) delete process.env[k];
   process.env.HOME = home;
   process.env.NO_COLOR = "1";
   try { fn(home); } finally { process.env = saved; }

@@ -7,6 +7,7 @@ set -euo pipefail
 ud_root="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
 agents_dir="${PI_AGENTS_DIR:-$HOME/.pi/agent/agents}/unconscious"
 skills_dir="${UD_SKILLS_DIR:-$HOME/.agents/skills}"
+prompts_dir="${PI_PROMPTS_DIR:-$HOME/.pi/agent/prompts}"
 pi_settings="${PI_SETTINGS:-$HOME/.pi/agent/settings.json}"
 bili_config="${BILI_CONFIG:-$HOME/.config/billion-context/billion-context.json}"
 claude_agents="${CLAUDE_AGENTS_DIR:-$HOME/.claude/agents}"
@@ -35,6 +36,12 @@ enable() {
     if [ -e "$dest" ] && [ ! -L "$dest" ]; then echo "warning: $dest exists and isn't ours; skipped" >&2; continue; fi
     ln -sfn "$s" "$dest"
   done
+  mkdir -p "$prompts_dir"
+  for p in "$ud_root"/prompts/*.md; do
+    dest="$prompts_dir/$(basename "$p")"
+    if [ -e "$dest" ] && [ ! -L "$dest" ]; then echo "warning: $dest exists and isn't ours; skipped" >&2; continue; fi
+    ln -sfn "$p" "$dest"
+  done
   json_set "$pi_settings" 'd.setdefault("subagents", {})["disableBuiltins"] = True'
   json_set "$bili_config" 'd.setdefault("pi", {})["subagents"] = False'
   grep -q 'pi-subagents' "$pi_settings" || echo "warning: pi-subagents isn't in $pi_settings packages; the roles have no harness to run them" >&2
@@ -46,6 +53,10 @@ disable() {
   for s in "$ud_root"/skills/*/; do
     dest="$skills_dir/$(basename "${s%/}")"
     [ -L "$dest" ] && [ "$(readlink "$dest")" = "${s%/}" ] && rm "$dest"
+  done
+  for p in "$ud_root"/prompts/*.md; do
+    dest="$prompts_dir/$(basename "$p")"
+    [ -L "$dest" ] && [ "$(readlink "$dest")" = "$p" ] && rm "$dest"
   done
   json_set "$pi_settings" '
 s = d.get("subagents", {}); s.pop("disableBuiltins", None)
