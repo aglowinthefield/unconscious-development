@@ -54,6 +54,8 @@ export interface Tracker {
   // file; either way it opens a thread.
   postNote(cr: ChangeRequest, note: { path: string; line: number; body: string }): void;
   reply(cr: ChangeRequest, threadId: number, body: string): void;
+  // Mark a thread resolved, if it isn't already.
+  resolve(cr: ChangeRequest, threadId: number): void;
 }
 
 export const stateOf = (issue: Issue): State | null =>

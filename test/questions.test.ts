@@ -8,7 +8,7 @@ import { render } from "../src/comments.ts";
 import { fitSpan, literal, parseVerdict, prompt, type InterpretInput, type Interpreter, type Verdict } from "../src/interpret.ts";
 import type { ChangeRequest, Note, Tracker } from "../src/tracker/tracker.ts";
 import {
-  pollChangeRequest, pollQuestions, parseReplyTag, answerablePath, mayAnswer, normaliseAnswer, parseQuestionTag, questionBody, questionsIn, unasked,
+  pollChangeRequest, pollQuestions, parseReplyTag, answerablePath, mayAnswer, normaliseAnswer, parseQuestionTag, questionBody, questionTag, questionsIn, unasked,
 } from "../src/questions.ts";
 
 const SPEC = `## Acceptance criteria
@@ -29,7 +29,7 @@ test("the comment body shows the question and carries a tag that finds the marke
   const body = questionBody(q, { rng: () => 0 });
   assert.match(body, /<img align="left" width="68" height="120" src="[^"]+\/tarot\/ace-of-cups\.png" alt="Ace of Cups">/);
   assert.match(body, /\*\*Open question:\*\* bit cutoff; 31 proposed\n/);
-  assert.deepEqual(parseQuestionTag(body), { path: q.path, marker: q.marker });
+  assert.deepEqual(parseQuestionTag(body), { path: q.path, marker: q.marker, card: "ace-of-cups" });
   assert.equal(parseQuestionTag("a plain comment"), null);
   assert.equal(parseQuestionTag("<!-- ud-question !!! -->"), null);
 });
@@ -106,6 +106,7 @@ test("people with a stake answer, bots never; UD_SELF narrows it to named logins
 function fakeTracker(files: Record<string, string>) {
   const notes: Note[] = [];
   const commits: string[] = [];
+  const resolved = new Set<number>();
   const cr: ChangeRequest = { number: 1, head: "c0", branch: "spec/1", files: Object.keys(files) };
   const me = { login: "tom", bot: false, member: true };
   const tracker = {
@@ -122,8 +123,9 @@ function fakeTracker(files: Record<string, string>) {
     postNote: (_: ChangeRequest, n: { body: string }) => void notes.push({ id: notes.length + 1, body: n.body, author: me }),
     reply: (_: ChangeRequest, threadId: number, body: string) =>
       void notes.push({ id: notes.length + 1, body, author: me, replyTo: threadId }),
+    resolve: (_: ChangeRequest, threadId: number) => void resolved.add(threadId),
   } as unknown as Tracker;
-  return { tracker, notes, files, commits, cr, me };
+  return { tracker, notes, files, commits, cr, me, resolved };
 }
 
 // Answers by rule: a reply naming a number decides it, "why" asks back, anything else is unclear.
@@ -152,7 +154,7 @@ test("a poll asks each open question once, on spec change requests only", () => 
 });
 
 test("a plain-words reply is interpreted, written in place of the marker, and shown as a diff", () => {
-  const { tracker, notes, files, commits, cr, me } = fakeTracker({ "docs/specs/a/b.md": SPEC });
+  const { tracker, notes, files, commits, cr, me, resolved } = fakeTracker({ "docs/specs/a/b.md": SPEC });
   const { interpreter, seen } = fakeInterpreter();
   const opts = { self: [], rng: () => 0, interpreter };
   pollChangeRequest(tracker, cr, opts);
@@ -175,8 +177,33 @@ test("a plain-words reply is interpreted, written in place of the marker, and sh
   assert.equal(answered.replyTo, 1);
   assert.equal(parseReplyTag(answered.body)?.note, 10);
   assert.match(answered.body, /```diff\n- - AC1: Hashes differ in at most \[NEEDS[^\n]+\n\+ - AC1: Hashes differ in at most 31 of 256 bits\.\n```/);
-  assert.match(answered.body, /1 open question left on this change\. Reply here to correct it\./);
+  assert.match(answered.body, /```\n\nReply here to correct it\./);
+  assert.doesNotMatch(answered.body, /open question/, "a thread speaks for its own question only");
+  assert.deepEqual([...resolved], [1], "the answered thread is resolved; the other stays open");
   assert.deepEqual(pollChangeRequest(tracker, cr, opts), [], "a handled reply is not read again");
+});
+
+test("replies in a thread show the question's card, even when the deck draws another", () => {
+  const { tracker, notes, cr, me } = fakeTracker({ "docs/specs/a/b.md": SPEC });
+  let draw = 0;
+  const opts = { self: [], rng: () => draw, interpreter: fakeInterpreter().interpreter };
+  pollChangeRequest(tracker, cr, opts);
+  draw = 0.999;
+  notes.push({ id: 10, body: "why?", author: me, replyTo: 1 });
+  notes.push({ id: 11, body: "31", author: me, replyTo: 1 });
+  pollChangeRequest(tracker, cr, opts);
+  const replies = notes.filter(n => n.replyTo === 1 && parseReplyTag(n.body));
+  assert.equal(replies.length, 2);
+  for (const r of replies) assert.match(r.body, /\/tarot\/ace-of-cups\.png" alt="Ace of Cups"/);
+});
+
+test("a question asked before its tag named a card lends its image's card to replies", () => {
+  const { tracker, notes, cr, me } = fakeTracker({ "docs/specs/a/b.md": SPEC });
+  const [q] = questionsIn("docs/specs/a/b.md", SPEC);
+  notes.push({ id: 1, body: `${card("the-moon").html}\n\n${questionTag(q)}`, author: me });
+  notes.push({ id: 10, body: "why?", author: me, replyTo: 1 });
+  pollChangeRequest(tracker, cr, { self: [], rng: () => 0, interpreter: fakeInterpreter().interpreter });
+  assert.match(notes.find(n => n.replyTo === 1 && parseReplyTag(n.body))!.body, /alt="The Moon"/);
 });
 
 test("a later reply corrects the answer on its line; a question back changes nothing", () => {

@@ -17,4 +17,10 @@ export function card(slug: string): Card {
   return { slug, name, url, html: `<img align="left" width="68" height="120" src="${url}" alt="${name}">` };
 }
 
+// The card a comment shows, read from its image URL; null when it shows none.
+export function cardIn(body: string): Card | null {
+  const m = /\/tarot\/([a-z-]+)\.png/.exec(body);
+  return m && (CARDS as readonly string[]).includes(m[1]) ? card(m[1]) : null;
+}
+
 export const drawCard = (rng: () => number = Math.random): Card => card(CARDS[Math.floor(rng() * CARDS.length)]);
