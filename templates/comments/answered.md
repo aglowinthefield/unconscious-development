@@ -9,7 +9,7 @@ Answered in {{sha}}:
 + {{after}}
 ```
 
-{{remaining}} Reply here to correct it.
+Reply here to correct it.
 
 <br clear="left">
 

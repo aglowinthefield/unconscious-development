@@ -102,5 +102,21 @@ export function githubTracker(repo: string): Tracker {
     reply(cr, threadId, body) {
       gh(["api", "-X", "POST", `repos/${repo}/pulls/${cr.number}/comments/${threadId}/replies`, "-f", `body=${body}`]);
     },
+    resolve(cr, threadId) {
+      // Review threads are only addressable in GraphQL, by the database id of their first comment.
+      const [owner, name] = repo.split("/");
+      const query = `query($owner: String!, $name: String!, $number: Int!, $endCursor: String) {
+        repository(owner: $owner, name: $name) { pullRequest(number: $number) {
+          reviewThreads(first: 100, after: $endCursor) {
+            nodes { id isResolved comments(first: 1) { nodes { databaseId } } }
+            pageInfo { hasNextPage endCursor }
+          } } } }`;
+      const out = gh(["api", "graphql", "--paginate", "-f", `query=${query}`, "-f", `owner=${owner}`, "-f", `name=${name}`,
+        "-F", `number=${cr.number}`, "--jq", ".data.repository.pullRequest.reviewThreads.nodes[] | @json"]);
+      const thread = (out ? out.split("\n").map(l => JSON.parse(l)) : [])
+        .find((t: any) => t.comments.nodes[0]?.databaseId === threadId);
+      if (!thread || thread.isResolved) return;
+      gh(["api", "graphql", "-f", "query=mutation($id: ID!) { resolveReviewThread(input: { threadId: $id }) { thread { id } } }", "-f", `id=${thread.id}`]);
+    },
   };
 }
