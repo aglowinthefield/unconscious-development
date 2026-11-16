@@ -77,11 +77,13 @@ A boundary earns its place only when one of these differs across it. Domain, rep
 
 Explorer and Sage differ only on output contract when dispatched alone. They earn separate existence when sequenced: the Sage plans on the Explorer's facts rather than on facts it chose to look for. Ruler and Sage both propose; the Sage proposes a plan for one task, the Ruler proposes within a domain's law with the Self in the room. Shadow and Trickster are the only two roles whose isolation is enforced by something other than a prompt: a fresh delegate context, a separate vessel.
 
-### Two global rules
+### Three global rules
 
 No tool is a dependency except files and scripts. The contract is Markdown (Personas, `PROJECT.md`, specs, `🌀 Now/` pages, `AGENTS.md`), skills, and scripts (`check-spec`, `spec-to-tasks`, the label workflow). Everything runs from a plain agent session or a vessel on any runner. herdr may add a tab or shortcut on top; Pi is the harness today; neither may be named in a charter, spec, or skill. Role prompts are the one place a harness's delegation tool appears, and the file to rewrite if the harness changes.
 
 The cast owns the subagent namespace. Any harness or extension that ships its own subagent presets competes for the same names and delegation surface. Those presets get disabled or overridden so only the cast is reachable.
+
+No bare ids. The first time any output a person reads names a criterion or task (`AC13`, `t5`), it says what that is in a few words, and where Markdown renders it links the id to its line in the spec on GitHub. The reader shouldn't have to open the spec to follow a reply, a page, or a PR body.
 
 
 ### Dispatch and interrupts
