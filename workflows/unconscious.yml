@@ -5,12 +5,6 @@
 # on-merge      on a push to main touching specs: each approved spec flips its plan's issue to
 #               ready-for-agent and runs spec-to-tasks.
 # spec-to-tasks when you label an issue ready-for-agent by hand (the trivial tier).
-# ask          on a PR touching specs or Personas: posts each open [NEEDS CLARIFICATION] marker as a
-#              review comment on its line, once.
-# answer       on a reply to one of those comments by someone with a stake in the repo (or a login
-#              in the UD_SELF variable): puts the reply in place of the marker, commits and pushes.
-#              A push made with the workflow token starts no workflow, so check-spec and the
-#              repo's CI rerun on your next push, such as the one setting status: approved.
 #
 # Tasks go to the runner. With no runner reachable from Actions, the session runner prints each
 # task to the log for a person to start. To create Bakery cards instead, run this on a runner that
@@ -20,8 +14,6 @@ name: unconscious
 on:
   pull_request:
     paths: ["docs/specs/**", "docs/personas/**"]
-  pull_request_review_comment:
-    types: [created]
   push:
     branches: [main]
     paths: ["docs/specs/**"]
@@ -72,40 +64,3 @@ jobs:
         with: { node-version: 24 }
       - run: .ud/bin/unconscious spec-to-tasks "${{ github.event.issue.number }}" --runner "$UD_RUNNER"
         env: { GH_TOKEN: "${{ github.token }}" }
-
-  ask:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    permissions: { contents: read, pull-requests: write }
-    steps:
-      - uses: actions/checkout@v4
-        with: { repository: aglowinthefield/unconscious-development, ref: "${{ env.UD_REF }}", path: .ud }
-      - uses: actions/setup-node@v4
-        with: { node-version: 24 }
-      - run: .ud/bin/unconscious ask --pr "$PR" --repo "$GITHUB_REPOSITORY"
-        env: { GH_TOKEN: "${{ github.token }}", PR: "${{ github.event.pull_request.number }}" }
-
-  answer:
-    if: >-
-      github.event_name == 'pull_request_review_comment' && github.event.comment.in_reply_to_id &&
-      github.event.comment.user.type != 'Bot' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    permissions: { contents: write, pull-requests: write }
-    concurrency: { group: "ud-answer-${{ github.event.pull_request.number }}", cancel-in-progress: false }
-    steps:
-      - uses: actions/checkout@v4
-        with: { ref: "${{ github.event.pull_request.head.ref }}" }
-      - uses: actions/checkout@v4
-        with: { repository: aglowinthefield/unconscious-development, ref: "${{ env.UD_REF }}", path: .ud }
-      - uses: actions/setup-node@v4
-        with: { node-version: 24 }
-      - run: .ud/bin/unconscious answer --pr "$PR" --comment "$COMMENT" --repo "$GITHUB_REPOSITORY"
-        env:
-          GH_TOKEN: "${{ github.token }}"
-          PR: "${{ github.event.pull_request.number }}"
-          COMMENT: "${{ github.event.comment.id }}"
-          UD_SELF: "${{ vars.UD_SELF }}"
-          GIT_AUTHOR_NAME: github-actions[bot]
-          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
-          GIT_COMMITTER_NAME: github-actions[bot]
-          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com

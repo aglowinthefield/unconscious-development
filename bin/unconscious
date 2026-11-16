@@ -5,9 +5,10 @@
 #               presets, and switch off billion-context's acp_delegate
 #   unconscious disable  undo all three
 #   unconscious status   show what is on
-#   unconscious check-spec|spec-to-tasks|on-merge|status-page|ask|answer   the scripts in src/ (run with -h)
+#   unconscious check-spec|spec-to-tasks|on-merge|status-page|questions   the scripts in src/ (run with -h)
 #   unconscious propose          run the Magician headless over every Now page
-#   unconscious schedule on|off   status-page every 15 minutes, propose daily, with launchd
+#   unconscious tick             status-page, then questions (what the schedule runs)
+#   unconscious schedule on|off   tick every 15 minutes, propose daily, with launchd
 # Both commands touch only the keys they own, so running either twice is safe.
 # Changes apply to new pi sessions.
 set -euo pipefail
@@ -75,7 +76,7 @@ print("billion-context acp_delegate:", "off" if b.get("pi", {}).get("subagents")
 PY
 }
 
-# Run status-page every 15 minutes (and at login) and propose daily at 07:00, as launchd agents. The agent keeps the PATH and
+# Run tick every 15 minutes (and at login) and propose daily at 07:00, as launchd agents. The agent keeps the PATH and
 # Now folder of the shell that turned it on, so gh, git and node resolve the same way.
 plist="$HOME/Library/LaunchAgents/dev.unconscious.status-page.plist"
 propose_plist="$HOME/Library/LaunchAgents/dev.unconscious.propose.plist"
@@ -87,6 +88,12 @@ propose() {
   pi -p --no-session --no-skills --skill "$ud_root/skills/propose" --tools read,bash,edit,write \
     "Use the propose skill headless: write Proposed next on every project page in ${UD_NOW_DIR:-the Now folder}. Today is $(date +%F)."
   "$ud_root/bin/unconscious" status-page
+}
+# The 15-minute pass: rebuild the Now pages, then ask and apply open spec questions.
+tick() {
+  echo "== $(date -u +%FT%TZ) tick"
+  "$ud_root/bin/unconscious" status-page || true
+  "$ud_root/bin/unconscious" questions
 }
 schedule() {
   case "${1:-}" in
@@ -100,7 +107,7 @@ schedule() {
 <dict>
   <key>Label</key><string>dev.unconscious.status-page</string>
   <key>ProgramArguments</key>
-  <array><string>$ud_root/bin/unconscious</string><string>status-page</string></array>
+  <array><string>$ud_root/bin/unconscious</string><string>tick</string></array>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key><string>$PATH</string>
@@ -137,7 +144,7 @@ PLIST
         launchctl bootout "gui/$(id -u)" "$p" 2>/dev/null || true
         launchctl bootstrap "gui/$(id -u)" "$p"
       done
-      echo "status-page runs every 15 minutes into $dir; log: ~/Library/Logs/unconscious-status-page.log"
+      echo "status-page and questions run every 15 minutes, pages into $dir; log: ~/Library/Logs/unconscious-status-page.log"
       echo "propose runs daily at ${UD_PROPOSE_HOUR:-7}:00; log: ~/Library/Logs/unconscious-propose.log" ;;
     off)
       for p in "$plist" "$propose_plist"; do launchctl bootout "gui/$(id -u)" "$p" 2>/dev/null || true; rm -f "$p"; done
@@ -152,6 +159,7 @@ case "${1:-status}" in
   status) status; schedule ;;
   schedule) schedule "${2:-}" ;;
   propose) propose ;;
-  check-spec|spec-to-tasks|on-merge|status-page|ask|answer) exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$@" ;;
-  *) echo "usage: unconscious enable|disable|status|check-spec|spec-to-tasks|on-merge|status-page|ask|answer|propose|schedule" >&2; exit 2 ;;
+  tick) tick ;;
+  check-spec|spec-to-tasks|on-merge|status-page|questions) exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$@" ;;
+  *) echo "usage: unconscious enable|disable|status|check-spec|spec-to-tasks|on-merge|status-page|questions|propose|tick|schedule" >&2; exit 2 ;;
 esac

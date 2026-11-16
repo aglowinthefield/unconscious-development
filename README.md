@@ -34,13 +34,13 @@ Node 24, no dependencies. Run from a project repo; `-h` for options.
 - `bin/unconscious check-spec`: checks every spec and plan under `docs/specs/`, or a trivial issue's criteria with `--issue N`.
 - `bin/unconscious spec-to-tasks N`: turns issue N's plan (or its body, for the trivial tier) into tasks keyed `gh-N/t1`, through Bakery when `bakery-cli` is on the path, else printed for a plain session. `--dry-run` shows them without the state check.
 - `bin/unconscious on-merge --base SHA`: flips the issue of each approved spec the merge touched to `ready-for-agent` and runs `spec-to-tasks`.
-- `bin/unconscious ask --pr N`: posts each open `[NEEDS CLARIFICATION]` on spec PR N as a review comment on its line, once.
-- `bin/unconscious answer --pr N --comment ID`: puts a reply to one of those comments in place of its marker, commits and pushes. Replies count from people with a stake in the repo (on GitHub: owner, members, collaborators), or only the logins in `UD_SELF` when set. Both go through the tracker adapter (`src/tracker/tracker.ts`); GitHub's is `src/tracker/github.ts`.
+- `bin/unconscious questions`: for every project page's repo, posts each open `[NEEDS CLARIFICATION]` on a spec PR as a review comment on its line, once, and puts a reply in that thread in place of its marker as a commit on the PR branch. Replies count from people with a stake in the repo (on GitHub: owner, members, collaborators), or only the logins in `UD_SELF` when set. It runs as you, through `gh`, every 15 minutes with `schedule on`, so the commit starts the repo's CI like any push. The tracker verbs it uses are in `src/tracker/tracker.ts`; GitHub's adapter is `src/tracker/github.ts`.
+- `templates/comments/`: the text of those comments (`question.md`, `answered.md`, `gone.md`). Copy one to `~/.config/unconscious/comments/` (or `$UD_COMMENT_TEMPLATES`) to change it. `{{card}}` is a random Rider-Waite-Smith card from the `ud-assets` branch, floated left; `{{card_name}}` is its name. The tag that lets the next run recognise a comment is added after the template.
 - `workflows/unconscious.yml`: the CI workflow a project repo copies to run all of these.
 - `bin/unconscious status-page`: rebuilds each `🌀 Now/<project>.md` page (any page with `repo:` in its frontmatter; `path:` to read specs, `ci:` to name the main workflow) and the Projects table in `🌀 Now/index.md`, whose Next column is each page's first proposal. Sections it doesn't write, like Proposed next, stay as they are.
 - `skills/propose`: the Magician. Writes the Proposed next section of a Now page; run it in a session with "propose".
 - `bin/unconscious propose`: runs the Magician headless in `pi` over every Now page.
-- `bin/unconscious schedule on|off`: runs `status-page` every 15 minutes and `propose` daily at 07:00 (`UD_PROPOSE_HOUR`), with launchd.
+- `bin/unconscious schedule on|off`: runs `tick` (`status-page`, then `questions`) every 15 minutes and `propose` daily at 07:00 (`UD_PROPOSE_HOUR`), with launchd.
 - `npm test`: the tests.
 
 ## The cast

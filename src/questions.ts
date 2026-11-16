@@ -1,11 +1,11 @@
-// Open questions on a spec PR. `ask` posts one review comment per [NEEDS CLARIFICATION] marker,
-// on the marker's line. `answer` takes a reply in that thread and puts its text in the file in
-// place of the marker. Each question comment carries a tag naming the file and the exact marker,
-// so a later push or a second run never asks twice and the answer finds its marker.
+// Open questions on a spec change request, polled. Each [NEEDS CLARIFICATION] marker is asked as
+// a note on its line; a reply in that thread from someone who may answer is put in the file in
+// place of the marker and committed to the branch. Each question carries a tag naming the file and
+// the exact marker, and each reply this tool posts carries a tag naming the note it settled, so
+// the tracker itself is the record of what has been done.
 
-import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { drawCard } from "./cards.ts";
+import { loadTemplate, render, type Kind } from "./comments.ts";
 import { markers } from "./markdown.ts";
 import type { ChangeRequest, Person, Tracker } from "./tracker/tracker.ts";
 
@@ -16,6 +16,10 @@ export interface Question {
 }
 
 const TAG = /<!-- ud-question ([A-Za-z0-9_-]+) -->/;
+const REPLY_TAG = /<!-- ud-reply (\d+) -->/;
+
+// Marks a reply this tool posted, naming the note it answered.
+export const replyTag = (noteId: number) => `<!-- ud-reply ${noteId} -->`;
 
 export function questionTag(q: { path: string; marker: string }): string {
   const payload = Buffer.from(JSON.stringify({ path: q.path, marker: q.marker })).toString("base64url");
@@ -57,17 +61,6 @@ export function unasked(questions: Question[], commentBodies: string[]): Questio
   });
 }
 
-export function questionBody(q: Question): string {
-  const text = q.marker.replace(/^\[NEEDS CLARIFICATION:\s*/, "").replace(/\]$/, "");
-  return [
-    `**Open question:** ${text}`,
-    "",
-    "Reply in this thread with the words that should stand in the file instead of the marker. Your reply replaces it as written, on the same line, and is committed to this branch.",
-    "",
-    questionTag(q),
-  ].join("\n");
-}
-
 // One line of text: the marker sits inside a sentence or list item, so a line break would split it.
 export function normaliseAnswer(body: string): string {
   return body.replace(/\r\n/g, "\n").split(/\n+/).map(l => l.trim()).filter(Boolean).join(" ");
@@ -93,58 +86,76 @@ function openQuestions(tracker: Tracker, cr: ChangeRequest): Question[] {
   });
 }
 
-// Ask every open question on the change request that no note has asked yet. Returns how many.
-export function askQuestions(tracker: Tracker, ref: number, dryRun = false): number {
-  const cr = tracker.getChangeRequest(ref);
-  const fresh = unasked(openQuestions(tracker, cr), tracker.notes(cr).map(n => n.body));
-  for (const q of fresh) {
-    if (!dryRun) tracker.postNote(cr, { path: q.path, line: q.line, body: questionBody(q) });
-    console.log(`${dryRun ? "would ask" : "asked"} ${q.path}:${q.line} ${q.marker}`);
-  }
-  if (!fresh.length) console.log("no unasked questions");
-  return fresh.length;
+export interface PollOptions {
+  self: string[]; // UD_SELF: when set, only these logins answer
+  dryRun?: boolean;
+  rng?: () => number; // draws the card
+  templates?: string[]; // template dirs, override first
 }
 
-const git = (root: string, args: string[]) =>
-  execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+function compose(kind: Kind, vars: Record<string, string | number>, tag: string, opts: PollOptions): string {
+  const c = drawCard(opts.rng);
+  return `${render(loadTemplate(kind, opts.templates), { ...vars, card: c.html, card_name: c.name, card_url: c.url })}\n\n${tag}`;
+}
 
-// Apply a reply to a question: replace the marker in the branch checked out at `root`, commit,
-// push, and say so in the thread. Anything that isn't a permitted answer is ignored.
-export function answerQuestion(
-  tracker: Tracker, root: string, ref: number, noteId: number, opts: { self: string[]; dryRun?: boolean },
-): string {
-  const cr = tracker.getChangeRequest(ref);
-  const note = tracker.getNote(cr, noteId);
-  if (!note.replyTo) return "not a reply; ignored";
-  const thread = tracker.getNote(cr, note.replyTo);
-  const tag = parseQuestionTag(thread.body);
-  if (!tag || !thread.author.bot) return "not a reply to an open question; ignored";
-  if (!mayAnswer(note.author, opts.self)) return `${note.author.login} may not answer; ignored`;
-  if (!answerablePath(tag.path)) return `refusing to edit ${tag.path}`;
+const questionText = (marker: string) => marker.replace(/^\[NEEDS CLARIFICATION:\s*/, "").replace(/\]$/, "");
 
-  const answer = normaliseAnswer(note.body);
-  if (!answer) return "empty reply; ignored";
-  const file = join(root, tag.path);
-  const next = applyAnswer(readFileSync(file, "utf8"), tag.marker, answer);
-  if (next === null) {
-    if (!opts.dryRun) tracker.reply(cr, thread.id, "This question is no longer in the file, so the reply changed nothing.");
-    return "marker already gone";
+export function questionBody(q: Question, opts: PollOptions = { self: [] }): string {
+  return compose("question", { question: questionText(q.marker), marker: q.marker, path: q.path, line: q.line }, questionTag(q), opts);
+}
+
+// Comments this tool posted carry a tag; a person's reply never does.
+const isOurs = (body: string) => TAG.test(body) || REPLY_TAG.test(body);
+
+// One pass over a change request: apply each new answer, then ask each new question. Every comment
+// is a tracker note, so the pass keeps no state of its own and running it twice changes nothing.
+export function pollChangeRequest(tracker: Tracker, cr: ChangeRequest, opts: PollOptions): string[] {
+  if (!cr.files.some(answerablePath)) return [];
+  const log: string[] = [];
+  const notes = tracker.notes(cr);
+
+  for (const thread of notes) {
+    const tag = !thread.replyTo && parseQuestionTag(thread.body);
+    if (!tag || !answerablePath(tag.path)) continue;
+    const replies = notes.filter(n => n.replyTo === thread.id);
+    if (replies.some(r => REPLY_TAG.test(r.body))) continue; // this thread is settled
+    const reply = replies.find(r => !isOurs(r.body) && mayAnswer(r.author, opts.self) && normaliseAnswer(r.body));
+    if (!reply) continue;
+    const answer = normaliseAnswer(reply.body);
+    const text = tracker.fileAt(tag.path, cr.head);
+    const next = text === null ? null : applyAnswer(text, tag.marker, answer);
+    const where = `#${cr.number} ${tag.path}`;
+    if (next === null) {
+      if (!opts.dryRun) tracker.reply(cr, thread.id, compose("gone", { marker: tag.marker, path: tag.path }, replyTag(reply.id), opts));
+      log.push(`${where}: question already gone`);
+      continue;
+    }
+    if (opts.dryRun) { log.push(`${where}: would answer ${tag.marker} with: ${answer}`); continue; }
+    const sha = tracker.commitFile(cr, {
+      path: tag.path, content: next,
+      message: `Answer an open question in ${tag.path}\n\n${tag.marker}\n\n→ ${answer}\n\nAnswered by @${reply.author.login}.`,
+    });
+    cr.head = sha;
+    const left = openQuestions(tracker, cr).length;
+    const remaining = left
+      ? `${left} open question${left === 1 ? "" : "s"} left on this change.`
+      : "No open questions left; set `status: approved` in the spec when you approve it.";
+    tracker.reply(cr, thread.id, compose("answered",
+      { answer, sha: sha.slice(0, 7), remaining, left, author: reply.author.login, marker: tag.marker, path: tag.path },
+      replyTag(reply.id), opts));
+    log.push(`${where}: answered in ${sha.slice(0, 7)}`);
   }
-  if (opts.dryRun) return `would replace ${tag.marker} in ${tag.path} with: ${answer}`;
 
-  writeFileSync(file, next);
-  git(root, ["add", "--", tag.path]);
-  // The committer comes from git's own config or GIT_AUTHOR_*/GIT_COMMITTER_* (the workflow sets them).
-  git(root, ["commit", "-q", "-m", `Answer an open question in ${tag.path}`, "-m", `${tag.marker}\n\n→ ${answer}\n\nAnswered by @${note.author.login}.`]);
-  git(root, ["push", "-q", "origin", `HEAD:${cr.branch}`]);
-  const sha = git(root, ["rev-parse", "HEAD"]).slice(0, 7);
+  // Ask after answering: an answer can carry a new marker, and new questions go on the new head.
+  const fresh = unasked(openQuestions(tracker, cr), (opts.dryRun ? notes : tracker.notes(cr)).map(n => n.body));
+  for (const q of fresh) {
+    if (!opts.dryRun) tracker.postNote(cr, { path: q.path, line: q.line, body: questionBody(q, opts) });
+    log.push(`#${cr.number} ${q.path}:${q.line}: ${opts.dryRun ? "would ask" : "asked"} ${q.marker}`);
+  }
+  return log;
+}
 
-  const left = cr.files.filter(answerablePath).flatMap(path => {
-    try { return questionsIn(path, readFileSync(join(root, path), "utf8")); } catch { return []; }
-  }).length;
-  tracker.reply(cr, thread.id, left
-    ? `Answered in ${sha}. ${left} open question${left === 1 ? "" : "s"} left on this change.`
-    : `Answered in ${sha}. No open questions left; set \`status: approved\` in the spec when you approve it.`);
-  askQuestions(tracker, ref); // an answer may itself hold a new marker
-  return `answered ${tag.path} in ${sha}`;
+// Every open change request in the tracker's repo.
+export function pollQuestions(tracker: Tracker, opts: PollOptions): string[] {
+  return tracker.openChangeRequests().flatMap(cr => pollChangeRequest(tracker, cr, opts));
 }

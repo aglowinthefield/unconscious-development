@@ -44,7 +44,10 @@ export interface Tracker {
   createIssue(input: { title: string; body: string; labels: string[] }): Issue;
 
   getChangeRequest(ref: string | number): ChangeRequest;
+  openChangeRequests(): ChangeRequest[];
   fileAt(path: string, ref: string): string | null; // null when the file doesn't exist at ref
+  // Replace one file on the change request's branch as a new commit. Returns the commit id.
+  commitFile(cr: ChangeRequest, file: { path: string; content: string; message: string }): string;
   notes(cr: ChangeRequest): Note[];
   getNote(cr: ChangeRequest, id: number): Note;
   // A note on one line of a file. When the tracker can't attach it there, it attaches it to the

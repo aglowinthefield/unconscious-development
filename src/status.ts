@@ -289,8 +289,11 @@ const write = (path: string, text: string) => {
   renameSync(path + ".tmp", path);
 };
 
-export function statusPage(dir: string, only?: string): Row[] {
-  const rows: Row[] = [];
+export interface ProjectPage { name: string; file: string; path: string; text: string; fm: Frontmatter; repo: string }
+
+// The project pages in the Now folder (or the one named `only`): pages with `repo:` in frontmatter.
+export function projectPages(dir: string, only?: string): ProjectPage[] {
+  const pages: ProjectPage[] = [];
   for (const f of readdirSync(dir).filter(f => f.endsWith(".md") && f !== "index.md").sort()) {
     const path = join(dir, f);
     const text = readFileSync(path, "utf8");
@@ -298,6 +301,14 @@ export function statusPage(dir: string, only?: string): Row[] {
     if (typeof fm?.repo !== "string") continue;
     const name = typeof fm.name === "string" ? fm.name : basename(f, ".md");
     if (only && only !== name && only !== basename(f, ".md")) continue;
+    pages.push({ name, file: f, path, text, fm, repo: fm.repo });
+  }
+  return pages;
+}
+
+export function statusPage(dir: string, only?: string): Row[] {
+  const rows: Row[] = [];
+  for (const { name, file: f, path, text, fm } of projectPages(dir, only)) {
     try {
       const snapshot = gather(fm);
       write(path, renderPage(text, snapshot));

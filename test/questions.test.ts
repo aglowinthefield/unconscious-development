@@ -1,12 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { CARDS, card, drawCard } from "../src/cards.ts";
+import { render } from "../src/comments.ts";
 import type { ChangeRequest, Note, Tracker } from "../src/tracker/tracker.ts";
 import {
-  answerQuestion, askQuestions, answerablePath, applyAnswer, mayAnswer, normaliseAnswer, parseQuestionTag, questionBody, questionsIn, unasked,
+  pollChangeRequest, pollQuestions, replyTag, answerablePath, applyAnswer, mayAnswer, normaliseAnswer, parseQuestionTag, questionBody, questionsIn, unasked,
 } from "../src/questions.ts";
 
 const SPEC = `## Acceptance criteria
@@ -24,11 +25,30 @@ test("each marker becomes a question on its line", () => {
 
 test("the comment body shows the question and carries a tag that finds the marker again", () => {
   const [q] = questionsIn("docs/specs/a/b.md", SPEC);
-  const body = questionBody(q);
-  assert.match(body, /^\*\*Open question:\*\* bit cutoff; 31 proposed\n/);
+  const body = questionBody(q, { self: [], rng: () => 0 });
+  assert.match(body, /<img align="left" width="68" height="120" src="[^"]+\/tarot\/ace-of-cups\.png" alt="Ace of Cups">/);
+  assert.match(body, /\*\*Open question:\*\* bit cutoff; 31 proposed\n/);
   assert.deepEqual(parseQuestionTag(body), { path: q.path, marker: q.marker });
   assert.equal(parseQuestionTag("a plain comment"), null);
   assert.equal(parseQuestionTag("<!-- ud-question !!! -->"), null);
+});
+
+test("the deck has 78 cards with readable names, drawn at random", () => {
+  assert.equal(CARDS.length, 78);
+  assert.equal(new Set(CARDS).size, 78);
+  assert.equal(card("the-high-priestess").name, "The High Priestess");
+  assert.equal(card("ace-of-pentacles").name, "Ace of Pentacles");
+  assert.equal(drawCard(() => 0.999).slug, CARDS[77]);
+});
+
+test("a template fills its variables, and a custom one overrides the shipped one", () => {
+  assert.equal(render("{{a}} and {{ b }} and {{nope}}.", { a: 1, b: "two" }), "1 and two and .");
+  const dir = mkdtempSync(join(tmpdir(), "ud-tpl-"));
+  writeFileSync(join(dir, "question.md"), "Q: {{question}} ({{card_name}})");
+  const [q] = questionsIn("docs/specs/a/b.md", SPEC);
+  const body = questionBody(q, { self: [], rng: () => 0, templates: [dir] });
+  assert.equal(body.split("\n")[0], "Q: bit cutoff; 31 proposed (Ace of Cups)");
+  assert.ok(parseQuestionTag(body), "the tag survives a custom template");
 });
 
 test("a question already asked, or asked twice in one file, is posted once", () => {
@@ -67,57 +87,73 @@ test("people with a stake answer, bots never; UD_SELF narrows it to named logins
   assert.ok(!mayAnswer(tom, ["zane"]));
 });
 
-// An in-memory tracker: one change request whose files live in a map, notes in an array.
-function fakeTracker(files: Record<string, string>, branch = "spec/1") {
+// An in-memory tracker: change requests whose branch files live in a map, notes in an array.
+function fakeTracker(files: Record<string, string>) {
   const notes: Note[] = [];
-  const cr: ChangeRequest = { number: 1, head: "abc", branch, files: Object.keys(files) };
+  const commits: string[] = [];
+  const cr: ChangeRequest = { number: 1, head: "c0", branch: "spec/1", files: Object.keys(files) };
+  const me = { login: "tom", bot: false, member: true };
   const tracker = {
     getChangeRequest: () => cr,
+    openChangeRequests: () => [cr, { number: 2, head: "x", branch: "y", files: ["src/x.ts"] }],
     fileAt: (path: string) => files[path] ?? null,
-    notes: () => notes,
+    commitFile: (_: ChangeRequest, f: { path: string; content: string; message: string }) => {
+      files[f.path] = f.content;
+      commits.push(f.message);
+      return `c${commits.length}abcdef`;
+    },
+    notes: () => notes.map(n => ({ ...n })),
     getNote: (_: ChangeRequest, id: number) => notes.find(n => n.id === id)!,
-    postNote: (_: ChangeRequest, n: { path: string; line: number; body: string }) =>
-      void notes.push({ id: notes.length + 1, body: n.body, author: { login: "bot", bot: true, member: false } }),
+    postNote: (_: ChangeRequest, n: { body: string }) => void notes.push({ id: notes.length + 1, body: n.body, author: me }),
     reply: (_: ChangeRequest, threadId: number, body: string) =>
-      void notes.push({ id: notes.length + 1, body, author: { login: "bot", bot: true, member: false }, replyTo: threadId }),
+      void notes.push({ id: notes.length + 1, body, author: me, replyTo: threadId }),
   } as unknown as Tracker;
-  return { tracker, notes };
+  return { tracker, notes, files, commits, cr, me };
 }
 
-test("ask posts each open question once, through any tracker", () => {
+const opts = { self: [], rng: () => 0 };
+
+test("a poll asks each open question once, on spec change requests only", () => {
   const { tracker, notes } = fakeTracker({ "docs/specs/a/b.md": SPEC, "src/x.ts": "[NEEDS CLARIFICATION: not a spec]" });
-  assert.equal(askQuestions(tracker, 1), 2);
-  assert.equal(askQuestions(tracker, 1), 0);
+  assert.equal(pollQuestions(tracker, opts).length, 2);
+  assert.deepEqual(pollQuestions(tracker, opts), []);
   assert.deepEqual(notes.map(n => parseQuestionTag(n.body)?.marker), [
     "[NEEDS CLARIFICATION: bit cutoff; 31 proposed]",
     "[NEEDS CLARIFICATION: floor; 50 proposed]",
   ]);
 });
 
-test("a reply replaces its marker, is committed and pushed, and the thread hears back", () => {
-  const dir = mkdtempSync(join(tmpdir(), "ud-answer-"));
-  const remote = join(dir, "remote.git");
-  const root = join(dir, "work");
-  const sh = (cwd: string, ...args: string[]) => execFileSync("git", args, { cwd, encoding: "utf8" }).trim();
-  sh(dir, "init", "-q", "--bare", remote);
-  sh(dir, "init", "-q", "-b", "spec/1", root);
-  mkdirSync(join(root, "docs/specs/a"), { recursive: true });
-  writeFileSync(join(root, "docs/specs/a/b.md"), SPEC);
-  sh(root, "add", ".");
-  sh(root, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "spec");
-  sh(root, "remote", "add", "origin", remote);
-  sh(root, "push", "-q", "origin", "spec/1");
-
-  for (const k of ["GIT_AUTHOR", "GIT_COMMITTER"]) { process.env[`${k}_NAME`] = "ud"; process.env[`${k}_EMAIL`] = "ud@test"; }
-  const { tracker, notes } = fakeTracker({ "docs/specs/a/b.md": SPEC });
-  askQuestions(tracker, 1);
-  notes.push({ id: 10, body: "31\n", author: { login: "tom", bot: false, member: true }, replyTo: 1 });
+test("a reply replaces its marker in a commit, the thread hears back, and the next poll leaves it alone", () => {
+  const { tracker, notes, files, commits, cr, me } = fakeTracker({ "docs/specs/a/b.md": SPEC });
+  pollChangeRequest(tracker, cr, opts);
+  notes.push({ id: 10, body: "31\n", author: me, replyTo: 1 });
   notes.push({ id: 11, body: "50", author: { login: "drive-by", bot: false, member: false }, replyTo: 2 });
 
-  assert.equal(answerQuestion(tracker, root, 1, 11, { self: [] }), "drive-by may not answer; ignored");
-  assert.match(answerQuestion(tracker, root, 1, 10, { self: [] }), /^answered docs\/specs\/a\/b\.md in [0-9a-f]{7}$/);
-  assert.match(readFileSync(join(root, "docs/specs/a/b.md"), "utf8"), /at most 31 of 256 bits/);
-  assert.equal(sh(root, "rev-parse", "HEAD"), sh(remote, "rev-parse", "spec/1"));
-  assert.match(notes.at(-1)!.body, /^Answered in [0-9a-f]{7}\. 1 open question left on this change\.$/);
-  assert.equal(answerQuestion(tracker, root, 1, 10, { self: [] }), "marker already gone");
+  assert.deepEqual(pollChangeRequest(tracker, cr, { ...opts, dryRun: true }),
+    ["#1 docs/specs/a/b.md: would answer [NEEDS CLARIFICATION: bit cutoff; 31 proposed] with: 31"]);
+  assert.equal(commits.length, 0);
+
+  assert.deepEqual(pollChangeRequest(tracker, cr, opts), ["#1 docs/specs/a/b.md: answered in c1abcde"]);
+  assert.match(files["docs/specs/a/b.md"], /at most 31 of 256 bits/);
+  assert.match(files["docs/specs/a/b.md"], /\[NEEDS CLARIFICATION: floor/, "the drive-by reply changed nothing");
+  assert.match(commits[0], /^Answer an open question in docs\/specs\/a\/b\.md\n[\s\S]*Answered by @tom\.$/);
+  const answered = notes.at(-1)!;
+  assert.equal(answered.replyTo, 1);
+  assert.ok(answered.body.endsWith(replyTag(10)));
+  assert.match(answered.body, /Answered in c1abcde: 31\n\n1 open question left on this change\./);
+  assert.equal(cr.head, "c1abcdef");
+
+  notes.push({ id: 20, body: "actually 30", author: me, replyTo: 1 });
+  assert.deepEqual(pollChangeRequest(tracker, cr, opts), [], "a settled thread takes no more answers");
+  assert.equal(commits.length, 1);
+});
+
+test("a reply to a question no longer in the file is told so", () => {
+  const { tracker, notes, files, cr, me } = fakeTracker({ "docs/specs/a/b.md": SPEC });
+  pollChangeRequest(tracker, cr, opts);
+  files["docs/specs/a/b.md"] = SPEC.replace("[NEEDS CLARIFICATION: bit cutoff; 31 proposed]", "31");
+  notes.push({ id: 10, body: "31", author: me, replyTo: 1 });
+  assert.deepEqual(pollChangeRequest(tracker, cr, opts), ["#1 docs/specs/a/b.md: question already gone"]);
+  assert.match(notes.at(-1)!.body, /no longer in the file/);
+  assert.deepEqual(pollChangeRequest(tracker, cr, opts), []);
 });

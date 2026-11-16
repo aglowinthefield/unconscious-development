@@ -1,8 +1,13 @@
 import { execFileSync } from "node:child_process";
 import { STATES, type ChangeRequest, type Issue, type Note, type State, type Tracker } from "./tracker.ts";
 
-const gh = (args: string[], cwd?: string) =>
-  execFileSync("gh", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+const gh = (args: string[], cwd?: string, input?: string) =>
+  execFileSync("gh", args, { cwd, input, encoding: "utf8", stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"] }).trim();
+
+const enc = (path: string) => path.split("/").map(encodeURIComponent).join("/");
+const CR_FIELDS = "number,headRefOid,headRefName,files";
+const toCR = (j: any): ChangeRequest =>
+  ({ number: j.number, head: j.headRefOid, branch: j.headRefName, files: (j.files ?? []).map((f: any) => f.path) });
 
 export function repoFromRemote(cwd: string): string {
   return gh(["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"], cwd);
@@ -61,12 +66,19 @@ export function githubTracker(repo: string): Tracker {
     },
     getChangeRequest(ref) {
       const n = String(ref).replace(/^.*\/pull\//, "").replace(/^#/, "");
-      const j = JSON.parse(gh(["pr", "view", n, "-R", repo, "--json", "number,headRefOid,headRefName,files"]));
-      return { number: j.number, head: j.headRefOid, branch: j.headRefName, files: j.files.map((f: any) => f.path) };
+      return toCR(JSON.parse(gh(["pr", "view", n, "-R", repo, "--json", CR_FIELDS])));
+    },
+    openChangeRequests() {
+      return JSON.parse(gh(["pr", "list", "-R", repo, "--state", "open", "--limit", "100", "--json", CR_FIELDS])).map(toCR);
+    },
+    commitFile(cr, { path, content, message }) {
+      const sha = gh(["api", `repos/${repo}/contents/${enc(path)}?ref=${encodeURIComponent(cr.branch)}`, "--jq", ".sha"]);
+      const input = JSON.stringify({ message, branch: cr.branch, sha, content: Buffer.from(content).toString("base64") });
+      return gh(["api", "-X", "PUT", `repos/${repo}/contents/${enc(path)}`, "--input", "-", "--jq", ".commit.sha"], undefined, input);
     },
     fileAt(path, ref) {
       try {
-        const b64 = gh(["api", `repos/${repo}/contents/${path}?ref=${ref}`, "--jq", ".content"]);
+        const b64 = gh(["api", `repos/${repo}/contents/${enc(path)}?ref=${encodeURIComponent(ref)}`, "--jq", ".content"]);
         return Buffer.from(b64, "base64").toString("utf8");
       } catch {
         return null;
