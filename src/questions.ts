@@ -7,13 +7,14 @@
 import { CARDS, card, cardIn, drawCard, type Card } from "./cards.ts";
 import { loadTemplate, render, type Kind } from "./comments.ts";
 import { literal, type Interpreter } from "./interpret.ts";
-import { markers } from "./markdown.ts";
+import { MARKER, markers } from "./markdown.ts";
 import type { ChangeRequest, Note, Person, Tracker } from "./tracker/tracker.ts";
 
 export interface Question {
   path: string;
   line: number;
   marker: string;
+  note?: string; // the full question, from the `> **Open:**` note under the line
 }
 
 const TAG = /<!-- ud-question ([A-Za-z0-9_-]+) -->/;
@@ -61,8 +62,35 @@ export function answerablePath(path: string): boolean {
   return /^docs\/(specs|personas)\/[^\0]+\.md$/.test(path) && !path.split("/").includes("..");
 }
 
+const OPEN = /^\s*> \*\*Open:\*\*\s*/;
+
+interface OpenNote { start: number; end: number; text: string }
+
+// The notes under a line, in order. Each starts `> **Open:**` and runs over the `>` lines after it.
+export function openNotes(lines: string[], index: number): OpenNote[] {
+  const notes: OpenNote[] = [];
+  let i = index + 1;
+  while (i < lines.length && OPEN.test(lines[i])) {
+    const start = i;
+    const parts = [lines[i++].replace(OPEN, "")];
+    while (i < lines.length && /^\s*>/.test(lines[i]) && !OPEN.test(lines[i])) parts.push(lines[i++].replace(/^\s*>\s?/, ""));
+    notes.push({ start, end: i, text: parts.map(p => p.trim()).filter(Boolean).join(" ") });
+  }
+  return notes;
+}
+
+// A marker's note: the nth note under its line belongs to the nth marker on it.
+function noteFor(lines: string[], index: number, marker: string): OpenNote | undefined {
+  const n = [...lines[index].matchAll(MARKER)].findIndex(m => m[0] === marker);
+  return n < 0 ? undefined : openNotes(lines, index)[n];
+}
+
 export function questionsIn(path: string, text: string): Question[] {
-  return markers(text).map(m => ({ path, line: m.line, marker: m.text }));
+  const lines = text.split("\n");
+  return markers(text).map(m => {
+    const note = noteFor(lines, m.line - 1, m.text);
+    return note ? { path, line: m.line, marker: m.text, note: note.text } : { path, line: m.line, marker: m.text };
+  });
 }
 
 // Markers no existing comment has asked about yet. A marker asked once is never asked again, even
@@ -116,7 +144,7 @@ const questionText = (marker: string) => marker.replace(/^\[NEEDS CLARIFICATION:
 
 export function questionBody(q: Question, opts: Pick<PollOptions, "rng" | "templates"> = {}): string {
   const c = drawCard(opts.rng);
-  return compose("question", { question: questionText(q.marker), marker: q.marker, path: q.path, line: q.line }, questionTag(q, c.slug), opts, c);
+  return compose("question", { question: q.note ?? questionText(q.marker), marker: q.marker, path: q.path, line: q.line }, questionTag(q, c.slug), opts, c);
 }
 
 // Comments this tool posted carry a tag; a person's reply never does.
@@ -152,7 +180,7 @@ function settle(
   const text = tracker.fileAt(tag.path, cr.head) ?? "";
   const lines = text.split("\n");
   // Find the span to replace: the marker, or the earlier answer on the line it was written to.
-  let index: number, at: number, span: string;
+  let index: number, at: number, span: string, note: OpenNote | undefined;
   if (answered?.line !== undefined) {
     index = lines.indexOf(answered.line);
     at = answered.at ?? -1;
@@ -162,6 +190,7 @@ function settle(
     index = lines.findIndex(l => l.includes(tag.marker));
     at = index < 0 ? -1 : lines[index].indexOf(tag.marker);
     span = tag.marker;
+    if (index >= 0) note = noteFor(lines, index, tag.marker);
   }
   if (index < 0) {
     post("gone", {}, { note: reply.id });
@@ -172,7 +201,7 @@ function settle(
   const quoted = literal(reply.body);
   const verdict = quoted !== null
     ? { verdict: "answer" as const, text: quoted }
-    : opts.interpreter.interpret({ question: questionText(tag.marker), before, span, after, reply: normaliseAnswer(reply.body) });
+    : opts.interpreter.interpret({ question: note?.text ?? questionText(tag.marker), before, span, after, reply: normaliseAnswer(reply.body) });
   if (verdict.verdict !== "answer") {
     post("unclear", { note: verdict.note, verdict: verdict.verdict }, { note: reply.id });
     return { log: `${verdict.verdict}: ${verdict.note}` };
@@ -180,6 +209,7 @@ function settle(
   const newLine = before + verdict.text + after;
   if (opts.dryRun) return { log: `would write: ${newLine.trim()}` };
   lines[index] = newLine;
+  if (note) lines.splice(note.start, note.end - note.start); // the answer settles its note too
   const sha = tracker.commitFile(cr, {
     path: tag.path, content: lines.join("\n"),
     message: `${answered ? "Correct the answer to" : "Answer"} an open question in ${tag.path}\n\n${tag.marker}\n\n→ ${verdict.text}\n\n${answered ? "Corrected" : "Answered"} by @${reply.author.login}.`,
