@@ -11,14 +11,19 @@ import { stateOf, type Issue, type Tracker } from "./tracker/tracker.ts";
 import { bakeryRunner } from "./runner/bakery.ts";
 import { sessionRunner } from "./runner/session.ts";
 import type { Runner, TaskInput } from "./runner/runner.ts";
-import { nowDir, statusPage } from "./status.ts";
+import { nowDir, projectPages, statusPage } from "./status.ts";
+import { pollChangeRequest, pollQuestions, type PollOptions } from "./questions.ts";
 
 const USAGE = `usage:
   unconscious check-spec [--root DIR] [FILE...]       check docs/specs/** (or the files given)
   unconscious check-spec --issue N [--repo O/R]        check a trivial issue's criteria
   unconscious spec-to-tasks N [--dry-run] [--runner bakery|session] [--board ID] [--root DIR] [--repo O/R]
   unconscious on-merge --base SHA [--head SHA] [--runner …] [--board ID] [--root DIR] [--repo O/R]
-  unconscious status-page [--dir DIR] [PROJECT]       rebuild the 🌀 Now pages (or one project's)`;
+  unconscious status-page [--dir DIR] [PROJECT]       rebuild the 🌀 Now pages (or one project's)
+  unconscious questions [--dir DIR] [PROJECT] [--dry-run]
+                                                       ask open [NEEDS CLARIFICATION] markers on spec PRs and apply
+                                                       replies, for every project page (or one)
+  unconscious questions --pr N [--repo O/R] [--dry-run] the same for one PR`;
 
 class Refusal extends Error {}
 
@@ -116,6 +121,7 @@ function main(argv: string[]) {
       root: { type: "string" }, repo: { type: "string" }, issue: { type: "string" },
       runner: { type: "string" }, board: { type: "string" }, "dry-run": { type: "boolean" },
       base: { type: "string" }, head: { type: "string" }, dir: { type: "string" }, help: { type: "boolean", short: "h" },
+      pr: { type: "string" },
     },
   });
   if (!command || values.help) { console.log(USAGE); return 0; }
@@ -146,6 +152,24 @@ function main(argv: string[]) {
     if (!values.base) throw new Refusal("on-merge needs --base SHA");
     onMerge(root, tracker(), pickRunner(values.runner, root, values.board), values.base, values.head ?? "HEAD");
     return 0;
+  }
+  if (command === "questions") {
+    const opts: PollOptions = { self: (process.env.UD_SELF ?? "").split(/[\s,]+/).filter(Boolean), dryRun: Boolean(values["dry-run"]) };
+    if (values.pr) {
+      const t = tracker();
+      pollChangeRequest(t, t.getChangeRequest(values.pr), opts).forEach(l => console.log(l));
+      return 0;
+    }
+    let failed = 0;
+    for (const page of projectPages(values.dir ? resolve(values.dir) : nowDir(), positionals[0])) {
+      try {
+        pollQuestions(githubTracker(page.repo), opts).forEach(l => console.log(`${page.repo}${l}`));
+      } catch (e: any) {
+        failed++;
+        console.error(`${page.file}: ${String(e.stderr || e.message).split("\n")[0]}`);
+      }
+    }
+    return failed ? 1 : 0;
   }
   if (command === "status-page") {
     const dir = values.dir ? resolve(values.dir) : nowDir();

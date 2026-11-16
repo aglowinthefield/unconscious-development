@@ -1,8 +1,13 @@
 import { execFileSync } from "node:child_process";
-import { STATES, type Issue, type State, type Tracker } from "./tracker.ts";
+import { STATES, type ChangeRequest, type Issue, type Note, type State, type Tracker } from "./tracker.ts";
 
-const gh = (args: string[], cwd?: string) =>
-  execFileSync("gh", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+const gh = (args: string[], cwd?: string, input?: string) =>
+  execFileSync("gh", args, { cwd, input, encoding: "utf8", stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"] }).trim();
+
+const enc = (path: string) => path.split("/").map(encodeURIComponent).join("/");
+const CR_FIELDS = "number,headRefOid,headRefName,files";
+const toCR = (j: any): ChangeRequest =>
+  ({ number: j.number, head: j.headRefOid, branch: j.headRefName, files: (j.files ?? []).map((f: any) => f.path) });
 
 export function repoFromRemote(cwd: string): string {
   return gh(["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"], cwd);
@@ -23,6 +28,16 @@ export function githubTracker(repo: string): Tracker {
     body: j.body ?? "",
     labels: (j.labels ?? []).map((l: any) => l.name),
     open: j.state === "OPEN",
+  });
+  const toNote = (j: any): Note => ({
+    id: j.id,
+    body: j.body ?? "",
+    author: {
+      login: j.user.login,
+      bot: j.user.type === "Bot",
+      member: ["OWNER", "MEMBER", "COLLABORATOR"].includes(j.author_association),
+    },
+    replyTo: j.in_reply_to_id ?? undefined,
   });
   return {
     getIssue(ref) {
@@ -48,6 +63,44 @@ export function githubTracker(repo: string): Tracker {
       names.forEach(ensureLabel);
       const url = gh(["issue", "create", "-R", repo, "--title", title, "--body", body, ...names.flatMap(l => ["--label", l])]);
       return this.getIssue(url);
+    },
+    getChangeRequest(ref) {
+      const n = String(ref).replace(/^.*\/pull\//, "").replace(/^#/, "");
+      return toCR(JSON.parse(gh(["pr", "view", n, "-R", repo, "--json", CR_FIELDS])));
+    },
+    openChangeRequests() {
+      return JSON.parse(gh(["pr", "list", "-R", repo, "--state", "open", "--limit", "100", "--json", CR_FIELDS])).map(toCR);
+    },
+    commitFile(cr, { path, content, message }) {
+      const sha = gh(["api", `repos/${repo}/contents/${enc(path)}?ref=${encodeURIComponent(cr.branch)}`, "--jq", ".sha"]);
+      const input = JSON.stringify({ message, branch: cr.branch, sha, content: Buffer.from(content).toString("base64") });
+      return gh(["api", "-X", "PUT", `repos/${repo}/contents/${enc(path)}`, "--input", "-", "--jq", ".commit.sha"], undefined, input);
+    },
+    fileAt(path, ref) {
+      try {
+        const b64 = gh(["api", `repos/${repo}/contents/${enc(path)}?ref=${encodeURIComponent(ref)}`, "--jq", ".content"]);
+        return Buffer.from(b64, "base64").toString("utf8");
+      } catch {
+        return null;
+      }
+    },
+    notes(cr) {
+      const out = gh(["api", "--paginate", `repos/${repo}/pulls/${cr.number}/comments`, "--jq", ".[] | @json"]);
+      return out ? out.split("\n").map(l => toNote(JSON.parse(l))) : [];
+    },
+    getNote(_cr, id) {
+      return toNote(JSON.parse(gh(["api", `repos/${repo}/pulls/comments/${id}`])));
+    },
+    postNote(cr: ChangeRequest, { path, line, body }) {
+      const base = ["api", "-X", "POST", `repos/${repo}/pulls/${cr.number}/comments`, "-f", `body=${body}`, "-f", `commit_id=${cr.head}`, "-f", `path=${path}`];
+      try {
+        gh([...base, "-F", `line=${line}`, "-f", "side=RIGHT"]);
+      } catch {
+        gh([...base, "-f", "subject_type=file"]); // the line is outside the diff
+      }
+    },
+    reply(cr, threadId, body) {
+      gh(["api", "-X", "POST", `repos/${repo}/pulls/${cr.number}/comments/${threadId}/replies`, "-f", `body=${body}`]);
     },
   };
 }
