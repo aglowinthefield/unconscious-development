@@ -12,6 +12,7 @@ import { bakeryRunner } from "./runner/bakery.ts";
 import { sessionRunner } from "./runner/session.ts";
 import type { Runner, TaskInput } from "./runner/runner.ts";
 import { nowDir, projectPages, statusPage } from "./status.ts";
+import { piInterpreter } from "./interpret.ts";
 import { pollChangeRequest, pollQuestions, type PollOptions } from "./questions.ts";
 
 const USAGE = `usage:
@@ -154,7 +155,9 @@ function main(argv: string[]) {
     return 0;
   }
   if (command === "questions") {
-    const opts: PollOptions = { self: (process.env.UD_SELF ?? "").split(/[\s,]+/).filter(Boolean), dryRun: Boolean(values["dry-run"]) };
+    const opts: PollOptions = {
+      self: (process.env.UD_SELF ?? "").split(/[\s,]+/).filter(Boolean), dryRun: Boolean(values["dry-run"]), interpreter: piInterpreter(),
+    };
     if (values.pr) {
       const t = tracker();
       pollChangeRequest(t, t.getChangeRequest(values.pr), opts).forEach(l => console.log(l));

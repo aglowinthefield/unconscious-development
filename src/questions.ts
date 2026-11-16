@@ -6,8 +6,9 @@
 
 import { drawCard } from "./cards.ts";
 import { loadTemplate, render, type Kind } from "./comments.ts";
+import { literal, type Interpreter } from "./interpret.ts";
 import { markers } from "./markdown.ts";
-import type { ChangeRequest, Person, Tracker } from "./tracker/tracker.ts";
+import type { ChangeRequest, Note, Person, Tracker } from "./tracker/tracker.ts";
 
 export interface Question {
   path: string;
@@ -16,10 +17,25 @@ export interface Question {
 }
 
 const TAG = /<!-- ud-question ([A-Za-z0-9_-]+) -->/;
-const REPLY_TAG = /<!-- ud-reply (\d+) -->/;
+const REPLY_TAG = /<!-- ud-reply ([A-Za-z0-9_-]+) -->/;
 
-// Marks a reply this tool posted, naming the note it answered.
-export const replyTag = (noteId: number) => `<!-- ud-reply ${noteId} -->`;
+// What a reply this tool posted records: the note it settled and, when it changed the file, the
+// line as written and where the answer sits in it, so a correction can find that answer again.
+export interface Settled { note: number; line?: string; at?: number; inserted?: string }
+
+export const replyTag = (s: Settled) => `<!-- ud-reply ${Buffer.from(JSON.stringify(s)).toString("base64url")} -->`;
+
+export function parseReplyTag(body: string): Settled | null {
+  const m = REPLY_TAG.exec(body);
+  if (!m) return null;
+  if (/^\d+$/.test(m[1])) return { note: Number(m[1]) };
+  try {
+    const s = JSON.parse(Buffer.from(m[1], "base64url").toString("utf8"));
+    return typeof s?.note === "number" ? s : null;
+  } catch {
+    return null;
+  }
+}
 
 export function questionTag(q: { path: string; marker: string }): string {
   const payload = Buffer.from(JSON.stringify({ path: q.path, marker: q.marker })).toString("base64url");
@@ -66,11 +82,6 @@ export function normaliseAnswer(body: string): string {
   return body.replace(/\r\n/g, "\n").split(/\n+/).map(l => l.trim()).filter(Boolean).join(" ");
 }
 
-export function applyAnswer(text: string, marker: string, answer: string): string | null {
-  if (!text.includes(marker)) return null;
-  return text.split(marker).join(answer);
-}
-
 // Who may answer: a person with a stake in the repo, never a bot. When UD_SELF lists logins,
 // only those.
 export function mayAnswer(author: Person, self: string[] = []): boolean {
@@ -91,21 +102,80 @@ export interface PollOptions {
   dryRun?: boolean;
   rng?: () => number; // draws the card
   templates?: string[]; // template dirs, override first
+  interpreter: Interpreter; // reads plain-words replies
 }
 
-function compose(kind: Kind, vars: Record<string, string | number>, tag: string, opts: PollOptions): string {
+function compose(kind: Kind, vars: Record<string, string | number>, tag: string, opts: Pick<PollOptions, "rng" | "templates">): string {
   const c = drawCard(opts.rng);
   return `${render(loadTemplate(kind, opts.templates), { ...vars, card: c.html, card_name: c.name, card_url: c.url })}\n\n${tag}`;
 }
 
 const questionText = (marker: string) => marker.replace(/^\[NEEDS CLARIFICATION:\s*/, "").replace(/\]$/, "");
 
-export function questionBody(q: Question, opts: PollOptions = { self: [] }): string {
+export function questionBody(q: Question, opts: Pick<PollOptions, "rng" | "templates"> = {}): string {
   return compose("question", { question: questionText(q.marker), marker: q.marker, path: q.path, line: q.line }, questionTag(q), opts);
 }
 
 // Comments this tool posted carry a tag; a person's reply never does.
 const isOurs = (body: string) => TAG.test(body) || REPLY_TAG.test(body);
+
+const remainingText = (left: number) => left
+  ? `${left} open question${left === 1 ? "" : "s"} left on this change.`
+  : "No open questions left; set `status: approved` in the spec when you approve it.";
+
+// Act on one reply in a question thread. Before the question is answered, the reply's answer goes
+// in place of the marker; after, a further reply corrects that answer on the line it was written to.
+function settle(
+  tracker: Tracker, cr: ChangeRequest, tag: { path: string; marker: string }, threadId: number, reply: Note,
+  answered: Settled | undefined, opts: PollOptions,
+): { log: string; answered?: Settled } {
+  const post = (kind: Kind, vars: Record<string, string | number>, s: Settled) => {
+    if (!opts.dryRun) tracker.reply(cr, threadId, compose(kind, { ...vars, marker: tag.marker, path: tag.path }, replyTag(s), opts));
+  };
+  const text = tracker.fileAt(tag.path, cr.head) ?? "";
+  const lines = text.split("\n");
+  // Find the span to replace: the marker, or the earlier answer on the line it was written to.
+  let index: number, at: number, span: string;
+  if (answered?.line !== undefined) {
+    index = lines.indexOf(answered.line);
+    at = answered.at ?? -1;
+    span = answered.inserted ?? "";
+    if (index < 0 || answered.line.slice(at, at + span.length) !== span) index = -1;
+  } else {
+    index = lines.findIndex(l => l.includes(tag.marker));
+    at = index < 0 ? -1 : lines[index].indexOf(tag.marker);
+    span = tag.marker;
+  }
+  if (index < 0) {
+    post("gone", {}, { note: reply.id });
+    return { log: answered ? "the answered line has changed since; correction not applied" : "question already gone" };
+  }
+  const line = lines[index];
+  const before = line.slice(0, at), after = line.slice(at + span.length);
+  const quoted = literal(reply.body);
+  const verdict = quoted !== null
+    ? { verdict: "answer" as const, text: quoted }
+    : opts.interpreter.interpret({ question: questionText(tag.marker), before, span, after, reply: normaliseAnswer(reply.body) });
+  if (verdict.verdict !== "answer") {
+    post("unclear", { note: verdict.note, verdict: verdict.verdict }, { note: reply.id });
+    return { log: `${verdict.verdict}: ${verdict.note}` };
+  }
+  const newLine = before + verdict.text + after;
+  if (opts.dryRun) return { log: `would write: ${newLine.trim()}` };
+  lines[index] = newLine;
+  const sha = tracker.commitFile(cr, {
+    path: tag.path, content: lines.join("\n"),
+    message: `${answered ? "Correct the answer to" : "Answer"} an open question in ${tag.path}\n\n${tag.marker}\n\n→ ${verdict.text}\n\n${answered ? "Corrected" : "Answered"} by @${reply.author.login}.`,
+  });
+  cr.head = sha;
+  const left = openQuestions(tracker, cr).length;
+  const s: Settled = { note: reply.id, line: newLine, at, inserted: verdict.text };
+  post("answered", {
+    answer: verdict.text, before: line.trim(), after: newLine.trim(), sha: sha.slice(0, 7),
+    remaining: remainingText(left), left, author: reply.author.login,
+  }, s);
+  return { log: `${answered ? "corrected" : "answered"} in ${sha.slice(0, 7)}`, answered: s };
+}
 
 // One pass over a change request: apply each new answer, then ask each new question. Every comment
 // is a tracker note, so the pass keeps no state of its own and running it twice changes nothing.
@@ -117,33 +187,22 @@ export function pollChangeRequest(tracker: Tracker, cr: ChangeRequest, opts: Pol
   for (const thread of notes) {
     const tag = !thread.replyTo && parseQuestionTag(thread.body);
     if (!tag || !answerablePath(tag.path)) continue;
-    const replies = notes.filter(n => n.replyTo === thread.id);
-    if (replies.some(r => REPLY_TAG.test(r.body))) continue; // this thread is settled
-    const reply = replies.find(r => !isOurs(r.body) && mayAnswer(r.author, opts.self) && normaliseAnswer(r.body));
-    if (!reply) continue;
-    const answer = normaliseAnswer(reply.body);
-    const text = tracker.fileAt(tag.path, cr.head);
-    const next = text === null ? null : applyAnswer(text, tag.marker, answer);
-    const where = `#${cr.number} ${tag.path}`;
-    if (next === null) {
-      if (!opts.dryRun) tracker.reply(cr, thread.id, compose("gone", { marker: tag.marker, path: tag.path }, replyTag(reply.id), opts));
-      log.push(`${where}: question already gone`);
-      continue;
+    const replies = notes.filter(n => n.replyTo === thread.id).sort((a, b) => a.id - b.id);
+    const settled = replies.map(r => parseReplyTag(r.body)).filter((x): x is Settled => x !== null);
+    const handled = new Set(settled.map(x => x.note));
+    let answered = settled.filter(x => x.line !== undefined).at(-1); // the answer standing in the file, if any
+    for (const reply of replies) {
+      if (isOurs(reply.body) || handled.has(reply.id) || !mayAnswer(reply.author, opts.self) || !normaliseAnswer(reply.body)) continue;
+      try {
+        const result = settle(tracker, cr, tag, thread.id, reply, answered, opts);
+        log.push(`#${cr.number} ${tag.path}: ${result.log}`);
+        if (result.answered) answered = result.answered;
+      } catch (e: any) {
+        // Nothing was recorded, so the next run tries this reply again.
+        log.push(`#${cr.number} ${tag.path}: reply ${reply.id} not read, will retry: ${String(e.stderr || e.message).split("\n")[0]}`);
+        break;
+      }
     }
-    if (opts.dryRun) { log.push(`${where}: would answer ${tag.marker} with: ${answer}`); continue; }
-    const sha = tracker.commitFile(cr, {
-      path: tag.path, content: next,
-      message: `Answer an open question in ${tag.path}\n\n${tag.marker}\n\n→ ${answer}\n\nAnswered by @${reply.author.login}.`,
-    });
-    cr.head = sha;
-    const left = openQuestions(tracker, cr).length;
-    const remaining = left
-      ? `${left} open question${left === 1 ? "" : "s"} left on this change.`
-      : "No open questions left; set `status: approved` in the spec when you approve it.";
-    tracker.reply(cr, thread.id, compose("answered",
-      { answer, sha: sha.slice(0, 7), remaining, left, author: reply.author.login, marker: tag.marker, path: tag.path },
-      replyTag(reply.id), opts));
-    log.push(`${where}: answered in ${sha.slice(0, 7)}`);
   }
 
   // Ask after answering: an answer can carry a new marker, and new questions go on the new head.

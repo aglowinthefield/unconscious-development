@@ -2,9 +2,14 @@
 
 # {{card_name}}
 
-Answered in {{sha}}: {{answer}}
+Answered in {{sha}}:
 
-{{remaining}}
+```diff
+- {{before}}
++ {{after}}
+```
+
+{{remaining}} Reply here to correct it.
 
 <br clear="left">
 

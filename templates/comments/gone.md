@@ -2,7 +2,7 @@
 
 # {{card_name}}
 
-This question is no longer in the file, so the reply changed nothing.
+The line this question was on has changed since, so the reply changed nothing.
 
 <br clear="left">
 
