@@ -56,6 +56,12 @@ export interface Tracker {
   reply(cr: ChangeRequest, threadId: number, body: string): void;
   // Mark a thread resolved, if it isn't already.
   resolve(cr: ChangeRequest, threadId: number): void;
+  // Comments on the change request as a whole, not on a line.
+  changeComments(cr: ChangeRequest): Note[];
+  commentOnChange(cr: ChangeRequest, body: string): void;
+  editComment(cr: ChangeRequest, id: number, body: string): void;
+  // A link to one line (or the whole) of a file at a commit.
+  fileUrl(path: string, ref: string, line?: number): string;
 }
 
 export const stateOf = (issue: Issue): State | null =>

@@ -189,8 +189,8 @@ export function checkPlanFile(root: string, path: string): Problem[] {
     for (const id of persona.invariants) {
       const v = listed.get(id);
       if (v === undefined) problems.push({ file, message: `invariant ${id} missing from "## Invariants"` });
-      else if (!/^holds\.?$/i.test(v) && !/^exception:\s*\S/i.test(v))
-        problems.push({ file, message: `invariant ${id} must be \`holds\` or \`exception: <reason>\`; got "${v}"` });
+      else if (!/^holds\b/i.test(v) && !/^exception:\s*\S/i.test(v))
+        problems.push({ file, message: `invariant ${id} must start \`holds\` or \`exception: <reason>\`; got "${v}"` });
     }
     for (const id of listed.keys())
       if (!persona.invariants.includes(id)) problems.push({ file, message: `invariant ${id} isn't in the Persona` });

@@ -14,9 +14,11 @@ import type { Runner, TaskInput } from "./runner/runner.ts";
 import { nowDir, projectPages, statusPage } from "./status.ts";
 import { piInterpreter } from "./interpret.ts";
 import { pollChangeRequest, pollQuestions, type PollOptions } from "./questions.ts";
+import { postCheckResult } from "./check-comment.ts";
 
 const USAGE = `usage:
   unconscious check-spec [--root DIR] [FILE...]       check docs/specs/** (or the files given)
+  unconscious check-spec --pr N [--repo O/R]           the same, and explain the result in a comment on PR N
   unconscious check-spec --issue N [--repo O/R]        check a trivial issue's criteria
   unconscious spec-to-tasks N [--dry-run] [--runner bakery|session] [--board ID] [--root DIR] [--repo O/R]
   unconscious on-merge --base SHA [--head SHA] [--runner …] [--board ID] [--root DIR] [--repo O/R]
@@ -140,6 +142,17 @@ function main(argv: string[]) {
     const problems = checkFiles(root, files);
     report(problems);
     if (!problems.length) console.log(`check-spec: ${files.length} file${files.length === 1 ? "" : "s"} ok`);
+    if (values.pr) {
+      // The comment only explains the result; failing to post it (a fork's read-only token) doesn't
+      // change it.
+      try {
+        const t = tracker();
+        console.log(postCheckResult(t, t.getChangeRequest(values.pr), problems, { dryRun: Boolean(values["dry-run"]) }));
+      } catch (e: any) {
+        const msg = `check comment not posted: ${String(e.stderr || e.message).split("\n")[0]}`;
+        console.log(process.env.GITHUB_ACTIONS ? `::warning::${msg}` : msg);
+      }
+    }
     return problems.length ? 1 : 0;
   }
   if (command === "spec-to-tasks") {
