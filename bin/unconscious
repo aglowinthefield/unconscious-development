@@ -5,7 +5,7 @@
 #               presets, and switch off billion-context's acp_delegate
 #   unconscious disable  undo all three
 #   unconscious status   show what is on
-#   unconscious check-spec|spec-to-tasks|on-merge|status-page   the scripts in src/ (run with -h)
+#   unconscious check-spec|spec-to-tasks|on-merge|status-page|ask|answer   the scripts in src/ (run with -h)
 #   unconscious propose          run the Magician headless over every Now page
 #   unconscious schedule on|off   status-page every 15 minutes, propose daily, with launchd
 # Both commands touch only the keys they own, so running either twice is safe.
@@ -152,6 +152,6 @@ case "${1:-status}" in
   status) status; schedule ;;
   schedule) schedule "${2:-}" ;;
   propose) propose ;;
-  check-spec|spec-to-tasks|on-merge|status-page) exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$@" ;;
-  *) echo "usage: unconscious enable|disable|status|check-spec|spec-to-tasks|on-merge|status-page|propose|schedule" >&2; exit 2 ;;
+  check-spec|spec-to-tasks|on-merge|status-page|ask|answer) exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$@" ;;
+  *) echo "usage: unconscious enable|disable|status|check-spec|spec-to-tasks|on-merge|status-page|ask|answer|propose|schedule" >&2; exit 2 ;;
 esac

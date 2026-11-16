@@ -12,13 +12,17 @@ import { bakeryRunner } from "./runner/bakery.ts";
 import { sessionRunner } from "./runner/session.ts";
 import type { Runner, TaskInput } from "./runner/runner.ts";
 import { nowDir, statusPage } from "./status.ts";
+import { answerQuestion, askQuestions } from "./tracker/github-questions.ts";
 
 const USAGE = `usage:
   unconscious check-spec [--root DIR] [FILE...]       check docs/specs/** (or the files given)
   unconscious check-spec --issue N [--repo O/R]        check a trivial issue's criteria
   unconscious spec-to-tasks N [--dry-run] [--runner bakery|session] [--board ID] [--root DIR] [--repo O/R]
   unconscious on-merge --base SHA [--head SHA] [--runner …] [--board ID] [--root DIR] [--repo O/R]
-  unconscious status-page [--dir DIR] [PROJECT]       rebuild the 🌀 Now pages (or one project's)`;
+  unconscious status-page [--dir DIR] [PROJECT]       rebuild the 🌀 Now pages (or one project's)
+  unconscious ask --pr N [--dry-run] [--repo O/R]      post each unasked [NEEDS CLARIFICATION] on PR N as a review comment
+  unconscious answer --pr N --comment ID [--dry-run] [--root DIR] [--repo O/R]
+                                                       put a reply to a question in place of its marker, commit and push`;
 
 class Refusal extends Error {}
 
@@ -116,6 +120,7 @@ function main(argv: string[]) {
       root: { type: "string" }, repo: { type: "string" }, issue: { type: "string" },
       runner: { type: "string" }, board: { type: "string" }, "dry-run": { type: "boolean" },
       base: { type: "string" }, head: { type: "string" }, dir: { type: "string" }, help: { type: "boolean", short: "h" },
+      pr: { type: "string" }, comment: { type: "string" },
     },
   });
   if (!command || values.help) { console.log(USAGE); return 0; }
@@ -145,6 +150,17 @@ function main(argv: string[]) {
   if (command === "on-merge") {
     if (!values.base) throw new Refusal("on-merge needs --base SHA");
     onMerge(root, tracker(), pickRunner(values.runner, root, values.board), values.base, values.head ?? "HEAD");
+    return 0;
+  }
+  if (command === "ask" || command === "answer") {
+    const pr = Number(values.pr);
+    if (!pr) throw new Refusal(`${command} needs --pr N`);
+    const repo = values.repo ?? repoFromRemote(root);
+    if (command === "ask") { askQuestions(repo, pr, Boolean(values["dry-run"])); return 0; }
+    const comment = Number(values.comment);
+    if (!comment) throw new Refusal("answer needs --comment ID");
+    const self = (process.env.UD_SELF ?? "").split(/[\s,]+/).filter(Boolean);
+    console.log(answerQuestion(root, repo, pr, comment, { self, dryRun: Boolean(values["dry-run"]) }));
     return 0;
   }
   if (command === "status-page") {

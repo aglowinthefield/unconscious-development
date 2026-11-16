@@ -34,6 +34,8 @@ Copy `templates/plan.md` from this skill's directory to `docs/specs/<domain>/<be
 
 Where the answer belongs to the Self, or the facts don't settle it, write `[NEEDS CLARIFICATION: <question>]` in place. Don't guess and don't hedge in prose. Each marker blocks merge until the Self's answer replaces it. A question that turns out not to matter becomes a Non-goal.
 
+Put the marker where the answer's words belong, so the reply can stand in for it: `differ in at most [NEEDS CLARIFICATION: bit cutoff; 31 proposed] bits`. On the spec PR, the `ask` job posts each marker as a review comment on its line. The Self replies in that thread, and the `answer` job puts the reply in place of the marker as written and commits it to the branch.
+
 ## 5. Check before handing over
 
 - Every criterion has an id and a settleable claim.
