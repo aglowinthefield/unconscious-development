@@ -1,6 +1,6 @@
 ---
 name: issue
-description: Start the spec flow from an issue id. Finds the issue's repo and domain, opens the `spec/<issue>` worktree, and turns this session into that domain's Ruler. Use when the user says "/issue 6686", "issue 6686", "spec #6686", "start 6686", or gives an issue URL to spec.
+description: "Start the spec flow from an issue id. Finds the issue's repo and domain, opens the `spec/<issue>` worktree, and turns this session into that domain's Ruler. Use when the user says \"/issue 6686\", \"issue 6686\", \"spec #6686\", \"start 6686\", or gives an issue URL to spec."
 ---
 
 # Issue
