@@ -221,7 +221,7 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 **After-deploy criteria run on a schedule.** (added 2026-11-15) A scheduled job looks at each `verifying` issue. When the merge commit is in production and the setup note's window has passed since that deploy, it starts a Trickster vessel with only the after-deploy criteria. How to tell a commit is in production is a `PROJECT.md` setting, discovered from the deploy workflow by default. All pass: the job closes the issue with the Trickster's numbers. Any fail or blocked: a stuck notice, and the issue stays `verifying` until you decide.
 
-**One vessel per task.**[^Q22][^Q23] `spec-to-tasks <issue>` creates tasks keyed `gh-<issue>/<task>` with dependency edges, through the runner adapter. Never one task per surface.
+**One vessel per task.**[^Q22][^Q23] `spec-to-tasks <issue>` creates tasks keyed `gh-<issue>/<task>` with dependency edges, through the runner adapter. One task is the default; a plan splits only where a part ships alone, waits on its own decision, or would outgrow a vessel. Never one task per surface.
 
 **Out-of-scope findings become issues.**[^Q33] Created through the tracker adapter with `needs-spec` and the domain, linked from the PR body.
 
