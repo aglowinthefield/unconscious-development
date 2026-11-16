@@ -56,7 +56,8 @@ test("the index table counts per project, and only its section is replaced", () 
     { name: "Mu", file: "mu.md", snapshot: null, error: "HTTP 404" },
   ]);
   assert.match(table, /\| \[\[silk\\\|Silk\]\] \|  \| 1 \|  \| green \| run `propose` \|/);
-  assert.match(table, /\| \[\[mu\\\|Mu\]\] \| \| \| \| not read: HTTP 404 \|/);
+  assert.match(table, /\| \[\[mu\\\|Mu\]\] \| \| \| \| unknown \|/);
+  assert.doesNotMatch(table, /HTTP 404/);
   const index = "## This session\n\nmine\n\n## Projects\n\nold table\n\n## Notes\n\nkeep\n";
   assert.equal(replaceSection(index, "Projects", "new"), "## This session\n\nmine\n\n## Projects\n\nnew\n\n## Notes\n\nkeep\n");
   assert.equal(replaceSection("## A\n\nx\n", "Projects", "new"), "## A\n\nx\n\n## Projects\n\nnew\n");
