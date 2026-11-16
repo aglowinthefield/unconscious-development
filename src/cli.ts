@@ -12,7 +12,7 @@ import { bakeryRunner } from "./runner/bakery.ts";
 import { sessionRunner } from "./runner/session.ts";
 import type { Runner, TaskInput } from "./runner/runner.ts";
 import { nowDir, statusPage } from "./status.ts";
-import { answerQuestion, askQuestions } from "./tracker/github-questions.ts";
+import { answerQuestion, askQuestions } from "./questions.ts";
 
 const USAGE = `usage:
   unconscious check-spec [--root DIR] [FILE...]       check docs/specs/** (or the files given)
@@ -155,12 +155,11 @@ function main(argv: string[]) {
   if (command === "ask" || command === "answer") {
     const pr = Number(values.pr);
     if (!pr) throw new Refusal(`${command} needs --pr N`);
-    const repo = values.repo ?? repoFromRemote(root);
-    if (command === "ask") { askQuestions(repo, pr, Boolean(values["dry-run"])); return 0; }
+    if (command === "ask") { askQuestions(tracker(), pr, Boolean(values["dry-run"])); return 0; }
     const comment = Number(values.comment);
     if (!comment) throw new Refusal("answer needs --comment ID");
     const self = (process.env.UD_SELF ?? "").split(/[\s,]+/).filter(Boolean);
-    console.log(answerQuestion(root, repo, pr, comment, { self, dryRun: Boolean(values["dry-run"]) }));
+    console.log(answerQuestion(tracker(), root, pr, comment, { self, dryRun: Boolean(values["dry-run"]) }));
     return 0;
   }
   if (command === "status-page") {
