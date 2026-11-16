@@ -34,7 +34,14 @@ Copy `templates/plan.md` from this skill's directory to `docs/specs/<domain>/<be
 
 Where the answer belongs to the Self, or the facts don't settle it, write `[NEEDS CLARIFICATION: <question>]` in place. Don't guess and don't hedge in prose. Each marker blocks merge until the Self's answer replaces it. A question that turns out not to matter becomes a Non-goal.
 
-Put the marker where the answer's words belong, so the reply can stand in for it: `differ in at most [NEEDS CLARIFICATION: bit cutoff; 31 proposed] bits`. On the spec PR, `unconscious questions` posts each marker as a review comment on its line. The Self replies in that thread in plain words, and the next run writes the answer in place of the marker and commits it to the branch.
+Put the marker where the answer's words belong and keep it to a short slot label, four words or fewer, so the sentence still reads. Ask the full question in a note on the line below, indented under the list item:
+
+```markdown
+- AC2: A cold first page returns in at most [NEEDS CLARIFICATION: p95 ms] at p95.
+  > **Open:** what p95 target, in ms, for a cold first page?
+```
+
+A question that decides whether a sentence stands gets a slot at the end of it (`[NEEDS CLARIFICATION: acceptable?]`). Two markers on one line get two notes, in the same order. On the spec PR, `unconscious questions` posts each marker as a review comment on its line. The Self replies in that thread in plain words, and the next run writes the answer in place of the marker and commits it to the branch.
 
 ## 5. Check before handing over
 

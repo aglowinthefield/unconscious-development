@@ -218,3 +218,39 @@ test("a reply whose line has changed is told so, and a failing interpreter leave
   assert.match(notes.at(-1)!.body, /has changed since/);
   assert.equal(commits.length, 1);
 });
+
+const NOTED = `## Acceptance criteria
+
+- AC2: A cold first page returns in at most [NEEDS CLARIFICATION: p95 ms] at p95.
+  > **Open:** what p95 target, in ms,
+  > for a cold first page?
+- AC3: Partial pages are fine. [NEEDS CLARIFICATION: acceptable?] [NEEDS CLARIFICATION: until?]
+  > **Open:** is a page without the look lane acceptable?
+  > **Open:** how long may it stay partial?
+- AC4: Done.
+`;
+
+test("a short slot asks the full question from its note, and answering removes the note", () => {
+  const qs = questionsIn("docs/specs/a/b.md", NOTED);
+  assert.deepEqual(qs.map(q => q.note), [
+    "what p95 target, in ms, for a cold first page?", "is a page without the look lane acceptable?", "how long may it stay partial?",
+  ]);
+  assert.match(questionBody(qs[0], { rng: () => 0 }), /\*\*Open question:\*\* what p95 target, in ms, for a cold first page\?\n/);
+
+  const { tracker, notes, files, cr, me } = fakeTracker({ "docs/specs/a/b.md": NOTED });
+  const { interpreter, seen } = fakeInterpreter();
+  const opts = { self: [], rng: () => 0, interpreter };
+  pollChangeRequest(tracker, cr, opts);
+  const ids = notes.filter(n => !n.replyTo).map(n => n.id);
+  notes.push({ id: 20, body: "\"800 ms\"", author: me, replyTo: ids[0] });
+  notes.push({ id: 21, body: "\"10 minutes\"", author: me, replyTo: ids[2] });
+  pollChangeRequest(tracker, cr, opts);
+  assert.equal(seen.length, 0);
+  assert.equal(files["docs/specs/a/b.md"], `## Acceptance criteria
+
+- AC2: A cold first page returns in at most 800 ms at p95.
+- AC3: Partial pages are fine. [NEEDS CLARIFICATION: acceptable?] 10 minutes
+  > **Open:** is a page without the look lane acceptable?
+- AC4: Done.
+`);
+});
