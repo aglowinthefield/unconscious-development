@@ -4,7 +4,7 @@
 // the exact marker, and each reply this tool posts carries a tag naming the note it settled, so
 // the tracker itself is the record of what has been done.
 
-import { drawCard } from "./cards.ts";
+import { CARDS, card, cardIn, drawCard, type Card } from "./cards.ts";
 import { loadTemplate, render, type Kind } from "./comments.ts";
 import { literal, type Interpreter } from "./interpret.ts";
 import { markers } from "./markdown.ts";
@@ -37,17 +37,20 @@ export function parseReplyTag(body: string): Settled | null {
   }
 }
 
-export function questionTag(q: { path: string; marker: string }): string {
-  const payload = Buffer.from(JSON.stringify({ path: q.path, marker: q.marker })).toString("base64url");
+// The tag also names the question's card, so replies in its thread show the same one whatever the
+// template does with it.
+export function questionTag(q: { path: string; marker: string }, card?: string): string {
+  const payload = Buffer.from(JSON.stringify({ path: q.path, marker: q.marker, card })).toString("base64url");
   return `<!-- ud-question ${payload} -->`;
 }
 
-export function parseQuestionTag(body: string): { path: string; marker: string } | null {
+export function parseQuestionTag(body: string): { path: string; marker: string; card?: string } | null {
   const m = TAG.exec(body);
   if (!m) return null;
   try {
-    const { path, marker } = JSON.parse(Buffer.from(m[1], "base64url").toString("utf8"));
-    return typeof path === "string" && typeof marker === "string" ? { path, marker } : null;
+    const { path, marker, card } = JSON.parse(Buffer.from(m[1], "base64url").toString("utf8"));
+    if (typeof path !== "string" || typeof marker !== "string") return null;
+    return (CARDS as readonly string[]).includes(card) ? { path, marker, card } : { path, marker };
   } catch {
     return null;
   }
@@ -105,15 +108,15 @@ export interface PollOptions {
   interpreter: Interpreter; // reads plain-words replies
 }
 
-function compose(kind: Kind, vars: Record<string, string | number>, tag: string, opts: Pick<PollOptions, "rng" | "templates">): string {
-  const c = drawCard(opts.rng);
+function compose(kind: Kind, vars: Record<string, string | number>, tag: string, opts: Pick<PollOptions, "rng" | "templates">, c: Card): string {
   return `${render(loadTemplate(kind, opts.templates), { ...vars, card: c.html, card_name: c.name, card_url: c.url })}\n\n${tag}`;
 }
 
 const questionText = (marker: string) => marker.replace(/^\[NEEDS CLARIFICATION:\s*/, "").replace(/\]$/, "");
 
 export function questionBody(q: Question, opts: Pick<PollOptions, "rng" | "templates"> = {}): string {
-  return compose("question", { question: questionText(q.marker), marker: q.marker, path: q.path, line: q.line }, questionTag(q), opts);
+  const c = drawCard(opts.rng);
+  return compose("question", { question: questionText(q.marker), marker: q.marker, path: q.path, line: q.line }, questionTag(q, c.slug), opts, c);
 }
 
 // Comments this tool posted carry a tag; a person's reply never does.
@@ -123,14 +126,21 @@ const remainingText = (left: number) => left
   ? `${left} open question${left === 1 ? "" : "s"} left on this change.`
   : "No open questions left; set `status: approved` in the spec when you approve it.";
 
+// The card a thread's replies show: the question's own, from its tag or (for questions asked
+// before the tag named it) its image; a fresh draw only when the question shows none.
+function threadCard(question: string, rng?: () => number): Card {
+  const slug = parseQuestionTag(question)?.card;
+  return slug ? card(slug) : cardIn(question) ?? drawCard(rng);
+}
+
 // Act on one reply in a question thread. Before the question is answered, the reply's answer goes
 // in place of the marker; after, a further reply corrects that answer on the line it was written to.
 function settle(
   tracker: Tracker, cr: ChangeRequest, tag: { path: string; marker: string }, threadId: number, reply: Note,
-  answered: Settled | undefined, opts: PollOptions,
+  answered: Settled | undefined, c: Card, opts: PollOptions,
 ): { log: string; answered?: Settled } {
   const post = (kind: Kind, vars: Record<string, string | number>, s: Settled) => {
-    if (!opts.dryRun) tracker.reply(cr, threadId, compose(kind, { ...vars, marker: tag.marker, path: tag.path }, replyTag(s), opts));
+    if (!opts.dryRun) tracker.reply(cr, threadId, compose(kind, { ...vars, marker: tag.marker, path: tag.path }, replyTag(s), opts, c));
   };
   const text = tracker.fileAt(tag.path, cr.head) ?? "";
   const lines = text.split("\n");
@@ -191,10 +201,11 @@ export function pollChangeRequest(tracker: Tracker, cr: ChangeRequest, opts: Pol
     const settled = replies.map(r => parseReplyTag(r.body)).filter((x): x is Settled => x !== null);
     const handled = new Set(settled.map(x => x.note));
     let answered = settled.filter(x => x.line !== undefined).at(-1); // the answer standing in the file, if any
+    const c = threadCard(thread.body, opts.rng);
     for (const reply of replies) {
       if (isOurs(reply.body) || handled.has(reply.id) || !mayAnswer(reply.author, opts.self) || !normaliseAnswer(reply.body)) continue;
       try {
-        const result = settle(tracker, cr, tag, thread.id, reply, answered, opts);
+        const result = settle(tracker, cr, tag, thread.id, reply, answered, c, opts);
         log.push(`#${cr.number} ${tag.path}: ${result.log}`);
         if (result.answered) answered = result.answered;
       } catch (e: any) {
