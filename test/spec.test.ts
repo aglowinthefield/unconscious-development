@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { checkFiles, checkIssueBody, findPlanForIssue, parseTasks, specFiles, taskOrder } from "../src/spec.ts";
+import { checkFiles, checkIssueBody, errorsIn, findPlanForIssue, parseTasks, specFiles, taskOrder } from "../src/spec.ts";
 import { taskFromIssue, tasksFromPlan } from "../src/tasks.ts";
 import type { Issue } from "../src/tracker/tracker.ts";
 import { PERSONA, PLAN, SPEC, repo } from "./fixtures.ts";
@@ -45,9 +45,13 @@ test("an invariant holds, with or without a note, or is an exception with a reas
   assert.equal(plan("exception:").length, 1);
 });
 
-test("a draft Persona can't carry a plan", () => {
-  const m = messages(base({ "docs/personas/orders.md": PERSONA.replace("confirmed", "draft") }));
-  assert.deepEqual(m, ["Persona docs/personas/orders.md is draft; plans need confirmed invariants"]);
+test("a draft Persona warns but doesn't block a plan", () => {
+  const root = base({ "docs/personas/orders.md": PERSONA.replace("confirmed", "draft") });
+  const problems = checkFiles(root, specFiles(root));
+  assert.deepEqual(problems.map(p => [p.message, p.warning]), [
+    ["Persona docs/personas/orders.md is draft; its invariants aren't settled yet, so check them in review", true],
+  ]);
+  assert.deepEqual(errorsIn(problems), []);
 });
 
 test("criteria coverage skips after-deploy ones, and tasks can't claim them", () => {

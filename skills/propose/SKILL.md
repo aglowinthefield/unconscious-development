@@ -17,7 +17,7 @@ Run `unconscious status-page <page name>` first, so Waiting on you, Stuck, In fl
 - Open issues with no state label: `gh issue list -R <repo> --search "is:open -label:needs-spec,ready-for-agent,ready-for-human,verifying" --limit 100 --json number,url,title,labels,createdAt,updatedAt,comments`. Read the body of every issue you might propose.
 - What merged since the section's date (or the last 7 days): `gh pr list -R <repo> --state merged --search "merged:>=<date>" --json number,title,mergedAt`, and `git log origin/main` in `<path>` after `git fetch`. Anything merged is done; never propose it, and don't trust a spec's `status` over a merge.
 - `needs-spec` issues. These were already judged worth a spec; prefer them.
-- Personas in `<path>/docs/personas/` and their `status`. A domain whose Persona is `confirmed` can be specced today; a `draft` one needs the Self to confirm invariants first, and one with no Persona needs a Persona first.
+- Personas in `<path>/docs/personas/` and their `status`. A domain with a Persona can be specced today; a `draft` one is fine but its invariants get less trust, and one with no Persona needs the persona skill first. A Persona with Proposed invariants waiting is worth a line: promoting them is a five-minute job for the Self.
 - Specs in `<path>/docs/specs/`, so you don't propose what an approved or built spec already covers.
 - The page's Notes section and anything it links, for what the Self cares about right now.
 

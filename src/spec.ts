@@ -8,7 +8,10 @@ export const SPEC_STATUSES = ["draft", "approved", "built"];
 
 export interface Criterion { id: string; afterDeploy: boolean; text: string }
 export interface Task { id: string; done: boolean; text: string; criteria: string[]; after: string[] }
-export interface Problem { file: string; line?: number; message: string }
+// A warning is reported but doesn't fail the check.
+export interface Problem { file: string; line?: number; message: string; warning?: boolean }
+
+export const errorsIn = (problems: Problem[]) => problems.filter(p => !p.warning);
 
 export interface Spec {
   path: string;
@@ -183,8 +186,10 @@ export function checkPlanFile(root: string, path: string): Problem[] {
 
   const persona = spec.domain ? readPersona(root, spec.domain) : null;
   if (persona) {
+    // A draft Persona doesn't block a plan, so the first spec can land while the Persona is still
+    // being learned; the warning keeps it visible.
     if (persona.status !== "confirmed")
-      problems.push({ file, message: `Persona ${relative(root, persona.path)} is ${persona.status || "unconfirmed"}; plans need confirmed invariants` });
+      problems.push({ file, warning: true, message: `Persona ${relative(root, persona.path)} is ${persona.status || "unconfirmed"}; its invariants aren't settled yet, so check them in review` });
     const listed = new Map(plan.invariants.map(i => [i.id, i.verdict]));
     for (const id of persona.invariants) {
       const v = listed.get(id);

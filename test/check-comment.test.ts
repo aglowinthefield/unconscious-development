@@ -42,3 +42,12 @@ test("one comment explains a failure, follows each run, and says when the check 
   assert.match(comments[0].body, /check-spec passes on 1234567\./);
   assert.match(comments[0].body, /alt="Ace of Cups"/, "the comment keeps its card");
 });
+
+test("warnings alone don't fail the check, but the comment shows them", () => {
+  const { tracker, comments, cr } = fakeTracker();
+  const draft = { file: "docs/specs/a/b.plan.md", message: "Persona docs/personas/a.md is draft", warning: true };
+  assert.equal(postCheckResult(tracker, cr, [draft], { rng: () => 0 }), "posted the check comment");
+  assert.match(comments[0].body, /check-spec passes on abcdef1\.\n\nWorth a look in review:\n\n- \[`docs\/specs\/a\/b\.plan\.md`\]/);
+  postCheckResult(tracker, cr, [invariant, draft], { rng: () => 0 });
+  assert.match(comments[0].body, /fails on abcdef1:\n\n- [^\n]+invariant a\/I2[^\n]+\n\nWorth a look in review:/);
+});

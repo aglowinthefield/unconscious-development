@@ -18,7 +18,9 @@ An agent harness is optional. The cast runs in pi with the pi-subagents package:
    - `docs/personas/<name>.md`, a draft Persona.
    - `.github/workflows/unconscious.yml`, which runs `check-spec` on spec PRs and creates tasks when a spec merges.
    - `.github/workflows/unconscious-tasks.yml`, which closes the issue when its last task's PR merges.
-2. Fill in the Persona: what the domain covers, and its invariants, the rules a change there must never break. Two or three invariants are enough to start. Set `status: confirmed` when they're right. Until then, `check-spec` fails every plan in this domain.
+2. Draft the Persona: what the domain covers, and its invariants, the rules a change there must never break. With the cast, ask your agent to "draft the `<name>` persona"; the persona skill reads the code and proposes invariants with their sources, and you strike what's wrong. By hand, two or three invariants are enough. A draft is enough to start: `check-spec` warns until you set `status: confirmed`.
+
+   The Persona then grows on its own. When the Shadow reviews a change and finds a rule the code relies on that the Persona doesn't list, the Creator adds it under Proposed invariants in that PR, and you promote or delete it.
 3. Commit the files on a branch, open a PR, and merge it.
 
 ## Your first change
