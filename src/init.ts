@@ -15,9 +15,12 @@ export interface InitOptions {
 
 export interface InitResult { created: string[]; kept: string[]; next: string[] }
 
+export const domainProblem = (domain: string) =>
+  /^[a-z0-9][a-z0-9-]*$/.test(domain) ? undefined : `domain "${domain}" must be lowercase letters, digits and dashes, like billing or ingestion-search`;
+
 export function init(root: string, opts: InitOptions): InitResult {
-  if (opts.domain !== undefined && !/^[a-z0-9][a-z0-9-]*$/.test(opts.domain))
-    throw new Error(`domain "${opts.domain}" must be lowercase letters, digits and dashes, like billing or ingestion-search`);
+  const problem = opts.domain === undefined ? undefined : domainProblem(opts.domain);
+  if (problem) throw new Error(problem);
   const workflow = (name: string) => readFileSync(join(opts.udRoot, "workflows", name), "utf8")
     .replace(/^# Copy to .*\n#\n/, "")
     .replace(/^  UD_REF: .*$/m, `  UD_REF: ${opts.udSha} # the Unconscious Development commit this repo runs; bump it to update`);

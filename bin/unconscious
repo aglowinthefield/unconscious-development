@@ -1,21 +1,7 @@
 #!/usr/bin/env bash
-# Turn the Unconscious Development cast on or off in pi or Claude Code.
-#   unconscious enable   link docs/roles/*.md into ~/.pi/agent/agents/unconscious and skills/* into
-#               ~/.agents/skills, hide pi-subagents' builtin
-#               presets, and switch off billion-context's acp_delegate
-#   unconscious enable --harness claude   write the roles into ~/.claude/agents and link skills/*
-#               into ~/.claude/skills
-#   unconscious disable [--harness claude]  undo it
-#   unconscious status   show what is on
-#   unconscious init|check-spec|spec-to-tasks|on-merge|status-page|questions   the scripts in src/ (run with -h)
-#   unconscious propose          run the Magician headless over every Now page
-#   unconscious draft <issue>     the Ruler drafts a small issue's criteria headless, or says it needs a spec
-#   unconscious review <pr> [--comment]   the Shadow reviews an existing PR against its criteria
-#   unconscious schedule on|off   status-page every 15 minutes, questions every 2, propose daily, with launchd;
-#               the jobs keep the UD_HARNESS they were turned on with
-# The headless commands (propose, draft, review) run in pi, or in Claude Code with UD_HARNESS=claude.
-# Both commands touch only the keys they own, so running either twice is safe.
-# Changes apply to new pi sessions.
+# The Unconscious Development CLI. `unconscious help` lists every command; the list and each
+# command's help live in src/help.ts. Commands that set up the harness, run launchd or start a
+# headless agent are below; the rest are in src/cli.ts.
 set -euo pipefail
 
 ud_root="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
@@ -99,7 +85,7 @@ PY
     if [ -e "$dest" ] && [ ! -L "$dest" ]; then echo "warning: $dest exists and isn't ours; skipped" >&2; continue; fi
     ln -sfn "$s" "$dest"
   done
-  status_claude
+  status
 }
 
 disable_claude() {
@@ -108,30 +94,10 @@ disable_claude() {
     dest="$claude_skills/$(basename "${s%/}")"
     [ -L "$dest" ] && [ "$(readlink "$dest")" = "${s%/}" ] && rm "$dest"
   done
-  status_claude
+  status
 }
 
-status_claude() {
-  local on=""
-  for f in "$claude_agents"/*.md; do [ -f "$f" ] && grep -qF "$claude_mark" "$f" && on="$on $(basename "$f" .md)"; done
-  echo "claude roles:${on:- off}"
-  on=""; for s in "$ud_root"/skills/*/; do [ -L "$claude_skills/$(basename "${s%/}")" ] && on="$on $(basename "${s%/}")"; done
-  echo "claude skills:${on:- off}"
-}
-
-status() {
-  if [ -d "$agents_dir" ]; then echo "roles: $(cd "$agents_dir" && ls *.md | tr '\n' ' ')"; else echo "roles: off"; fi
-  local on=""; for s in "$ud_root"/skills/*/; do [ -L "$skills_dir/$(basename "${s%/}")" ] && on="$on $(basename "${s%/}")"; done
-  echo "skills:${on:- off}"
-  python3 - "$pi_settings" "$bili_config" <<'PY'
-import json, os, sys
-load = lambda p: json.load(open(p)) if os.path.exists(p) else {}
-s, b = load(sys.argv[1]), load(sys.argv[2])
-print("pi-subagents builtins hidden:", s.get("subagents", {}).get("disableBuiltins", False))
-print("pi-subagents installed:", any("pi-subagents" in p for p in s.get("packages", [])))
-print("billion-context acp_delegate:", "off" if b.get("pi", {}).get("subagents") is False else "on")
-PY
-}
+status() { node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" status; }
 
 # Run status-page every 15 minutes and questions every 2 (both also at login), and propose daily at 07:00, as launchd
 # agents. launchd never starts a job while its last run is still going. The agent keeps the PATH and
@@ -284,22 +250,26 @@ PLIST
     off)
       for p in "$plist" "$questions_plist" "$propose_plist"; do launchctl bootout "gui/$(id -u)" "$p" 2>/dev/null || true; rm -f "$p"; done
       echo "schedule off" ;;
-    *) [ -f "$plist" ] && echo "schedule: on ($plist, $questions_plist, $propose_plist)" || echo "schedule: off" ;;
+    *) status ;;
   esac
 }
+
+cli() { exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$@"; }
+
+# Help: `unconscious`, `unconscious help [cmd]`, and `-h`/`--help` after any command.
+case "${1:-}" in ""|help|-h|--help) shift || true; cli help "$@" ;; esac
+for a in "${@:2}"; do case "$a" in -h|--help) cli help "$1" ;; esac; done
 
 harness=pi
 [ "${1:-}" != review ] && [ "${2:-}" = "--harness" ] && harness="${3:-}"
 case "$harness" in pi|claude) ;; *) echo "unknown harness \"$harness\"; use pi or claude" >&2; exit 2 ;; esac
 
-case "${1:-status}" in
+case "$1" in
   enable) if [ "$harness" = claude ]; then enable_claude; else enable; fi ;;
   disable) if [ "$harness" = claude ]; then disable_claude; else disable; fi ;;
-  status) status; status_claude; schedule ;;
   schedule) schedule "${2:-}" ;;
   propose) propose ;;
   draft) draft "${2:-}" ;;
   review) shift; review "$@" ;;
-  init|check-spec|spec-to-tasks|on-merge|task-merged|status-page|questions) exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$@" ;;
-  *) echo "usage: unconscious init|enable|disable|status|check-spec|spec-to-tasks|on-merge|task-merged|status-page|questions|propose|draft|review|schedule" >&2; exit 2 ;;
+  *) cli "$@" ;; # src/cli.ts runs its commands, and says "did you mean" for unknown ones
 esac
