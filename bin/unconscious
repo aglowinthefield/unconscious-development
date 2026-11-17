@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
-# Turn the Unconscious Development cast on or off in pi.
+# Turn the Unconscious Development cast on or off in pi or Claude Code.
 #   unconscious enable   link docs/roles/*.md into ~/.pi/agent/agents/unconscious and skills/* into
 #               ~/.agents/skills, hide pi-subagents' builtin
 #               presets, and switch off billion-context's acp_delegate
-#   unconscious disable  undo all three
+#   unconscious enable --harness claude   write the roles into ~/.claude/agents and link skills/*
+#               into ~/.claude/skills
+#   unconscious disable [--harness claude]  undo it
 #   unconscious status   show what is on
 #   unconscious init|check-spec|spec-to-tasks|on-merge|status-page|questions   the scripts in src/ (run with -h)
 #   unconscious propose          run the Magician headless over every Now page
-#   unconscious schedule on|off   status-page every 15 minutes, questions every 2, propose daily, with launchd
+#   unconscious draft <issue>     the Ruler drafts a small issue's criteria headless, or says it needs a spec
+#   unconscious review <pr> [--comment]   the Shadow reviews an existing PR against its criteria
+#   unconscious schedule on|off   status-page every 15 minutes, questions every 2, propose daily, with launchd;
+#               the jobs keep the UD_HARNESS they were turned on with
+# The headless commands (propose, draft, review) run in pi, or in Claude Code with UD_HARNESS=claude.
 # Both commands touch only the keys they own, so running either twice is safe.
 # Changes apply to new pi sessions.
 set -euo pipefail
@@ -17,6 +23,9 @@ agents_dir="${PI_AGENTS_DIR:-$HOME/.pi/agent/agents}/unconscious"
 skills_dir="${UD_SKILLS_DIR:-$HOME/.agents/skills}"
 pi_settings="${PI_SETTINGS:-$HOME/.pi/agent/settings.json}"
 bili_config="${BILI_CONFIG:-$HOME/.config/billion-context/billion-context.json}"
+claude_agents="${CLAUDE_AGENTS_DIR:-$HOME/.claude/agents}"
+claude_skills="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
+claude_mark="<!-- written by unconscious enable --harness claude; disable removes it -->"
 
 json_set() { # file, python statement on dict d
   python3 - "$1" "$2" <<'PY'
@@ -61,6 +70,55 @@ if not p: d.pop("pi", None)'
   status
 }
 
+# Claude Code reads subagents from Markdown files with nearly the same frontmatter, so each role is
+# rewritten rather than linked: tool names differ, and pi-only keys go. The Ruler and Creator keep
+# every tool, since they run as the main agent (`claude --agent ruler`) and send out other roles.
+enable_claude() {
+  mkdir -p "$claude_agents" "$claude_skills"
+  python3 - "$ud_root/docs/roles" "$claude_agents" "$claude_mark" <<'PY'
+import os, re, sys
+roles, out, mark = sys.argv[1:]
+names = {"read": "Read", "grep": "Grep", "find": "Glob", "ls": "Glob", "bash": "Bash", "edit": "Edit", "write": "Write"}
+for f in sorted(os.listdir(roles)):
+    text = open(os.path.join(roles, f)).read()
+    m = re.match(r"---\n(.*?)\n---\n(.*)", text, re.S)
+    if not m or not re.search(r"^name: ", m.group(1), re.M): continue
+    fm = dict(l.split(": ", 1) for l in m.group(1).splitlines() if ": " in l)
+    lines = [f"name: {fm['name']}", f"description: {fm['description']}"]
+    tools = [t.strip() for t in fm.get("tools", "").split(",") if t.strip()]
+    if fm["name"] not in ("ruler", "creator") and tools:
+        lines.append("tools: " + ", ".join(dict.fromkeys(names.get(t, t) for t in tools)))
+    lines.append(f"model: {fm.get('model', 'inherit')}")
+    dest = os.path.join(out, f"{fm['name']}.md")
+    if os.path.exists(dest) and mark not in open(dest).read():
+        print(f"warning: {dest} exists and isn't ours; skipped", file=sys.stderr); continue
+    open(dest, "w").write("---\n" + "\n".join(lines) + "\n---\n\n" + mark + "\n\n" + m.group(2).lstrip())
+PY
+  for s in "$ud_root"/skills/*/; do
+    s="${s%/}"; dest="$claude_skills/$(basename "$s")"
+    if [ -e "$dest" ] && [ ! -L "$dest" ]; then echo "warning: $dest exists and isn't ours; skipped" >&2; continue; fi
+    ln -sfn "$s" "$dest"
+  done
+  status_claude
+}
+
+disable_claude() {
+  for f in "$claude_agents"/*.md; do [ -f "$f" ] && grep -qF "$claude_mark" "$f" && rm "$f"; done
+  for s in "$ud_root"/skills/*/; do
+    dest="$claude_skills/$(basename "${s%/}")"
+    [ -L "$dest" ] && [ "$(readlink "$dest")" = "${s%/}" ] && rm "$dest"
+  done
+  status_claude
+}
+
+status_claude() {
+  local on=""
+  for f in "$claude_agents"/*.md; do [ -f "$f" ] && grep -qF "$claude_mark" "$f" && on="$on $(basename "$f" .md)"; done
+  echo "claude roles:${on:- off}"
+  on=""; for s in "$ud_root"/skills/*/; do [ -L "$claude_skills/$(basename "${s%/}")" ] && on="$on $(basename "${s%/}")"; done
+  echo "claude skills:${on:- off}"
+}
+
 status() {
   if [ -d "$agents_dir" ]; then echo "roles: $(cd "$agents_dir" && ls *.md | tr '\n' ' ')"; else echo "roles: off"; fi
   local on=""; for s in "$ud_root"/skills/*/; do [ -L "$skills_dir/$(basename "${s%/}")" ] && on="$on $(basename "${s%/}")"; done
@@ -86,10 +144,68 @@ questions_plist="$HOME/Library/LaunchAgents/dev.unconscious.questions.plist"
 propose() {
   echo "== $(date -u +%FT%TZ) propose"
   "$ud_root/bin/unconscious" status-page || true
-  pi -p --no-session --no-skills --skill "$ud_root/skills/propose" --tools read,bash,edit,write \
-    "Use the propose skill headless: write Proposed next on every project page in ${UD_NOW_DIR:-the Now folder}. Today is $(date +%F)."
+  local prompt="Use the propose skill headless: write Proposed next on every project page in ${UD_NOW_DIR:-the Now folder}. Today is $(date +%F)."
+  if [ "${UD_HARNESS:-pi}" = claude ]; then
+    # The Now folder sits outside any repo, so Claude needs it named to edit there.
+    claude -p --add-dir "${UD_NOW_DIR:-$(node --disable-warning=ExperimentalWarning -e 'import("'"$ud_root"'/src/status.ts").then(m => console.log(m.nowDir()))')}" \
+      --allowedTools "Read Grep Glob Bash Edit Write Skill" "$prompt"
+  else
+    pi -p --no-session --no-skills --skill "$ud_root/skills/propose" --tools read,bash,edit,write "$prompt"
+  fi
   "$ud_root/bin/unconscious" status-page
 }
+# Draft a small issue's criteria headless: the Ruler, with the spec skill, writes them into the
+# issue body and asks for ready-for-agent, or says the issue needs a spec session.
+draft() {
+  [ -n "${1:-}" ] || { echo "usage: unconscious draft <issue>" >&2; exit 2; }
+  local prompt="Headless, for issue $1 in this repo. Read it with gh. If it's trivial, follow the spec skill's trivial tier: write its criteria into the body, check them, and comment asking for ready-for-agent. If it needs the designed tier, comment one line saying why and that it needs a spec session, and stop. Change no files and open no PRs."
+  if [ "${UD_HARNESS:-pi}" = claude ]; then
+    claude -p --agent ruler --allowedTools "Read Grep Glob Bash Skill" "$prompt"
+    return
+  fi
+  local role; role="$(mktemp)"; trap 'rm -f "$role"' RETURN
+  awk 'f>=2; /^---$/{f++}' "$ud_root/docs/roles/ruler.md" > "$role"
+  pi -p --no-session --no-skills --skill "$ud_root/skills/spec" --append-system-prompt "$role" --tools read,grep,find,ls,bash "$prompt"
+}
+
+# Run the Shadow on a PR that already exists, as a first try of UD with no setup: criteria from the
+# PR or its linked issues, or, when nobody wrote any, the ones the PR claims, marked as derived.
+# Reads only; --comment posts the verdicts on the PR.
+review() {
+  local pr="" comment=""
+  for a in "$@"; do case "$a" in --comment) comment=1 ;; *) pr="$a" ;; esac; done
+  [ -n "$pr" ] || { echo "usage: unconscious review <pr> [--comment]" >&2; exit 2; }
+  local meta base issues context wt out
+  meta="$(gh pr view "$pr" --json number,title,body,baseRefName,closingIssuesReferences)"
+  base="$(jq -r .baseRefName <<<"$meta")"
+  pr="$(jq -r .number <<<"$meta")"
+  context="PR #$pr: $(jq -r .title <<<"$meta")"$'\n\n'"$(jq -r '.body // ""' <<<"$meta")"
+  for i in $(jq -r '.closingIssuesReferences[].number' <<<"$meta") $(jq -r '.body // ""' <<<"$meta" | grep -oiE 'refs:? #[0-9]+' | grep -oE '[0-9]+'); do
+    context+=$'\n\n'"Issue #$i: $(gh issue view "$i" --json title,body --jq '.title + "\n\n" + .body')"
+  done
+  wt="$(mktemp -d)/pr-$pr"
+  git fetch -q origin "$base"
+  git fetch -q origin "pull/$pr/head" # last, so FETCH_HEAD is the PR's head
+  git worktree add -q --detach "$wt" FETCH_HEAD
+  trap "git worktree remove --force '$wt' 2>/dev/null || true" EXIT
+  local prompt="Review PR #$pr. The change is \`git diff origin/$base...HEAD\` in this checkout.
+
+Criteria: use the \`## Acceptance criteria\` from the PR or issues below. If there are none, write the criteria the PR claims to meet, three to six, as AC1, AC2, ..., say they were derived because nobody wrote any, then judge them.
+
+$context"
+  if [ "${UD_HARNESS:-pi}" = claude ]; then
+    out="$(cd "$wt" && claude -p --agent shadow "$prompt")"
+  else
+    local role; role="$(mktemp)"
+    awk 'f>=2; /^---$/{f++}' "$ud_root/docs/roles/shadow.md" > "$role"
+    out="$(cd "$wt" && pi -p --no-session --no-skills --append-system-prompt "$role" --tools read,grep,find,ls,bash "$prompt")"
+    rm -f "$role"
+  fi
+  printf '%s\n' "$out"
+  [ -n "$comment" ] && gh pr comment "$pr" --body "$out"$'\n\n'"<sub>Shadow review by Unconscious Development.</sub>" >/dev/null && echo "posted on #$pr"
+  return 0
+}
+
 schedule() {
   case "${1:-}" in
     on)
@@ -107,6 +223,7 @@ schedule() {
   <dict>
     <key>PATH</key><string>$PATH</string>
     <key>UD_NOW_DIR</key><string>$dir</string>
+    <key>UD_HARNESS</key><string>${UD_HARNESS:-pi}</string>
   </dict>
   <key>StartInterval</key><integer>900</integer>
   <key>RunAtLoad</key><true/>
@@ -127,6 +244,7 @@ PLIST
   <dict>
     <key>PATH</key><string>$PATH</string>
     <key>UD_NOW_DIR</key><string>$dir</string>
+    <key>UD_HARNESS</key><string>${UD_HARNESS:-pi}</string>
   </dict>
   <key>StartInterval</key><integer>${UD_QUESTIONS_INTERVAL:-120}</integer>
   <key>RunAtLoad</key><true/>
@@ -147,6 +265,7 @@ PLIST
   <dict>
     <key>PATH</key><string>$PATH</string>
     <key>UD_NOW_DIR</key><string>$dir</string>
+    <key>UD_HARNESS</key><string>${UD_HARNESS:-pi}</string>
   </dict>
   <key>StartCalendarInterval</key>
   <dict><key>Hour</key><integer>${UD_PROPOSE_HOUR:-7}</integer><key>Minute</key><integer>0</integer></dict>
@@ -169,12 +288,18 @@ PLIST
   esac
 }
 
+harness=pi
+[ "${1:-}" != review ] && [ "${2:-}" = "--harness" ] && harness="${3:-}"
+case "$harness" in pi|claude) ;; *) echo "unknown harness \"$harness\"; use pi or claude" >&2; exit 2 ;; esac
+
 case "${1:-status}" in
-  enable) enable ;;
-  disable) disable ;;
-  status) status; schedule ;;
+  enable) if [ "$harness" = claude ]; then enable_claude; else enable; fi ;;
+  disable) if [ "$harness" = claude ]; then disable_claude; else disable; fi ;;
+  status) status; status_claude; schedule ;;
   schedule) schedule "${2:-}" ;;
   propose) propose ;;
+  draft) draft "${2:-}" ;;
+  review) shift; review "$@" ;;
   init|check-spec|spec-to-tasks|on-merge|task-merged|status-page|questions) exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$@" ;;
-  *) echo "usage: unconscious init|enable|disable|status|check-spec|spec-to-tasks|on-merge|status-page|questions|propose|schedule" >&2; exit 2 ;;
+  *) echo "usage: unconscious init|enable|disable|status|check-spec|spec-to-tasks|on-merge|task-merged|status-page|questions|propose|draft|review|schedule" >&2; exit 2 ;;
 esac

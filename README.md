@@ -22,7 +22,7 @@ The contract is files and scripts: Personas, specs, `🌀 Now/`
 pages, `check-spec`, `spec-to-tasks`. No harness, tracker or runner is a
 dependency.
 
-Opt-in. Nothing here is loaded by default.
+Opt-in. Nothing here is loaded by default. `bin/unconscious enable` installs the cast into pi; `enable --harness claude` installs it into Claude Code.
 
 New here? Start with the [Quickstart](docs/Quickstart.md), which takes one change from issue to merged PR. The [Glossary](docs/Glossary.md) says what each name means.
 
@@ -45,6 +45,8 @@ Node 24, no dependencies. Run from a project repo; `-h` for options.
 - `skills/persona`: drafts a domain's Persona from the code, and promotes the invariants reviews propose.
 - `skills/propose`: the Magician. Writes the Proposed next section of a Now page; run it in a session with "propose".
 - `bin/unconscious propose`: runs the Magician headless in `pi` over every Now page.
+- `bin/unconscious review N [--comment]`: runs the Shadow headless on existing PR N, in a temporary worktree, against the criteria in the PR or its linked issues, or the ones the PR claims when none were written. A first try that needs no setup.
+- `bin/unconscious draft N`: runs the Ruler headless in `pi` on issue N. A small issue gets its criteria written into its body and a comment asking for `ready-for-agent`; a bigger one gets a comment saying it needs a spec session. Adding `ready-for-agent` is the approval: the furthest-along state label wins, so `needs-spec` doesn't have to come off first.
 - `bin/unconscious schedule on|off`: runs `status-page` every 15 minutes, `questions` every 2 and `propose` daily at 07:00 (`UD_PROPOSE_HOUR`), with launchd.
 - `npm test`: the tests.
 

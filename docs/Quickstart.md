@@ -1,5 +1,7 @@
 This takes one change from an issue to a merged PR. Words you haven't met are in the [Glossary](Glossary.md).
 
+To see what UD is for before setting anything up, run its reviewer on a PR you already have. From that repo, run `~/code/unconscious-development/bin/unconscious review <PR number>`. The Shadow checks the PR against the acceptance criteria in it or its linked issue. If nobody wrote any, it states the criteria the PR claims and judges those. You get a verdict per criterion, each with the line of code that settles it. Add `--comment` to post it on the PR. It needs pi, or Claude Code with the cast installed and `UD_HARNESS=claude`.
+
 ## Before you start
 
 You need:
@@ -9,7 +11,12 @@ You need:
 - A repo on GitHub that you can push to and merge PRs into.
 - This repo cloned somewhere, for example `~/code/unconscious-development`. The commands below call `bin/unconscious` from there.
 
-An agent harness is optional. The cast runs in pi with the pi-subagents package: `bin/unconscious enable` installs the roles and skills. Without it, you write specs by hand and start each task yourself, and everything else here works the same.
+An agent harness is optional. The cast runs in Claude Code or in pi:
+
+- Claude Code: `bin/unconscious enable --harness claude` writes the roles into `~/.claude/agents/` and the skills into `~/.claude/skills/`. Start a role as the main agent with `claude --agent ruler` or `claude --agent creator`, so it can send out the others. Set `UD_HARNESS=claude` for the headless commands (`draft`, `propose`).
+- pi, with the pi-subagents package: `bin/unconscious enable`.
+
+Without either, you write specs by hand and start each task yourself, and everything else here works the same.
 
 ## Set up your repo
 
@@ -26,7 +33,7 @@ An agent harness is optional. The cast runs in pi with the pi-subagents package:
 ## Your first change
 
 1. Open an issue that says what should change and why, and label it `needs-spec`.
-2. Decide the tier. If the change is one task with no design choice (a constant, copy, a config flag), it's trivial: go to [A trivial change](#a-trivial-change). Otherwise it's designed: continue here.
+2. Decide the tier. If the change is one task with no design choice (a constant, copy, a config flag), it's trivial: go to [A trivial change](#a-trivial-change). Otherwise it's designed: continue here. If it's a change you'd rather just make yourself, skip UD: open a normal PR, with no issue or criteria.
 3. Create a branch named `spec/<issue number>`.
 4. Write the spec and plan. With the cast, ask your pi session to use the spec skill on the issue; the Ruler drafts both with you. By hand, copy `skills/spec/templates/spec.md` to `docs/specs/<domain>/<behaviour>.md` and `plan.md` to `<behaviour>.plan.md` beside it, and fill them in. The spec's `issues` and the plan's `issue` are the issue's URL.
 5. Where you can't decide something yet, write `[NEEDS CLARIFICATION: <question>]` at the spot the answer belongs.
@@ -38,15 +45,18 @@ Then go to [Do the tasks](#do-the-tasks).
 
 ### A trivial change
 
-1. In the issue body, add a `## Acceptance criteria` heading with one `- AC1: <claim>` line per thing a reviewer could check.
-2. Run `bin/unconscious check-spec --issue <number>` from your repo to check it.
-3. Replace the issue's `needs-spec` label with `ready-for-agent`. The workflow lists its one task in the job log.
+1. Get criteria into the issue body: one `- AC1: <claim>` line per thing a reviewer could check, under `## Acceptance criteria`. With the cast, run `bin/unconscious draft <number>` from your repo, or ask your agent to spec the issue; the Ruler writes them and comments asking for your approval. By hand, write them and run `bin/unconscious check-spec --issue <number>`.
+2. Read the criteria, edit any that are wrong, and add the `ready-for-agent` label. That's the whole approval. The workflow lists the issue's one task in the job log.
+
+### Exploring first
+
+When you don't know what to build yet, skip the spec and explore in a chat session on a branch. When you're happy with it, ask the Ruler to "spec what we built" (`claude --agent ruler`, or the spec skill in pi). It writes the spec's criteria from the branch's diff, has the Shadow check the code meets them, and adds any rules you discovered to the Persona's proposed invariants. The spec lands as `built` in the same PR as the code.
 
 ## Do the tasks
 
 Each task has a key like `gh-42/t1` and a body with its criteria.
 
-1. Start an agent session in a new worktree and give it the task body. With the cast, the Creator builds it and the Shadow reviews the diff against the criteria. Without it, do the work yourself.
+1. Start an agent session in a new worktree and give it the task body. With the cast, start it as the Creator (`claude --agent creator` in Claude Code); it builds the task and has the Shadow review the diff against the criteria. Without it, do the work yourself.
 2. Open a PR whose title starts with the task key, like `gh-42/t1: Add the bulk archive mutation`, and whose body says `Refs #<issue>`. Don't write `Closes`, since a plan can have more tasks.
 3. Review and merge it.
 

@@ -54,3 +54,10 @@ test("done marks the spec built, removes the plan, and keeps after-deploy criter
   const comment = closingComment(d, "Landed in abc1234.");
   assert.match(comment, /^Every task has merged \(#1, #2\)\. Landed in abc1234\.\n\n.*`verifying`.*\n\n- AC3: Archive errors/);
 });
+
+test("the furthest-along state label wins, so adding ready-for-agent approves", async () => {
+  const { stateOf } = await import("../src/tracker/tracker.ts");
+  assert.equal(stateOf(issue({ labels: ["needs-spec", "ready-for-agent"] })), "ready-for-agent");
+  assert.equal(stateOf(issue({ labels: ["ready-for-agent", "verifying"] })), "verifying");
+  assert.equal(stateOf(issue({ labels: ["bug"] })), null);
+});
