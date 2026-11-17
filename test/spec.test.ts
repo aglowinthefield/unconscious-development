@@ -68,11 +68,39 @@ test("unknown dependencies and cycles fail", () => {
   assert.deepEqual(messages(base({ "docs/specs/orders/bulk-archive.plan.md": unknown })), ["t2 is after t9, which isn't a task"]);
 });
 
+test("after: names task ids in this plan only", () => {
+  const other = PLAN.replace("after: t1", "after: t1, billing checkout");
+  assert.deepEqual(messages(base({ "docs/specs/orders/bulk-archive.plan.md": other })), [
+    't2 is after "billing checkout", which isn\'t a task id in this plan; `after:` names task ids only, so say a wait on other work in the task\'s text',
+  ]);
+});
+
+test("two plans can't share an issue", () => {
+  const second = SPEC.replace("bulk archive", "bulk restore");
+  const m = messages(base({
+    "docs/specs/orders/bulk-restore.md": second,
+    "docs/specs/orders/bulk-restore.plan.md": PLAN.replace("issue: https://github.com/o/r/issues/412", "issue: '#412'"),
+  }));
+  assert.deepEqual(m, [
+    "plan issue https://github.com/o/r/issues/412 is also the issue of docs/specs/orders/bulk-restore.plan.md; give each spec its own issue",
+    "plan issue #412 is also the issue of docs/specs/orders/bulk-archive.plan.md; give each spec its own issue",
+    "plan issue #412 isn't in the spec's `issues`",
+  ]);
+});
+
 test("an approved spec needs its plan; a built one doesn't", () => {
   const root = repo({ "docs/personas/orders.md": PERSONA, "docs/specs/orders/bulk-archive.md": SPEC });
   assert.deepEqual(messages(root), ["approved spec has no plan at docs/specs/orders/bulk-archive.plan.md"]);
   const built = repo({ "docs/personas/orders.md": PERSONA, "docs/specs/orders/bulk-archive.md": SPEC.replace("approved", "built") });
   assert.deepEqual(messages(built), []);
+});
+
+test("after: never reaches the task's text, wherever it sits", () => {
+  const [first, last] = parseTasks("- [ ] t2: after: t1. Add procedures. Criteria: AC1\n- [ ] t3: Move screens. Criteria: AC1. After: t2.\n");
+  assert.deepEqual([first.text, first.after], ["Add procedures", ["t1"]]);
+  assert.deepEqual([last.text, last.after], ["Move screens", ["t2"]]);
+  const [nested] = parseTasks("- [x] t4: Add the lane. Criteria: AC1. after: t3\n  - Done in `src/lane.ts`.\n");
+  assert.deepEqual(nested.after, ["t3"]);
 });
 
 test("task lines parse across continuation lines, in dependency order", () => {
