@@ -46,6 +46,10 @@ Then go to [Do the tasks](#do-the-tasks).
 1. Get criteria into the issue body: one `- AC1: <claim>` line per thing a reviewer could check, under `## Acceptance criteria`. With the cast, run `bin/unconscious draft <number>` from your repo, or ask your agent to spec the issue; the Ruler writes them and comments asking for your approval. By hand, write them and run `bin/unconscious check-spec --issue <number>`.
 2. Read the criteria, edit any that are wrong, and add the `ready-for-agent` label. That's the whole approval. The workflow lists the issue's one task in the job log.
 
+### Exploring first
+
+When you don't know what to build yet, skip the spec and explore in a chat session on a branch. When you're happy with it, ask the Ruler to "spec what we built" (`claude --agent ruler`, or the spec skill in pi). It writes the spec's criteria from the branch's diff, has the Shadow check the code meets them, and adds any rules you discovered to the Persona's proposed invariants. The spec lands as `built` in the same PR as the code.
+
 ## Do the tasks
 
 Each task has a key like `gh-42/t1` and a body with its criteria.

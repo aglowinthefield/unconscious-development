@@ -58,6 +58,19 @@ A domain with no Persona yet gets one first: follow the persona skill (`skills/p
 
 The spec and plan land in one PR on `spec/<issue>`. When you write in the Self's answer to the last marker, set `status: approved` in the same edit; the Self never edits the file to approve it. Merging the PR is the approval: the merge job flips the issue and creates the tasks. `check-spec` fails while any marker is open, so a spec can't merge with an open question. To merge a spec as reference without starting work, the Self asks for `draft` and you keep it. Task PRs say `Refs #<issue>`, never `Closes`. When the last task merges, the task merge job sets the spec's `status` to `built` and closes the issue, or moves it to `verifying` until the after-deploy criteria pass. The Self sees every spec by status in the vault's `🌀 Now/Specs.base`.
 
+## After exploring
+
+Sometimes the Self works out what to build by building it, in a chat session, on a branch. Then the spec comes last, from what was built, so the decisions made while exploring aren't lost.
+
+1. Work on the exploration branch, not a new `spec/` one.
+2. If no issue covers the work, create one with `gh issue create`: what the change does and why, in two or three sentences, no state label.
+3. Find or create the living spec, as in step 2 above. Write its criteria from the diff: what the branch now does, each one a claim a reader of the diff or one run could settle. Write only what the code does. If the Self wants something it doesn't do yet, that's a new issue, not a criterion.
+4. Send a Shadow with those criteria and the branch's diff against its base. For each `unmet` one, the Self either fixes the code or you drop the criterion. Never keep a criterion the Shadow found unmet.
+5. Put rules the exploration turned up (a limit, an order, something that broke when it was violated) under Proposed invariants in the Persona, with the `path:line` that relies on each.
+6. No plan: the work is done. Set the spec's `status: built`. The PR carries code and spec together, and its body says `Closes #<issue>`, since nothing is left to split into tasks.
+
+Reply with the criteria and their Shadow verdicts, the proposed invariants, and the issue.
+
 ## Naming criteria and tasks
 
 Ids like `AC13` and `t5` mean nothing to a reader without the spec open. The first time you name one in anything a person reads (a reply, a vault page, a PR body, an issue comment), say what it is in a few words. Where Markdown renders, also link the id to its line in the spec on GitHub: `[AC13](https://github.com/<owner>/<repo>/blob/main/docs/specs/<domain>/<name>.md#L43) (a staff adoption report seven days after the gate opens)`. In a terminal reply the gloss alone is enough.
