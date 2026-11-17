@@ -10,9 +10,10 @@
 #   unconscious init|check-spec|spec-to-tasks|on-merge|status-page|questions   the scripts in src/ (run with -h)
 #   unconscious propose          run the Magician headless over every Now page
 #   unconscious draft <issue>     the Ruler drafts a small issue's criteria headless, or says it needs a spec
+#   unconscious review <pr> [--comment]   the Shadow reviews an existing PR against its criteria
 #   unconscious schedule on|off   status-page every 15 minutes, questions every 2, propose daily, with launchd;
 #               the jobs keep the UD_HARNESS they were turned on with
-# The headless commands (propose, draft) run in pi, or in Claude Code with UD_HARNESS=claude.
+# The headless commands (propose, draft, review) run in pi, or in Claude Code with UD_HARNESS=claude.
 # Both commands touch only the keys they own, so running either twice is safe.
 # Changes apply to new pi sessions.
 set -euo pipefail
@@ -167,6 +168,44 @@ draft() {
   pi -p --no-session --no-skills --skill "$ud_root/skills/spec" --append-system-prompt "$role" --tools read,grep,find,ls,bash "$prompt"
 }
 
+# Run the Shadow on a PR that already exists, as a first try of UD with no setup: criteria from the
+# PR or its linked issues, or, when nobody wrote any, the ones the PR claims, marked as derived.
+# Reads only; --comment posts the verdicts on the PR.
+review() {
+  local pr="" comment=""
+  for a in "$@"; do case "$a" in --comment) comment=1 ;; *) pr="$a" ;; esac; done
+  [ -n "$pr" ] || { echo "usage: unconscious review <pr> [--comment]" >&2; exit 2; }
+  local meta base issues context wt out
+  meta="$(gh pr view "$pr" --json number,title,body,baseRefName,closingIssuesReferences)"
+  base="$(jq -r .baseRefName <<<"$meta")"
+  pr="$(jq -r .number <<<"$meta")"
+  context="PR #$pr: $(jq -r .title <<<"$meta")"$'\n\n'"$(jq -r '.body // ""' <<<"$meta")"
+  for i in $(jq -r '.closingIssuesReferences[].number' <<<"$meta") $(jq -r '.body // ""' <<<"$meta" | grep -oiE 'refs:? #[0-9]+' | grep -oE '[0-9]+'); do
+    context+=$'\n\n'"Issue #$i: $(gh issue view "$i" --json title,body --jq '.title + "\n\n" + .body')"
+  done
+  wt="$(mktemp -d)/pr-$pr"
+  git fetch -q origin "$base"
+  git fetch -q origin "pull/$pr/head" # last, so FETCH_HEAD is the PR's head
+  git worktree add -q --detach "$wt" FETCH_HEAD
+  trap "git worktree remove --force '$wt' 2>/dev/null || true" EXIT
+  local prompt="Review PR #$pr. The change is \`git diff origin/$base...HEAD\` in this checkout.
+
+Criteria: use the \`## Acceptance criteria\` from the PR or issues below. If there are none, write the criteria the PR claims to meet, three to six, as AC1, AC2, ..., say they were derived because nobody wrote any, then judge them.
+
+$context"
+  if [ "${UD_HARNESS:-pi}" = claude ]; then
+    out="$(cd "$wt" && claude -p --agent shadow "$prompt")"
+  else
+    local role; role="$(mktemp)"
+    awk 'f>=2; /^---$/{f++}' "$ud_root/docs/roles/shadow.md" > "$role"
+    out="$(cd "$wt" && pi -p --no-session --no-skills --append-system-prompt "$role" --tools read,grep,find,ls,bash "$prompt")"
+    rm -f "$role"
+  fi
+  printf '%s\n' "$out"
+  [ -n "$comment" ] && gh pr comment "$pr" --body "$out"$'\n\n'"<sub>Shadow review by Unconscious Development.</sub>" >/dev/null && echo "posted on #$pr"
+  return 0
+}
+
 schedule() {
   case "${1:-}" in
     on)
@@ -250,7 +289,7 @@ PLIST
 }
 
 harness=pi
-[ "${2:-}" = "--harness" ] && harness="${3:-}"
+[ "${1:-}" != review ] && [ "${2:-}" = "--harness" ] && harness="${3:-}"
 case "$harness" in pi|claude) ;; *) echo "unknown harness \"$harness\"; use pi or claude" >&2; exit 2 ;; esac
 
 case "${1:-status}" in
@@ -260,6 +299,7 @@ case "${1:-status}" in
   schedule) schedule "${2:-}" ;;
   propose) propose ;;
   draft) draft "${2:-}" ;;
+  review) shift; review "$@" ;;
   init|check-spec|spec-to-tasks|on-merge|task-merged|status-page|questions) exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$@" ;;
-  *) echo "usage: unconscious init|enable|disable|status|check-spec|spec-to-tasks|on-merge|task-merged|status-page|questions|propose|draft|schedule" >&2; exit 2 ;;
+  *) echo "usage: unconscious init|enable|disable|status|check-spec|spec-to-tasks|on-merge|task-merged|status-page|questions|propose|draft|review|schedule" >&2; exit 2 ;;
 esac

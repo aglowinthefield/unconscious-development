@@ -1,5 +1,7 @@
 This takes one change from an issue to a merged PR. Words you haven't met are in the [Glossary](Glossary.md).
 
+To see what UD is for before setting anything up, run its reviewer on a PR you already have. From that repo, run `~/code/unconscious-development/bin/unconscious review <PR number>`. The Shadow checks the PR against the acceptance criteria in it or its linked issue. If nobody wrote any, it states the criteria the PR claims and judges those. You get a verdict per criterion, each with the line of code that settles it. Add `--comment` to post it on the PR. It needs pi, or Claude Code with the cast installed and `UD_HARNESS=claude`.
+
 ## Before you start
 
 You need:
