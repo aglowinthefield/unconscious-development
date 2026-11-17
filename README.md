@@ -22,7 +22,7 @@ The contract is files and scripts: Personas, specs, `🌀 Now/`
 pages, `check-spec`, `spec-to-tasks`. No harness, tracker or runner is a
 dependency.
 
-Opt-in. Nothing here is loaded by default.
+Opt-in. Nothing here is loaded by default. `bin/unconscious enable` installs the cast into pi; `enable --harness claude` installs it into Claude Code.
 
 New here? Start with the [Quickstart](docs/Quickstart.md), which takes one change from issue to merged PR. The [Glossary](docs/Glossary.md) says what each name means.
 

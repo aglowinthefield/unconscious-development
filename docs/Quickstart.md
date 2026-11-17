@@ -9,7 +9,12 @@ You need:
 - A repo on GitHub that you can push to and merge PRs into.
 - This repo cloned somewhere, for example `~/code/unconscious-development`. The commands below call `bin/unconscious` from there.
 
-An agent harness is optional. The cast runs in pi with the pi-subagents package: `bin/unconscious enable` installs the roles and skills. Without it, you write specs by hand and start each task yourself, and everything else here works the same.
+An agent harness is optional. The cast runs in Claude Code or in pi:
+
+- Claude Code: `bin/unconscious enable --harness claude` writes the roles into `~/.claude/agents/` and the skills into `~/.claude/skills/`. Start a role as the main agent with `claude --agent ruler` or `claude --agent creator`, so it can send out the others. Set `UD_HARNESS=claude` for the headless commands (`draft`, `propose`).
+- pi, with the pi-subagents package: `bin/unconscious enable`.
+
+Without either, you write specs by hand and start each task yourself, and everything else here works the same.
 
 ## Set up your repo
 
@@ -45,7 +50,7 @@ Then go to [Do the tasks](#do-the-tasks).
 
 Each task has a key like `gh-42/t1` and a body with its criteria.
 
-1. Start an agent session in a new worktree and give it the task body. With the cast, the Creator builds it and the Shadow reviews the diff against the criteria. Without it, do the work yourself.
+1. Start an agent session in a new worktree and give it the task body. With the cast, start it as the Creator (`claude --agent creator` in Claude Code); it builds the task and has the Shadow review the diff against the criteria. Without it, do the work yourself.
 2. Open a PR whose title starts with the task key, like `gh-42/t1: Add the bulk archive mutation`, and whose body says `Refs #<issue>`. Don't write `Closes`, since a plan can have more tasks.
 3. Review and merge it.
 

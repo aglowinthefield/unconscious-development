@@ -14,3 +14,5 @@ The dispatchable cast of [[Unconscious Development]], as agent files for the har
 The Self and Magician aren't here. You are the Self. The Magician is the `propose` skill (`skills/propose/`) run in a session. The Ruler loads the `spec` skill from `skills/spec/` and may send only an Explorer, a Sage or a Shadow.
 
 The format is pi-subagents'. `bin/unconscious enable` links these files into `~/.pi/agent/agents/unconscious/` and each `skills/<name>/` into `~/.agents/skills/`, hides pi-subagents' builtin presets and turns off billion-context's `acp_delegate`, so only the cast is reachable. `bin/unconscious disable` undoes all three; `bin/unconscious status` shows what's on. Both take effect in new sessions.
+
+`bin/unconscious enable --harness claude` writes each role into `~/.claude/agents/` instead, as a Claude Code subagent: same name, description and body, Claude's tool names, and no pi-only keys. The Ruler and Creator keep every tool, because in Claude Code only the main agent can send out others, so they run as the main agent (`claude --agent ruler`). Thinking levels don't carry over. `disable --harness claude` removes only the files it wrote.

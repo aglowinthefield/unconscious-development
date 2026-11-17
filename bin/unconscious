@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
-# Turn the Unconscious Development cast on or off in pi.
+# Turn the Unconscious Development cast on or off in pi or Claude Code.
 #   unconscious enable   link docs/roles/*.md into ~/.pi/agent/agents/unconscious and skills/* into
 #               ~/.agents/skills, hide pi-subagents' builtin
 #               presets, and switch off billion-context's acp_delegate
-#   unconscious disable  undo all three
+#   unconscious enable --harness claude   write the roles into ~/.claude/agents and link skills/*
+#               into ~/.claude/skills
+#   unconscious disable [--harness claude]  undo it
 #   unconscious status   show what is on
 #   unconscious init|check-spec|spec-to-tasks|on-merge|status-page|questions   the scripts in src/ (run with -h)
 #   unconscious propose          run the Magician headless over every Now page
 #   unconscious draft <issue>     the Ruler drafts a small issue's criteria headless, or says it needs a spec
 #   unconscious schedule on|off   status-page every 15 minutes, questions every 2, propose daily, with launchd
+# The headless commands (propose, draft) run in pi, or in Claude Code with UD_HARNESS=claude.
 # Both commands touch only the keys they own, so running either twice is safe.
 # Changes apply to new pi sessions.
 set -euo pipefail
@@ -18,6 +21,9 @@ agents_dir="${PI_AGENTS_DIR:-$HOME/.pi/agent/agents}/unconscious"
 skills_dir="${UD_SKILLS_DIR:-$HOME/.agents/skills}"
 pi_settings="${PI_SETTINGS:-$HOME/.pi/agent/settings.json}"
 bili_config="${BILI_CONFIG:-$HOME/.config/billion-context/billion-context.json}"
+claude_agents="${CLAUDE_AGENTS_DIR:-$HOME/.claude/agents}"
+claude_skills="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
+claude_mark="<!-- written by unconscious enable --harness claude; disable removes it -->"
 
 json_set() { # file, python statement on dict d
   python3 - "$1" "$2" <<'PY'
@@ -62,6 +68,55 @@ if not p: d.pop("pi", None)'
   status
 }
 
+# Claude Code reads subagents from Markdown files with nearly the same frontmatter, so each role is
+# rewritten rather than linked: tool names differ, and pi-only keys go. The Ruler and Creator keep
+# every tool, since they run as the main agent (`claude --agent ruler`) and send out other roles.
+enable_claude() {
+  mkdir -p "$claude_agents" "$claude_skills"
+  python3 - "$ud_root/docs/roles" "$claude_agents" "$claude_mark" <<'PY'
+import os, re, sys
+roles, out, mark = sys.argv[1:]
+names = {"read": "Read", "grep": "Grep", "find": "Glob", "ls": "Glob", "bash": "Bash", "edit": "Edit", "write": "Write"}
+for f in sorted(os.listdir(roles)):
+    text = open(os.path.join(roles, f)).read()
+    m = re.match(r"---\n(.*?)\n---\n(.*)", text, re.S)
+    if not m or not re.search(r"^name: ", m.group(1), re.M): continue
+    fm = dict(l.split(": ", 1) for l in m.group(1).splitlines() if ": " in l)
+    lines = [f"name: {fm['name']}", f"description: {fm['description']}"]
+    tools = [t.strip() for t in fm.get("tools", "").split(",") if t.strip()]
+    if fm["name"] not in ("ruler", "creator") and tools:
+        lines.append("tools: " + ", ".join(dict.fromkeys(names.get(t, t) for t in tools)))
+    lines.append(f"model: {fm.get('model', 'inherit')}")
+    dest = os.path.join(out, f"{fm['name']}.md")
+    if os.path.exists(dest) and mark not in open(dest).read():
+        print(f"warning: {dest} exists and isn't ours; skipped", file=sys.stderr); continue
+    open(dest, "w").write("---\n" + "\n".join(lines) + "\n---\n\n" + mark + "\n\n" + m.group(2).lstrip())
+PY
+  for s in "$ud_root"/skills/*/; do
+    s="${s%/}"; dest="$claude_skills/$(basename "$s")"
+    if [ -e "$dest" ] && [ ! -L "$dest" ]; then echo "warning: $dest exists and isn't ours; skipped" >&2; continue; fi
+    ln -sfn "$s" "$dest"
+  done
+  status_claude
+}
+
+disable_claude() {
+  for f in "$claude_agents"/*.md; do [ -f "$f" ] && grep -qF "$claude_mark" "$f" && rm "$f"; done
+  for s in "$ud_root"/skills/*/; do
+    dest="$claude_skills/$(basename "${s%/}")"
+    [ -L "$dest" ] && [ "$(readlink "$dest")" = "${s%/}" ] && rm "$dest"
+  done
+  status_claude
+}
+
+status_claude() {
+  local on=""
+  for f in "$claude_agents"/*.md; do [ -f "$f" ] && grep -qF "$claude_mark" "$f" && on="$on $(basename "$f" .md)"; done
+  echo "claude roles:${on:- off}"
+  on=""; for s in "$ud_root"/skills/*/; do [ -L "$claude_skills/$(basename "${s%/}")" ] && on="$on $(basename "${s%/}")"; done
+  echo "claude skills:${on:- off}"
+}
+
 status() {
   if [ -d "$agents_dir" ]; then echo "roles: $(cd "$agents_dir" && ls *.md | tr '\n' ' ')"; else echo "roles: off"; fi
   local on=""; for s in "$ud_root"/skills/*/; do [ -L "$skills_dir/$(basename "${s%/}")" ] && on="$on $(basename "${s%/}")"; done
@@ -87,18 +142,26 @@ questions_plist="$HOME/Library/LaunchAgents/dev.unconscious.questions.plist"
 propose() {
   echo "== $(date -u +%FT%TZ) propose"
   "$ud_root/bin/unconscious" status-page || true
-  pi -p --no-session --no-skills --skill "$ud_root/skills/propose" --tools read,bash,edit,write \
-    "Use the propose skill headless: write Proposed next on every project page in ${UD_NOW_DIR:-the Now folder}. Today is $(date +%F)."
+  local prompt="Use the propose skill headless: write Proposed next on every project page in ${UD_NOW_DIR:-the Now folder}. Today is $(date +%F)."
+  if [ "${UD_HARNESS:-pi}" = claude ]; then
+    claude -p --allowedTools "Read Grep Glob Bash Edit Write Skill" "$prompt"
+  else
+    pi -p --no-session --no-skills --skill "$ud_root/skills/propose" --tools read,bash,edit,write "$prompt"
+  fi
   "$ud_root/bin/unconscious" status-page
 }
 # Draft a small issue's criteria headless: the Ruler, with the spec skill, writes them into the
 # issue body and asks for ready-for-agent, or says the issue needs a spec session.
 draft() {
   [ -n "${1:-}" ] || { echo "usage: unconscious draft <issue>" >&2; exit 2; }
+  local prompt="Headless, for issue $1 in this repo. Read it with gh. If it's trivial, follow the spec skill's trivial tier: write its criteria into the body, check them, and comment asking for ready-for-agent. If it needs the designed tier, comment one line saying why and that it needs a spec session, and stop. Change no files and open no PRs."
+  if [ "${UD_HARNESS:-pi}" = claude ]; then
+    claude -p --agent ruler --allowedTools "Read Grep Glob Bash Skill" "$prompt"
+    return
+  fi
   local role; role="$(mktemp)"; trap 'rm -f "$role"' RETURN
   awk 'f>=2; /^---$/{f++}' "$ud_root/docs/roles/ruler.md" > "$role"
-  pi -p --no-session --no-skills --skill "$ud_root/skills/spec" --append-system-prompt "$role" --tools read,grep,find,ls,bash \
-    "Headless, for issue $1 in this repo. Read it with gh. If it's trivial, follow the spec skill's trivial tier: write its criteria into the body, check them, and comment asking for ready-for-agent. If it needs the designed tier, comment one line saying why and that it needs a spec session, and stop. Change no files and open no PRs."
+  pi -p --no-session --no-skills --skill "$ud_root/skills/spec" --append-system-prompt "$role" --tools read,grep,find,ls,bash "$prompt"
 }
 
 schedule() {
@@ -180,10 +243,14 @@ PLIST
   esac
 }
 
+harness=pi
+[ "${2:-}" = "--harness" ] && harness="${3:-}"
+case "$harness" in pi|claude) ;; *) echo "unknown harness \"$harness\"; use pi or claude" >&2; exit 2 ;; esac
+
 case "${1:-status}" in
-  enable) enable ;;
-  disable) disable ;;
-  status) status; schedule ;;
+  enable) if [ "$harness" = claude ]; then enable_claude; else enable; fi ;;
+  disable) if [ "$harness" = claude ]; then disable_claude; else disable; fi ;;
+  status) status; status_claude; schedule ;;
   schedule) schedule "${2:-}" ;;
   propose) propose ;;
   draft) draft "${2:-}" ;;
