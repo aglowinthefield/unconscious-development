@@ -16,6 +16,7 @@ import { piInterpreter } from "./interpret.ts";
 import { pollChangeRequest, pollQuestions, type PollOptions } from "./questions.ts";
 import { postCheckResult } from "./check-comment.ts";
 import { init } from "./init.ts";
+import { closingComment, decide, markBuilt } from "./task-merged.ts";
 
 const USAGE = `usage:
   unconscious init [--domain NAME] [--root DIR] [--dry-run]
@@ -24,6 +25,8 @@ const USAGE = `usage:
   unconscious check-spec --pr N [--repo O/R]           the same, and explain the result in a comment on PR N
   unconscious check-spec --issue N [--repo O/R]        check a trivial issue's criteria
   unconscious spec-to-tasks N [--dry-run] [--runner bakery|session] [--board ID] [--root DIR] [--repo O/R]
+  unconscious task-merged --pr N [--branch B] [--root DIR] [--repo O/R] [--dry-run]
+                                                       after task PR N merges, finish its issue if it was the last task
   unconscious on-merge --base SHA [--head SHA] [--runner …] [--board ID] [--root DIR] [--repo O/R]
   unconscious status-page [--dir DIR] [PROJECT]       rebuild the 🌀 Now pages (or one project's)
   unconscious questions [--dir DIR] [PROJECT] [--dry-run]
@@ -118,6 +121,51 @@ function onMerge(root: string, tracker: Tracker, runner: Runner, base: string, h
   }
 }
 
+// The issues a task PR is for: those it names a task key of, or says `Refs` to.
+function issuesOf(text: string): number[] {
+  const keys = [...text.matchAll(/\bgh-(\d+)\/t\d+\b/g)].map(m => Number(m[1]));
+  const refs = [...text.matchAll(/\bRefs:?\s+(?:#|https:\/\/\S+\/issues\/)(\d+)\b/gi)].map(m => Number(m[1]));
+  return [...new Set([...keys, ...refs])];
+}
+
+function taskMerged(root: string, tracker: Tracker, ref: string, branch: string | undefined, dryRun: boolean) {
+  const change = tracker.getChange(ref);
+  if (!change.merged) return console.log(`#${change.number} isn't merged; nothing to do`);
+  const git = (args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  for (const n of issuesOf(`${change.title}\n${change.body}`)) {
+    const issue = tracker.getIssue(n);
+    const merged = [change, ...tracker.mergedChangesFor(issue).filter(c => c.merged && c.number !== change.number)];
+    const d = decide(root, issue, merged);
+    if (d.kind === "skip") { console.log(`#${n}: ${d.why}`); continue; }
+    if (d.kind === "waiting") { console.log(`#${n}: waiting on ${d.left.join(", ")}`); continue; }
+    const next = d.afterDeploy.length ? "verifying" : "closed";
+    if (dryRun) { console.log(`#${n}: every task merged; would mark ${d.spec ?? "nothing"} built and move the issue to ${next}`); continue; }
+
+    // The spec's new status lands on the base branch, or in a PR when the branch refuses a push.
+    let landed = "";
+    const changed = markBuilt(root, d);
+    if (changed.length) {
+      const base = branch ?? git(["rev-parse", "--abbrev-ref", "HEAD"]);
+      git(["add", "-A", "--", ...changed]);
+      git(["commit", "-m", `Mark ${d.spec} built\n\nIts last task merged in #${change.number}; the plan goes with it.`]);
+      const sha = git(["rev-parse", "--short", "HEAD"]);
+      try {
+        git(["push", "origin", `HEAD:${base}`]);
+        landed = `The spec is now \`built\` and its plan is removed, in ${sha}.`;
+      } catch {
+        const side = `ud/built-${n}`;
+        git(["push", "-f", "origin", `HEAD:refs/heads/${side}`]);
+        const url = tracker.openChange({ branch: side, base, title: `Mark ${d.spec} built`, body: `Its last task merged in #${change.number}. Refs #${n}` });
+        landed = `${base} refused a direct push, so marking the spec \`built\` is in ${url}.`;
+      }
+    }
+    if (d.afterDeploy.length) tracker.setState(issue, "verifying");
+    tracker.comment(issue, closingComment(d, landed));
+    if (!d.afterDeploy.length) tracker.close(issue);
+    console.log(`#${n}: every task merged; ${next}${landed ? `. ${landed}` : ""}`);
+  }
+}
+
 function main(argv: string[]) {
   const [command, ...rest] = argv;
   const { values, positionals } = parseArgs({
@@ -127,7 +175,7 @@ function main(argv: string[]) {
       root: { type: "string" }, repo: { type: "string" }, issue: { type: "string" },
       runner: { type: "string" }, board: { type: "string" }, "dry-run": { type: "boolean" },
       base: { type: "string" }, head: { type: "string" }, dir: { type: "string" }, help: { type: "boolean", short: "h" },
-      pr: { type: "string" }, domain: { type: "string" },
+      pr: { type: "string" }, domain: { type: "string" }, branch: { type: "string" },
     },
   });
   if (!command || values.help) { console.log(USAGE); return 0; }
@@ -152,6 +200,11 @@ function main(argv: string[]) {
     try { if (!git(["branch", "-r", "--contains", udSha], udRoot)) console.log(`\nwarning: the workflow pins ${udSha.slice(0, 7)}, which isn't pushed; CI can't fetch it until it is`); } catch {}
     console.log("\nNext:");
     r.next.forEach((n, i) => console.log(`${i + 1}. ${n}`));
+    return 0;
+  }
+  if (command === "task-merged") {
+    if (!values.pr) throw new Refusal("task-merged needs --pr N");
+    taskMerged(root, tracker(), values.pr, values.branch, Boolean(values["dry-run"]));
     return 0;
   }
   if (command === "check-spec") {

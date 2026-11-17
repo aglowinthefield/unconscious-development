@@ -175,6 +175,6 @@ case "${1:-status}" in
   status) status; schedule ;;
   schedule) schedule "${2:-}" ;;
   propose) propose ;;
-  init|check-spec|spec-to-tasks|on-merge|status-page|questions) exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$@" ;;
+  init|check-spec|spec-to-tasks|on-merge|task-merged|status-page|questions) exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$@" ;;
   *) echo "usage: unconscious init|enable|disable|status|check-spec|spec-to-tasks|on-merge|status-page|questions|propose|schedule" >&2; exit 2 ;;
 esac

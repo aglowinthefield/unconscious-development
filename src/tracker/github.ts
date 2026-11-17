@@ -1,11 +1,13 @@
 import { execFileSync } from "node:child_process";
-import { STATES, type ChangeRequest, type Issue, type Note, type State, type Tracker } from "./tracker.ts";
+import { STATES, type Change, type ChangeRequest, type Issue, type Note, type State, type Tracker } from "./tracker.ts";
 
 const gh = (args: string[], cwd?: string, input?: string) =>
   execFileSync("gh", args, { cwd, input, encoding: "utf8", stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"] }).trim();
 
 const enc = (path: string) => path.split("/").map(encodeURIComponent).join("/");
 const CR_FIELDS = "number,headRefOid,headRefName,files";
+const CHANGE_FIELDS = "number,url,title,body,state";
+const toChange = (j: any): Change => ({ number: j.number, url: j.url, title: j.title ?? "", body: j.body ?? "", merged: j.state === "MERGED" });
 const toCR = (j: any): ChangeRequest =>
   ({ number: j.number, head: j.headRefOid, branch: j.headRefName, files: (j.files ?? []).map((f: any) => f.path) });
 
@@ -63,6 +65,21 @@ export function githubTracker(repo: string): Tracker {
       names.forEach(ensureLabel);
       const url = gh(["issue", "create", "-R", repo, "--title", title, "--body", body, ...names.flatMap(l => ["--label", l])]);
       return this.getIssue(url);
+    },
+    close(issue) {
+      gh(["issue", "close", String(issue.number), "-R", repo]);
+      issue.open = false;
+    },
+    getChange(ref) {
+      const n = String(ref).replace(/^.*\/pull\//, "").replace(/^#/, "");
+      return toChange(JSON.parse(gh(["pr", "view", n, "-R", repo, "--json", CHANGE_FIELDS])));
+    },
+    mergedChangesFor(issue) {
+      return JSON.parse(gh(["pr", "list", "-R", repo, "--state", "merged", "--search", String(issue.number), "--limit", "100", "--json", CHANGE_FIELDS]))
+        .map(toChange);
+    },
+    openChange({ branch, base, title, body }) {
+      return gh(["pr", "create", "-R", repo, "--head", branch, "--base", base, "--title", title, "--body", body]);
     },
     getChangeRequest(ref) {
       const n = String(ref).replace(/^.*\/pull\//, "").replace(/^#/, "");

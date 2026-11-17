@@ -36,15 +36,31 @@ export interface Note {
   replyTo?: number;
 }
 
+// A change request's text, enough to tell which issue and task it was for.
+export interface Change {
+  number: number;
+  url: string;
+  title: string;
+  body: string;
+  merged: boolean;
+}
+
 export interface Tracker {
   getIssue(ref: string | number): Issue;
   setState(issue: Issue, state: State): void;
   addLabel(issue: Issue, label: string): void;
   comment(issue: Issue, body: string): void;
   createIssue(input: { title: string; body: string; labels: string[] }): Issue;
+  close(issue: Issue): void;
 
   getChangeRequest(ref: string | number): ChangeRequest;
   openChangeRequests(): ChangeRequest[];
+  getChange(ref: string | number): Change;
+  // Merged change requests whose title or body mentions the issue. May miss some; callers add the
+  // one they know about.
+  mergedChangesFor(issue: Issue): Change[];
+  // Push nothing; open a change request from a branch already pushed. Returns its URL.
+  openChange(input: { branch: string; base: string; title: string; body: string }): string;
   fileAt(path: string, ref: string): string | null; // null when the file doesn't exist at ref
   // Replace one file on the change request's branch as a new commit. Returns the commit id.
   commitFile(cr: ChangeRequest, file: { path: string; content: string; message: string }): string;

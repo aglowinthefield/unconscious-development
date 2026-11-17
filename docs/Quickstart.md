@@ -17,8 +17,9 @@ An agent harness is optional. The cast runs in pi with the pi-subagents package:
    - `docs/specs/`, where specs live.
    - `docs/personas/<name>.md`, a draft Persona.
    - `.github/workflows/unconscious.yml`, which runs `check-spec` on spec PRs and creates tasks when a spec merges.
+   - `.github/workflows/unconscious-tasks.yml`, which closes the issue when its last task's PR merges.
 2. Fill in the Persona: what the domain covers, and its invariants, the rules a change there must never break. Two or three invariants are enough to start. Set `status: confirmed` when they're right. Until then, `check-spec` fails every plan in this domain.
-3. Commit the three files on a branch, open a PR, and merge it.
+3. Commit the files on a branch, open a PR, and merge it.
 
 ## Your first change
 
@@ -44,9 +45,10 @@ Then go to [Do the tasks](#do-the-tasks).
 Each task has a key like `gh-42/t1` and a body with its criteria.
 
 1. Start an agent session in a new worktree and give it the task body. With the cast, the Creator builds it and the Shadow reviews the diff against the criteria. Without it, do the work yourself.
-2. Open a PR that says `Refs #<issue>`, not `Closes`, since a plan can have more tasks.
+2. Open a PR whose title starts with the task key, like `gh-42/t1: Add the bulk archive mutation`, and whose body says `Refs #<issue>`. Don't write `Closes`, since a plan can have more tasks.
 3. Review and merge it.
-4. When the last task has merged, set the spec's `status: built` and close the issue. A job will do this for you; it isn't built yet.
+
+When the last task's PR merges, the workflow marks the spec `built`, removes the plan, and closes the issue. If the spec has after-deploy criteria, the issue moves to `verifying` instead and stays open until you've checked them in production. If your default branch refuses pushes from GitHub Actions, the spec change arrives as a PR for you to merge.
 
 ## Optional extras
 
