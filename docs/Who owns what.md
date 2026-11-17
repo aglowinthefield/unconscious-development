@@ -1,5 +1,5 @@
 ---
-status: needs-review
+status: accepted
 proposed: 2026-11-17
 revises: "[[Unconscious Development]]"
 ---

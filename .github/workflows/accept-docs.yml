@@ -1,0 +1,37 @@
+# A doc reaches main by a merged PR, and merging is the review. So any doc on main still marked
+# `status: needs-review` is flipped to `accepted` here, and the vault's Needs review view only
+# lists notes nobody has reviewed yet.
+name: Accept merged docs
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/**"]
+
+permissions:
+  contents: write
+
+jobs:
+  accept:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Flip needs-review to accepted
+        shell: node {0}
+        run: |
+          const fs = require("fs"), path = require("path");
+          const walk = d => fs.readdirSync(d, { withFileTypes: true })
+            .flatMap(e => e.isDirectory() ? walk(path.join(d, e.name)) : e.name.endsWith(".md") ? [path.join(d, e.name)] : []);
+          for (const f of walk("docs")) {
+            const text = fs.readFileSync(f, "utf8");
+            const m = /^---\n([\s\S]*?)\n---\n/.exec(text);
+            if (!m || !/^status: needs-review$/m.test(m[1])) continue;
+            fs.writeFileSync(f, "---\n" + m[1].replace(/^status: needs-review$/m, "status: accepted") + "\n---\n" + text.slice(m[0].length));
+            console.log(`accepted: ${f}`);
+          }
+      - run: |
+          git diff --quiet && { echo "nothing to accept"; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -qam "Accept merged docs" && git push
