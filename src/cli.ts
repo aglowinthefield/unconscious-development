@@ -17,22 +17,8 @@ import { pollChangeRequest, pollQuestions, type PollOptions } from "./questions.
 import { postCheckResult } from "./check-comment.ts";
 import { init } from "./init.ts";
 import { closingComment, decide, markBuilt } from "./task-merged.ts";
+import { help } from "./help.ts";
 
-const USAGE = `usage:
-  unconscious init [--domain NAME] [--root DIR] [--dry-run]
-                                                       set a repo up: docs folders, the CI workflow, a draft Persona
-  unconscious check-spec [--root DIR] [FILE...]       check docs/specs/** (or the files given)
-  unconscious check-spec --pr N [--repo O/R]           the same, and explain the result in a comment on PR N
-  unconscious check-spec --issue N [--repo O/R]        check a trivial issue's criteria
-  unconscious spec-to-tasks N [--dry-run] [--runner bakery|session] [--board ID] [--root DIR] [--repo O/R]
-  unconscious task-merged --pr N [--branch B] [--root DIR] [--repo O/R] [--dry-run]
-                                                       after task PR N merges, finish its issue if it was the last task
-  unconscious on-merge --base SHA [--head SHA] [--runner …] [--board ID] [--root DIR] [--repo O/R]
-  unconscious status-page [--dir DIR] [PROJECT]       rebuild the 🌀 Now pages (or one project's)
-  unconscious questions [--dir DIR] [PROJECT] [--dry-run]
-                                                       ask open [NEEDS CLARIFICATION] markers on spec PRs and apply
-                                                       replies, for every project page (or one)
-  unconscious questions --pr N [--repo O/R] [--dry-run] the same for one PR`;
 
 class Refusal extends Error {}
 
@@ -171,6 +157,7 @@ function taskMerged(root: string, tracker: Tracker, ref: string, branch: string 
 
 function main(argv: string[]) {
   const [command, ...rest] = argv;
+  if (!command || command === "help" || command === "-h" || command === "--help") return help(rest);
   const { values, positionals } = parseArgs({
     args: rest,
     allowPositionals: true,
@@ -181,7 +168,7 @@ function main(argv: string[]) {
       pr: { type: "string" }, domain: { type: "string" }, branch: { type: "string" },
     },
   });
-  if (!command || values.help) { console.log(USAGE); return 0; }
+  if (values.help) return help([command]);
   const root = resolve(values.root ?? process.cwd());
   const tracker = () => githubTracker(values.repo ?? repoFromRemote(root));
 
@@ -275,13 +262,15 @@ function main(argv: string[]) {
     console.log(`status-page: ${rows.length - failed.length} of ${rows.length} project pages rebuilt in ${dir}`);
     return failed.length ? 1 : 0;
   }
-  console.error(USAGE);
-  return 2;
+  return help([command]);
 }
 
 try {
   process.exitCode = main(process.argv.slice(2));
 } catch (e) {
   if (e instanceof Refusal) { console.error(e.message); process.exitCode = 1; }
-  else throw e;
+  else if ((e as any)?.code?.startsWith?.("ERR_PARSE_ARGS")) {
+    console.error(`unconscious ${process.argv[2]}: ${(e as Error).message.split(". ")[0]}.\nRun unconscious help ${process.argv[2]} for its options.`);
+    process.exitCode = 2;
+  } else throw e;
 }
