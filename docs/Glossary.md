@@ -23,7 +23,7 @@ All of these live in the project repo.
 |---|---|
 | Domain | An area of the code with its own rules, such as `billing`. Every spec belongs to one. |
 | Persona | `docs/personas/<domain>.md`: the domain's scope, its invariants, and how to run things there. Any role reads it first to work in that domain. Not a user persona. |
-| Invariant | A rule the domain must never break, with an id like `billing/I2`. Every plan states for each one whether it still holds. |
+| Invariant | A rule the domain must never break, with an id like `billing/I2`. Every plan states for each one whether it still holds. A proposed invariant is one a review turned up, waiting for you to promote or delete. |
 | Spec | `docs/specs/<domain>/<behaviour>.md`: what one behaviour does and why, with its acceptance criteria. A spec describes the behaviour, not a change to it, so later changes edit the same file. It never says how. |
 | Acceptance criterion | One checkable claim in a spec, with an id like `AC3`. An after-deploy criterion (`AC6 (after deploy):`) can only be checked in production. |
 | Plan | `docs/specs/<domain>/<behaviour>.plan.md`: how one change to a spec gets built. Approach, contracts, invariants and tasks. Deleted once the change is done. |

@@ -16,6 +16,10 @@ What this domain refuses. Each id is written in full as `<domain>/I1` elsewhere.
 |---|---|---|
 | I1 | <The rule, in one sentence. Then the why, if it isn't obvious.> | [<file>](<link>) |
 
+## Proposed invariants
+
+Rules a review turned up that aren't confirmed yet. The persona skill promotes or deletes them with the Self.
+
 ## Standing questions
 
 - <A question every change here should answer.>

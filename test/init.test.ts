@@ -19,7 +19,7 @@ test("init lays out the repo, pins the workflow and drafts the Persona", () => {
   assert.doesNotMatch(wf, /Copy to/);
   const persona = readFileSync(join(root, "docs/personas/billing.md"), "utf8");
   assert.match(persona, /^domain: billing\nowner: tom\nstatus: draft\n/m);
-  assert.match(r.next[0], /status: confirmed/);
+  assert.match(r.next[0], /persona skill.*status: confirmed/);
 });
 
 test("init never overwrites, and a dry run writes nothing", () => {

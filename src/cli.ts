@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import {
-  checkFiles, checkIssueBody, findPlanForIssue, isPlan, planPathFor, readPlan, readSpec, specFiles, specPathFor, type Problem,
+  checkFiles, checkIssueBody, errorsIn, findPlanForIssue, isPlan, planPathFor, readPlan, readSpec, specFiles, specPathFor, type Problem,
 } from "./spec.ts";
 import { taskFromIssue, tasksFromPlan } from "./tasks.ts";
 import { githubTracker, repoFromRemote } from "./tracker/github.ts";
@@ -39,9 +39,9 @@ class Refusal extends Error {}
 function report(problems: Problem[]) {
   for (const p of problems) {
     const where = p.line ? `${p.file}:${p.line}` : p.file;
-    console.error(`${where}: ${p.message}`);
+    console.error(`${where}: ${p.warning ? "warning: " : ""}${p.message}`);
     if (process.env.GITHUB_ACTIONS)
-      console.log(`::error file=${p.file}${p.line ? `,line=${p.line}` : ""}::${p.message.replace(/\n/g, " ")}`);
+      console.log(`::${p.warning ? "warning" : "error"} file=${p.file}${p.line ? `,line=${p.line}` : ""}::${p.message.replace(/\n/g, " ")}`);
   }
 }
 
@@ -68,7 +68,8 @@ function specToTasks(root: string, tracker: Tracker, issue: Issue, runner: Runne
     const spec = readSpec(specPathFor(plan));
     if (spec.status !== "approved") problems.push(`${spec.path.slice(root.length + 1)} is ${spec.status}, not approved`);
     const found = checkFiles(root, [specPathFor(plan), plan]);
-    if (found.length) { report(found); problems.push("the spec or plan fails check-spec"); }
+    report(found);
+    if (errorsIn(found).length) problems.push("the spec or plan fails check-spec");
     const built = tasksFromPlan(root, plan, issue);
     if (built.skipped.length) console.error(`already done in the plan, skipped: ${built.skipped.join(", ")}`);
     tasks = built.tasks;
@@ -106,7 +107,7 @@ function onMerge(root: string, tracker: Tracker, runner: Runner, base: string, h
   for (const specPath of specs) {
     const planPath = planPathFor(specPath);
     if (!existsSync(planPath)) { console.error(`${specPath}: approved with no plan; skipped`); continue; }
-    const issueRef = checkFiles(root, [planPath]).length ? null : readPlan(planPath).issue;
+    const issueRef = errorsIn(checkFiles(root, [planPath])).length ? null : readPlan(planPath).issue;
     if (!issueRef) { console.error(`${planPath}: fails check-spec; skipped`); continue; }
     const issue = tracker.getIssue(issueRef);
     const rel = specPath.slice(root.length + 1);
@@ -216,8 +217,9 @@ function main(argv: string[]) {
     }
     const files = positionals.length ? positionals.map(f => resolve(f)).filter(f => f.endsWith(".md")) : specFiles(root);
     const problems = checkFiles(root, files);
+    const failed = errorsIn(problems).length;
     report(problems);
-    if (!problems.length) console.log(`check-spec: ${files.length} file${files.length === 1 ? "" : "s"} ok`);
+    if (!failed) console.log(`check-spec: ${files.length} file${files.length === 1 ? "" : "s"} ok`);
     if (values.pr) {
       // The comment only explains the result; failing to post it (a fork's read-only token) doesn't
       // change it.
@@ -229,7 +231,7 @@ function main(argv: string[]) {
         console.log(process.env.GITHUB_ACTIONS ? `::warning::${msg}` : msg);
       }
     }
-    return problems.length ? 1 : 0;
+    return failed ? 1 : 0;
   }
   if (command === "spec-to-tasks") {
     const ref = positionals[0] ?? values.issue;

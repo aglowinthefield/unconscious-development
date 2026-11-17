@@ -45,7 +45,7 @@ export function init(root: string, opts: InitOptions): InitResult {
   const persona = opts.domain && `docs/personas/${opts.domain}.md`;
   const next = [
     persona
-      ? `Fill in ${persona}: its scope and the invariants this domain refuses to break. Set \`status: confirmed\` when they're right; a plan fails check-spec until its Persona is confirmed.`
+      ? `Have your agent draft ${persona} from the code with the persona skill ("draft the ${opts.domain} persona"), or fill it in by hand. A draft is enough to start: check-spec warns until you set \`status: confirmed\`.`
       : "Name your first domain (the area of the code a spec belongs to) by running init again with --domain NAME.",
     "Commit these files on a branch, open a PR and merge it. If the default branch refuses pushes from GitHub Actions, the task job opens a PR to mark a spec built instead of pushing it.",
     `Then write your first spec: ${join(opts.udRoot, "docs/Quickstart.md")}, from "Your first change".`,
