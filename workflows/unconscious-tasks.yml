@@ -1,0 +1,42 @@
+# Copy to .github/workflows/unconscious-tasks.yml in a project repo (`unconscious init` does).
+#
+# task-merged  when a PR that says `Refs #<issue>` merges: if every task of that issue now has a
+#              merged PR, marks the spec `built`, removes its plan, and closes the issue, or moves it
+#              to `verifying` when the spec has after-deploy criteria. Where the base branch refuses
+#              a push, the spec change comes as a PR instead.
+#
+# A separate file from unconscious.yml because that one only runs on PRs touching docs/, and a
+# task PR usually doesn't.
+name: unconscious tasks
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+env:
+  UD_REF: main
+
+jobs:
+  task-merged:
+    if: github.event.pull_request.merged && contains(github.event.pull_request.body, 'Refs')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: "${{ github.event.pull_request.base.ref }}" }
+      - uses: actions/checkout@v4
+        with: { repository: aglowinthefield/unconscious-development, ref: "${{ env.UD_REF }}", path: .ud }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          .ud/bin/unconscious task-merged --pr "$PR" --branch "$BASE" --repo "$GITHUB_REPOSITORY"
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          BASE: ${{ github.event.pull_request.base.ref }}
+          GH_TOKEN: ${{ github.token }}

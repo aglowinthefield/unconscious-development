@@ -20,9 +20,10 @@ function invariantLines(invs: { id: string; verdict: string }[]) {
     .filter(Boolean).join("\n");
 }
 
-const closing = (issue: Issue) =>
+const closing = (issue: Issue, key: string) =>
   `Before you report, summon a Shadow with the criteria above and attach its verdicts. ` +
-  `The PR body says \`Refs #${issue.number}\`, never \`Closes\`.`;
+  `The PR's title starts with \`${key}\` and its body says \`Refs #${issue.number}\`, never \`Closes\`; ` +
+  `that is how the merge job knows this task is done.`;
 
 // Designed tier: one task per unchecked plan task.
 export function tasksFromPlan(root: string, planPath: string, issue: Issue): { tasks: TaskInput[]; skipped: string[] } {
@@ -55,7 +56,7 @@ export function tasksFromPlan(root: string, planPath: string, issue: Issue): { t
       "",
       invariantLines(plan.invariants),
       "",
-      closing(issue),
+      closing(issue, key),
     ].join("\n");
     return { key, title: title(key, t.text), body, after: t.after.filter(a => !skipped.includes(a)).map(a => taskKey(issue.number, a)) };
   });
@@ -77,7 +78,7 @@ export function taskFromIssue(issue: Issue): TaskInput {
     "",
     criteriaList(criteria),
     "",
-    closing(issue),
+    closing(issue, key),
   ].join("\n");
   return { key, title: `${key}: ${issue.title}`, body, after: [] };
 }
