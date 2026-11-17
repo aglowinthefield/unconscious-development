@@ -11,8 +11,9 @@
 #   unconscious propose          run the Magician headless over every Now page
 #   unconscious draft <issue>     the Ruler drafts a small issue's criteria headless, or says it needs a spec
 #   unconscious review <pr> [--comment]   the Shadow reviews an existing PR against its criteria
-#   unconscious schedule on|off   status-page every 15 minutes, questions every 2, propose daily, with launchd
-# The headless commands (propose, draft) run in pi, or in Claude Code with UD_HARNESS=claude.
+#   unconscious schedule on|off   status-page every 15 minutes, questions every 2, propose daily, with launchd;
+#               the jobs keep the UD_HARNESS they were turned on with
+# The headless commands (propose, draft, review) run in pi, or in Claude Code with UD_HARNESS=claude.
 # Both commands touch only the keys they own, so running either twice is safe.
 # Changes apply to new pi sessions.
 set -euo pipefail
@@ -145,7 +146,9 @@ propose() {
   "$ud_root/bin/unconscious" status-page || true
   local prompt="Use the propose skill headless: write Proposed next on every project page in ${UD_NOW_DIR:-the Now folder}. Today is $(date +%F)."
   if [ "${UD_HARNESS:-pi}" = claude ]; then
-    claude -p --allowedTools "Read Grep Glob Bash Edit Write Skill" "$prompt"
+    # The Now folder sits outside any repo, so Claude needs it named to edit there.
+    claude -p --add-dir "${UD_NOW_DIR:-$(node --disable-warning=ExperimentalWarning -e 'import("'"$ud_root"'/src/status.ts").then(m => console.log(m.nowDir()))')}" \
+      --allowedTools "Read Grep Glob Bash Edit Write Skill" "$prompt"
   else
     pi -p --no-session --no-skills --skill "$ud_root/skills/propose" --tools read,bash,edit,write "$prompt"
   fi
@@ -220,6 +223,7 @@ schedule() {
   <dict>
     <key>PATH</key><string>$PATH</string>
     <key>UD_NOW_DIR</key><string>$dir</string>
+    <key>UD_HARNESS</key><string>${UD_HARNESS:-pi}</string>
   </dict>
   <key>StartInterval</key><integer>900</integer>
   <key>RunAtLoad</key><true/>
@@ -240,6 +244,7 @@ PLIST
   <dict>
     <key>PATH</key><string>$PATH</string>
     <key>UD_NOW_DIR</key><string>$dir</string>
+    <key>UD_HARNESS</key><string>${UD_HARNESS:-pi}</string>
   </dict>
   <key>StartInterval</key><integer>${UD_QUESTIONS_INTERVAL:-120}</integer>
   <key>RunAtLoad</key><true/>
@@ -260,6 +265,7 @@ PLIST
   <dict>
     <key>PATH</key><string>$PATH</string>
     <key>UD_NOW_DIR</key><string>$dir</string>
+    <key>UD_HARNESS</key><string>${UD_HARNESS:-pi}</string>
   </dict>
   <key>StartCalendarInterval</key>
   <dict><key>Hour</key><integer>${UD_PROPOSE_HOUR:-7}</integer><key>Minute</key><integer>0</integer></dict>
