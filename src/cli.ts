@@ -15,8 +15,11 @@ import { nowDir, projectPages, statusPage } from "./status.ts";
 import { piInterpreter } from "./interpret.ts";
 import { pollChangeRequest, pollQuestions, type PollOptions } from "./questions.ts";
 import { postCheckResult } from "./check-comment.ts";
+import { init } from "./init.ts";
 
 const USAGE = `usage:
+  unconscious init [--domain NAME] [--root DIR] [--dry-run]
+                                                       set a repo up: docs folders, the CI workflow, a draft Persona
   unconscious check-spec [--root DIR] [FILE...]       check docs/specs/** (or the files given)
   unconscious check-spec --pr N [--repo O/R]           the same, and explain the result in a comment on PR N
   unconscious check-spec --issue N [--repo O/R]        check a trivial issue's criteria
@@ -124,13 +127,33 @@ function main(argv: string[]) {
       root: { type: "string" }, repo: { type: "string" }, issue: { type: "string" },
       runner: { type: "string" }, board: { type: "string" }, "dry-run": { type: "boolean" },
       base: { type: "string" }, head: { type: "string" }, dir: { type: "string" }, help: { type: "boolean", short: "h" },
-      pr: { type: "string" },
+      pr: { type: "string" }, domain: { type: "string" },
     },
   });
   if (!command || values.help) { console.log(USAGE); return 0; }
   const root = resolve(values.root ?? process.cwd());
   const tracker = () => githubTracker(values.repo ?? repoFromRemote(root));
 
+  if (command === "init") {
+    const git = (args: string[], cwd: string) => execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    let top: string;
+    try { top = git(["rev-parse", "--show-toplevel"], root); } catch { throw new Refusal(`${root} isn't a git repo; run init from your project's repo`); }
+    const udRoot = resolve(import.meta.dirname, "..");
+    if (top === udRoot) throw new Refusal("run init from your project's repo, not from Unconscious Development itself");
+    const udSha = git(["rev-parse", "HEAD"], udRoot);
+    let owner: string | undefined;
+    try { owner = git(["config", "user.name"], top) || undefined; } catch {}
+    let r;
+    try { r = init(top, { udRoot, udSha, domain: values.domain, owner, dryRun: Boolean(values["dry-run"]) }); }
+    catch (e: any) { throw new Refusal(e.message); }
+    const verb = values["dry-run"] ? "would create" : "created";
+    for (const f of r.created) console.log(`${verb} ${f}`);
+    for (const f of r.kept) console.log(`exists, left alone: ${f}`);
+    try { if (!git(["branch", "-r", "--contains", udSha], udRoot)) console.log(`\nwarning: the workflow pins ${udSha.slice(0, 7)}, which isn't pushed; CI can't fetch it until it is`); } catch {}
+    console.log("\nNext:");
+    r.next.forEach((n, i) => console.log(`${i + 1}. ${n}`));
+    return 0;
+  }
   if (command === "check-spec") {
     if (values.issue) {
       const issue = tracker().getIssue(values.issue);

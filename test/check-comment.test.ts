@@ -19,10 +19,10 @@ function fakeTracker() {
 const invariant = { file: "docs/specs/a/b.plan.md", message: "invariant a/I2 must start `holds` or `exception: <reason>`; got \"maybe\"" };
 const question = (n: number) => ({ file: "docs/specs/a/b.md", line: n, message: `open question: [NEEDS CLARIFICATION: q${n}]` });
 
-test("problems list with links, and open questions point at their threads", () => {
-  assert.equal(problemList([invariant, question(3), question(4)], (f, l) => `${f}#${l}`),
-    "- [`docs/specs/a/b.plan.md`](docs/specs/a/b.plan.md#undefined): invariant a/I2 must start `holds` or `exception: <reason>`; got \"maybe\"\n" +
-    "- 2 open questions, each asked in its own thread on the line.");
+test("each problem is listed with a link to its file or line", () => {
+  assert.equal(problemList([invariant, question(3)], (f, l) => (l ? `${f}#L${l}` : f)),
+    "- [`docs/specs/a/b.plan.md`](docs/specs/a/b.plan.md): invariant a/I2 must start `holds` or `exception: <reason>`; got \"maybe\"\n" +
+    "- [`docs/specs/a/b.md:3`](docs/specs/a/b.md#L3): open question: [NEEDS CLARIFICATION: q3]");
   assert.match(problemList([{ ...invariant, line: 9 }], (f, l) => `${f}#L${l}`), /^- \[`docs\/specs\/a\/b\.plan\.md:9`\]\(docs\/specs\/a\/b\.plan\.md#L9\)/);
 });
 

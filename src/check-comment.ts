@@ -8,16 +8,11 @@ import type { Problem } from "./spec.ts";
 import type { ChangeRequest, Tracker } from "./tracker/tracker.ts";
 
 const TAG = "<!-- ud-check -->";
-const OPEN = /^open question: /;
-
 export function problemList(problems: Problem[], link: (file: string, line?: number) => string): string {
-  const open = problems.filter(p => OPEN.test(p.message)).length;
-  const rest = problems.filter(p => !OPEN.test(p.message)).map(p => {
+  return problems.map(p => {
     const where = p.line ? `${p.file}:${p.line}` : p.file;
     return `- [\`${where}\`](${link(p.file, p.line)}): ${p.message}`;
-  });
-  if (open) rest.push(`- ${open} open question${open === 1 ? "" : "s"}, each asked in its own thread on the line.`);
-  return rest.join("\n");
+  }).join("\n");
 }
 
 export interface CheckCommentOptions { templates?: string[]; rng?: () => number; dryRun?: boolean }

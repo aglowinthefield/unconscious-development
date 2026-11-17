@@ -18,11 +18,13 @@ the spec into tasks, a Creator implements each task in its own session and
 worktree (a vessel), a Shadow checks the diff against the spec's acceptance
 criteria, and a Trickster runs the criteria that reading can't settle.
 
-The contract is files and scripts: Personas, specs, `PROJECT.md`, `🌀 Now/`
+The contract is files and scripts: Personas, specs, `🌀 Now/`
 pages, `check-spec`, `spec-to-tasks`. No harness, tracker or runner is a
 dependency.
 
 Opt-in. Nothing here is loaded by default.
+
+New here? Start with the [Quickstart](docs/Quickstart.md), which takes one change from issue to merged PR. The [Glossary](docs/Glossary.md) says what each name means.
 
 - [docs/Unconscious Development.md](docs/Unconscious%20Development.md): the working doc and current source of truth. As practices get their own file under `docs/`, the matching decisions leave it.
 - `docs/archive/`: the interview doc and the composition drafts it grew from. Reference only.
@@ -31,6 +33,7 @@ Opt-in. Nothing here is loaded by default.
 
 Node 24, no dependencies. Run from a project repo; `-h` for options.
 
+- `bin/unconscious init --domain NAME`: sets a repo up: `docs/specs/`, a draft Persona for the domain, and the CI workflow pinned to this checkout's commit. It never overwrites a file.
 - `bin/unconscious check-spec`: checks every spec and plan under `docs/specs/`, or a trivial issue's criteria with `--issue N`. With `--pr N` it also keeps one comment on that PR saying why the check fails, and rewrites it once the check passes; the workflow runs it that way.
 - `bin/unconscious spec-to-tasks N`: turns issue N's plan (or its body, for the trivial tier) into tasks keyed `gh-N/t1`, through Bakery when `bakery-cli` is on the path, else printed for a plain session. `--dry-run` shows them without the state check.
 - `bin/unconscious on-merge --base SHA`: flips the issue of each approved spec the merge touched to `ready-for-agent` and runs `spec-to-tasks`.
