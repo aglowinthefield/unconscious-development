@@ -256,7 +256,7 @@ export function renderProjects(rows: Row[]): string {
   const body = rows.map(r => {
     const link = `[[${basename(r.file, ".md")}\\|${r.name}]]`; // escaped: a bare | splits the table cell
     const next = r.next ?? "run `propose`";
-    if (!r.snapshot) return `| ${link} | | | | not read: ${r.error ?? "unknown error"} | ${next} |`;
+    if (!r.snapshot) return `| ${link} | | | | unknown | ${next} |`; // the CLI prints the error to stderr
     const o = r.snapshot;
     const waiting = o.mine.filter(p => prStage(p) === "yours").length + o.reviewRequested.length
       + o.issues.filter(i => has(i, "ready-for-human") || has(i, "needs-spec")).length;
