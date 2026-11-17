@@ -1,3 +1,5 @@
+import { c, columns, pad, paint } from "./style.ts";
+
 // Every command `unconscious` knows, and the help it prints. Adding a command means adding an entry
 // here; the bash entry point and src/cli.ts route `help`, `-h` and unknown commands through it.
 
@@ -25,9 +27,9 @@ export const COMMANDS: Command[] = [
   {
     name: "init", group: "Set up", args: "[--domain NAME]",
     summary: "set a repo up: docs, CI workflows, a Persona",
-    details: "Run it from your project's repo. Creates docs/specs/, a draft Persona for the domain, and the CI workflows pinned to this checkout's commit. It never overwrites a file.",
-    options: [["--domain NAME", "draft docs/personas/NAME.md"], ["--root DIR", "the project repo (default: the current directory)"], ["--dry-run", "say what it would create, write nothing"]],
-    examples: [["unconscious init --domain billing", "set up a repo whose first domain is billing"]],
+    details: "Run it from your project's repo. Creates docs/specs/, a draft Persona for the domain, and the CI workflows pinned to this checkout's commit. It never overwrites a file.\nOn a terminal with no --domain, it asks for the domain and its owner, lists the files, and asks before writing them.",
+    options: [["--domain NAME", "draft docs/personas/NAME.md, and ask nothing"], ["-y, --yes", "ask nothing"], ["--root DIR", "the project repo (default: the current directory)"], ["--dry-run", "say what it would create, write nothing"]],
+    examples: [["unconscious init", "answer a few questions"], ["unconscious init --domain billing", "set up a repo whose first domain is billing"]],
   },
   {
     name: "enable", group: "Set up", args: "[--harness pi|claude]",
@@ -44,6 +46,7 @@ export const COMMANDS: Command[] = [
   {
     name: "status", group: "Set up",
     summary: "show what's installed and scheduled",
+    details: "For pi and Claude Code: which roles and skills enable installed, and for pi the settings it changed. Then which schedule jobs are on, how often they run and where they log.",
   },
   {
     name: "schedule", group: "Set up", args: "on|off",
@@ -127,26 +130,31 @@ export const ENV: Record<string, string> = {
   UD_PROPOSE_HOUR: "hour propose runs at (default: 7)",
 };
 
-// Colour only on a terminal, and never with NO_COLOR; FORCE_COLOR wins over both.
-const useColor = () =>
-  process.env.FORCE_COLOR ? process.env.FORCE_COLOR !== "0" : Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
-
-const paint = (code: string) => (s: string) => (useColor() ? `\x1b[${code}m${s}\x1b[0m` : s);
-const c = {
-  bold: paint("1"), dim: paint("2"), cmd: paint("38;5;141"), arg: paint("38;5;180"), head: paint("1;38;5;183"),
-};
-
-// The cast as a row of tarot cards, coloured night to dawn: Self, Magician, Ruler, Explorer,
-// Sage, Creator, Shadow, Trickster, Persona.
-const CARDS: [numeral: string, glyph: string][] = [
-  ["XXI", "◯"], ["I", "∞"], ["IV", "♔"], ["0", "✧"], ["IX", "✶"], ["III", "♀"], ["XVIII", "☾"], ["7", "†"], ["II", "◐"],
+// The cast as a row of tarot cards, coloured night to dawn, each with its role's name below.
+const CARDS: [role: string, numeral: string, glyph: string][] = [
+  ["Self", "XXI", "◯"], ["Magician", "I", "∞"], ["Ruler", "IV", "♔"], ["Explorer", "0", "✧"], ["Sage", "IX", "✶"],
+  ["Creator", "III", "♀"], ["Shadow", "XVIII", "☾"], ["Trickster", "7", "†"], ["Persona", "II", "◐"],
 ];
 const SHADES = [61, 62, 98, 134, 140, 176, 175, 181, 223];
+const CARD = 7;
+
+const center = (s: string, w: number) => { const l = Math.floor((w - s.length) / 2); return " ".repeat(Math.max(0, l)) + s + " ".repeat(Math.max(0, w - l - s.length)); };
+
+// Names are wider than a card, so they alternate between two lines, centred under their card.
+function names(parity: number): string {
+  let line = "", plain = 0;
+  CARDS.forEach(([role], i) => {
+    if (i % 2 !== parity) return;
+    const start = 2 + i * CARD + Math.floor((CARD - role.length) / 2);
+    line += " ".repeat(Math.max(0, start - plain)) + paint(`38;5;${SHADES[i]}`)(role);
+    plain = Math.max(plain, start) + role.length;
+  });
+  return line;
+}
 
 export function banner(): string {
-  const center = (s: string, w: number) => { const l = Math.floor((w - s.length) / 2); return " ".repeat(l) + s + " ".repeat(w - l - s.length); };
   const row = (f: (n: string, g: string) => string) =>
-    "  " + CARDS.map(([n, g], i) => paint(`38;5;${SHADES[i]}`)(f(n, g))).join("");
+    "  " + CARDS.map(([, n, g], i) => paint(`38;5;${SHADES[i]}`)(f(n, g))).join("");
   return [
     row(() => "╭─────╮"),
     row(n => `│${center(n, 5)}│`),
@@ -154,14 +162,14 @@ export function banner(): string {
     row((_, g) => `│  ${g}  │`),
     row(() => "│     │"),
     row(() => "╰─────╯"),
+    names(0),
+    names(1),
     "",
     "  " + c.bold("u n c o n s c i o u s") + c.dim("   d e v e l o p m e n t"),
     "  " + c.dim("A cast of agents takes an issue from approved spec to reviewed diff."),
   ].join("\n");
 }
 
-const columns = () => process.stdout.columns || 80;
-const pad = (s: string, w: number) => s + " ".repeat(Math.max(1, w - s.length));
 const signature = (cmd: Command) => `${cmd.name}${cmd.args ? ` ${cmd.args}` : ""}`;
 
 export function overview(): string {

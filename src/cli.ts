@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import {
@@ -15,9 +15,12 @@ import { nowDir, projectPages, statusPage } from "./status.ts";
 import { piInterpreter } from "./interpret.ts";
 import { pollChangeRequest, pollQuestions, type PollOptions } from "./questions.ts";
 import { postCheckResult } from "./check-comment.ts";
-import { init } from "./init.ts";
+import { domainProblem, init } from "./init.ts";
+import { ask, Cancelled, doneAsking } from "./prompt.ts";
+import { c, no, yes } from "./style.ts";
 import { closingComment, decide, markBuilt } from "./task-merged.ts";
 import { help } from "./help.ts";
+import { formatStatus, setupStatus } from "./setup-status.ts";
 
 
 class Refusal extends Error {}
@@ -155,7 +158,7 @@ function taskMerged(root: string, tracker: Tracker, ref: string, branch: string 
   }
 }
 
-function main(argv: string[]) {
+async function main(argv: string[]): Promise<number> {
   const [command, ...rest] = argv;
   if (!command || command === "help" || command === "-h" || command === "--help") return help(rest);
   const { values, positionals } = parseArgs({
@@ -165,13 +168,17 @@ function main(argv: string[]) {
       root: { type: "string" }, repo: { type: "string" }, issue: { type: "string" },
       runner: { type: "string" }, board: { type: "string" }, "dry-run": { type: "boolean" },
       base: { type: "string" }, head: { type: "string" }, dir: { type: "string" }, help: { type: "boolean", short: "h" },
-      pr: { type: "string" }, domain: { type: "string" }, branch: { type: "string" },
+      pr: { type: "string" }, domain: { type: "string" }, branch: { type: "string" }, yes: { type: "boolean", short: "y" },
     },
   });
   if (values.help) return help([command]);
   const root = resolve(values.root ?? process.cwd());
   const tracker = () => githubTracker(values.repo ?? repoFromRemote(root));
 
+  if (command === "status") {
+    console.log(formatStatus(setupStatus(resolve(import.meta.dirname, ".."))));
+    return 0;
+  }
   if (command === "init") {
     const git = (args: string[], cwd: string) => execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
     let top: string;
@@ -181,14 +188,40 @@ function main(argv: string[]) {
     const udSha = git(["rev-parse", "HEAD"], udRoot);
     let owner: string | undefined;
     try { owner = git(["config", "user.name"], top) || undefined; } catch {}
-    let r;
-    try { r = init(top, { udRoot, udSha, domain: values.domain, owner, dryRun: Boolean(values["dry-run"]) }); }
-    catch (e: any) { throw new Refusal(e.message); }
-    const verb = values["dry-run"] ? "would create" : "created";
-    for (const f of r.created) console.log(`${verb} ${f}`);
-    for (const f of r.kept) console.log(`exists, left alone: ${f}`);
+    let domain = values.domain;
+    const dryRun = Boolean(values["dry-run"]);
+    // On a terminal with no --domain, ask for what the flags would have said, then confirm.
+    const interactive = !values.domain && !values.yes && Boolean(process.stdin.isTTY && process.stdout.isTTY);
+    if (interactive) {
+      console.log(`Setting up ${c.bold(top)} for Unconscious Development.\n`);
+      const personas = existsSync(join(top, "docs/personas")) ? readdirSync(join(top, "docs/personas")).filter(f => f.endsWith(".md")).map(f => f.slice(0, -3)) : [];
+      if (personas.length) console.log(c.dim(`Domains with a Persona already: ${personas.join(", ")}`));
+      console.log(c.dim("A domain is an area of the code with its own rules, like billing. Each spec belongs to one."));
+      for (;;) {
+        domain = (await ask(`First domain ${c.dim("(blank to skip)")}: `)).trim() || undefined;
+        const problem = domain && domainProblem(domain);
+        if (!problem) break;
+        console.log(no(problem));
+      }
+      if (domain) owner = (await ask(`Its owner ${c.dim(`(${owner ?? "you"})`)}: `)).trim() || owner;
+    }
+    const run = (dry: boolean) => { try { return init(top, { udRoot, udSha, domain, owner, dryRun: dry }); } catch (e: any) { throw new Refusal(e.message); } };
+    let r = run(interactive || dryRun);
+    if (interactive) {
+      console.log("");
+      for (const f of r.created) console.log(`  ${c.ok("+")} ${f}`);
+      for (const f of r.kept) console.log(`  ${c.dim(`= ${f} (exists, left alone)`)}`);
+      if (!r.created.length) console.log("\nNothing to create.");
+      else if (dryRun) console.log(c.dim("\n--dry-run: nothing written."));
+      else if (/^n/i.test((await ask(`\nCreate ${r.created.length} file${r.created.length === 1 ? "" : "s"}? ${c.dim("[Y/n]")} `)).trim())) { console.log("Nothing written."); return 1; }
+      else { r = run(false); console.log(yes(`created ${r.created.length} file${r.created.length === 1 ? "" : "s"}`)); }
+    } else {
+      const verb = dryRun ? "would create" : "created";
+      for (const f of r.created) console.log(`${verb} ${f}`);
+      for (const f of r.kept) console.log(`exists, left alone: ${f}`);
+    }
     try { if (!git(["branch", "-r", "--contains", udSha], udRoot)) console.log(`\nwarning: the workflow pins ${udSha.slice(0, 7)}, which isn't pushed; CI can't fetch it until it is`); } catch {}
-    console.log("\nNext:");
+    console.log(`\n${c.head("Next")}`);
     r.next.forEach((n, i) => console.log(`${i + 1}. ${n}`));
     return 0;
   }
@@ -266,9 +299,12 @@ function main(argv: string[]) {
 }
 
 try {
-  process.exitCode = main(process.argv.slice(2));
+  process.exitCode = await main(process.argv.slice(2));
+  doneAsking();
 } catch (e) {
-  if (e instanceof Refusal) { console.error(e.message); process.exitCode = 1; }
+  doneAsking();
+  if (e instanceof Cancelled) { console.error("\nCancelled; nothing written."); process.exitCode = 130; }
+  else if (e instanceof Refusal) { console.error(e.message); process.exitCode = 1; }
   else if ((e as any)?.code?.startsWith?.("ERR_PARSE_ARGS")) {
     console.error(`unconscious ${process.argv[2]}: ${(e as Error).message.split(". ")[0]}.\nRun unconscious help ${process.argv[2]} for its options.`);
     process.exitCode = 2;

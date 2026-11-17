@@ -85,7 +85,7 @@ PY
     if [ -e "$dest" ] && [ ! -L "$dest" ]; then echo "warning: $dest exists and isn't ours; skipped" >&2; continue; fi
     ln -sfn "$s" "$dest"
   done
-  status_claude
+  status
 }
 
 disable_claude() {
@@ -94,30 +94,10 @@ disable_claude() {
     dest="$claude_skills/$(basename "${s%/}")"
     [ -L "$dest" ] && [ "$(readlink "$dest")" = "${s%/}" ] && rm "$dest"
   done
-  status_claude
+  status
 }
 
-status_claude() {
-  local on=""
-  for f in "$claude_agents"/*.md; do [ -f "$f" ] && grep -qF "$claude_mark" "$f" && on="$on $(basename "$f" .md)"; done
-  echo "claude roles:${on:- off}"
-  on=""; for s in "$ud_root"/skills/*/; do [ -L "$claude_skills/$(basename "${s%/}")" ] && on="$on $(basename "${s%/}")"; done
-  echo "claude skills:${on:- off}"
-}
-
-status() {
-  if [ -d "$agents_dir" ]; then echo "roles: $(cd "$agents_dir" && ls *.md | tr '\n' ' ')"; else echo "roles: off"; fi
-  local on=""; for s in "$ud_root"/skills/*/; do [ -L "$skills_dir/$(basename "${s%/}")" ] && on="$on $(basename "${s%/}")"; done
-  echo "skills:${on:- off}"
-  python3 - "$pi_settings" "$bili_config" <<'PY'
-import json, os, sys
-load = lambda p: json.load(open(p)) if os.path.exists(p) else {}
-s, b = load(sys.argv[1]), load(sys.argv[2])
-print("pi-subagents builtins hidden:", s.get("subagents", {}).get("disableBuiltins", False))
-print("pi-subagents installed:", any("pi-subagents" in p for p in s.get("packages", [])))
-print("billion-context acp_delegate:", "off" if b.get("pi", {}).get("subagents") is False else "on")
-PY
-}
+status() { node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" status; }
 
 # Run status-page every 15 minutes and questions every 2 (both also at login), and propose daily at 07:00, as launchd
 # agents. launchd never starts a job while its last run is still going. The agent keeps the PATH and
@@ -270,7 +250,7 @@ PLIST
     off)
       for p in "$plist" "$questions_plist" "$propose_plist"; do launchctl bootout "gui/$(id -u)" "$p" 2>/dev/null || true; rm -f "$p"; done
       echo "schedule off" ;;
-    *) [ -f "$plist" ] && echo "schedule: on ($plist, $questions_plist, $propose_plist)" || echo "schedule: off" ;;
+    *) status ;;
   esac
 }
 
@@ -287,7 +267,6 @@ case "$harness" in pi|claude) ;; *) echo "unknown harness \"$harness\"; use pi o
 case "$1" in
   enable) if [ "$harness" = claude ]; then enable_claude; else enable; fi ;;
   disable) if [ "$harness" = claude ]; then disable_claude; else disable; fi ;;
-  status) status; status_claude; schedule ;;
   schedule) schedule "${2:-}" ;;
   propose) propose ;;
   draft) draft "${2:-}" ;;
