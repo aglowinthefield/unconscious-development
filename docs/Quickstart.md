@@ -26,7 +26,7 @@ An agent harness is optional. The cast runs in pi with the pi-subagents package:
 ## Your first change
 
 1. Open an issue that says what should change and why, and label it `needs-spec`.
-2. Decide the tier. If the change is one task with no design choice (a constant, copy, a config flag), it's trivial: go to [A trivial change](#a-trivial-change). Otherwise it's designed: continue here.
+2. Decide the tier. If the change is one task with no design choice (a constant, copy, a config flag), it's trivial: go to [A trivial change](#a-trivial-change). Otherwise it's designed: continue here. If it's a change you'd rather just make yourself, skip UD: open a normal PR, with no issue or criteria.
 3. Create a branch named `spec/<issue number>`.
 4. Write the spec and plan. With the cast, ask your pi session to use the spec skill on the issue; the Ruler drafts both with you. By hand, copy `skills/spec/templates/spec.md` to `docs/specs/<domain>/<behaviour>.md` and `plan.md` to `<behaviour>.plan.md` beside it, and fill them in. The spec's `issues` and the plan's `issue` are the issue's URL.
 5. Where you can't decide something yet, write `[NEEDS CLARIFICATION: <question>]` at the spot the answer belongs.
@@ -38,9 +38,8 @@ Then go to [Do the tasks](#do-the-tasks).
 
 ### A trivial change
 
-1. In the issue body, add a `## Acceptance criteria` heading with one `- AC1: <claim>` line per thing a reviewer could check.
-2. Run `bin/unconscious check-spec --issue <number>` from your repo to check it.
-3. Replace the issue's `needs-spec` label with `ready-for-agent`. The workflow lists its one task in the job log.
+1. Get criteria into the issue body: one `- AC1: <claim>` line per thing a reviewer could check, under `## Acceptance criteria`. With the cast, run `bin/unconscious draft <number>` from your repo, or ask your agent to spec the issue; the Ruler writes them and comments asking for your approval. By hand, write them and run `bin/unconscious check-spec --issue <number>`.
+2. Read the criteria, edit any that are wrong, and add the `ready-for-agent` label. That's the whole approval. The workflow lists the issue's one task in the job log.
 
 ## Do the tasks
 

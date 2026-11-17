@@ -7,7 +7,7 @@ import {
 } from "./spec.ts";
 import { taskFromIssue, tasksFromPlan } from "./tasks.ts";
 import { githubTracker, repoFromRemote } from "./tracker/github.ts";
-import { stateOf, type Issue, type Tracker } from "./tracker/tracker.ts";
+import { STATES, stateOf, type Issue, type Tracker } from "./tracker/tracker.ts";
 import { bakeryRunner } from "./runner/bakery.ts";
 import { sessionRunner } from "./runner/session.ts";
 import type { Runner, TaskInput } from "./runner/runner.ts";
@@ -61,6 +61,8 @@ function specToTasks(root: string, tracker: Tracker, issue: Issue, runner: Runne
   const state = stateOf(issue);
   if (!issue.open) problems.push(`#${issue.number} is closed`);
   if (state !== "ready-for-agent") problems.push(`#${issue.number} is ${state ?? "unlabelled"}, not ready-for-agent`);
+  // Approval may have only added the label; drop the state it left behind.
+  else if (!dryRun && issue.labels.some(l => l !== state && (STATES as readonly string[]).includes(l))) tracker.setState(issue, state);
 
   let tasks: TaskInput[];
   const plan = findPlanForIssue(root, issue);

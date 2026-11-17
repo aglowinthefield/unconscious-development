@@ -9,7 +9,9 @@ A spec says what a behaviour does and why. A plan says how one change gets there
 
 ## 1. Pick the tier
 
-Trivial: typo, constant, copy, config flag, or a net addition with no design choice. One task, no schema change, no new dependency. Write the criteria in the issue body under `## Acceptance criteria` and stop. No spec file, no plan.
+Trivial: typo, constant, copy, config flag, or a net addition with no design choice. One task, no schema change, no new dependency. Write the criteria into the issue body yourself under `## Acceptance criteria` (`gh issue edit <n> --body-file`), keeping what the body already says above them, and run `unconscious check-spec --issue <n>`. Then comment on the issue: the criteria in one line each, and "Add `ready-for-agent` to hand this to the cast, or edit the criteria first." Adding that label is the Self's whole approval. No spec file, no plan.
+
+A change the Self would rather just make by hand doesn't need UD at all: a normal PR, no issue, no criteria. Say so when an issue looks like that.
 
 Everything else is designed: a spec in `docs/specs/<domain>/<behaviour>.md` and a plan beside it. If in doubt, it's designed.
 

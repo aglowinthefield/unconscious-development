@@ -7,6 +7,7 @@
 #   unconscious status   show what is on
 #   unconscious init|check-spec|spec-to-tasks|on-merge|status-page|questions   the scripts in src/ (run with -h)
 #   unconscious propose          run the Magician headless over every Now page
+#   unconscious draft <issue>     the Ruler drafts a small issue's criteria headless, or says it needs a spec
 #   unconscious schedule on|off   status-page every 15 minutes, questions every 2, propose daily, with launchd
 # Both commands touch only the keys they own, so running either twice is safe.
 # Changes apply to new pi sessions.
@@ -90,6 +91,16 @@ propose() {
     "Use the propose skill headless: write Proposed next on every project page in ${UD_NOW_DIR:-the Now folder}. Today is $(date +%F)."
   "$ud_root/bin/unconscious" status-page
 }
+# Draft a small issue's criteria headless: the Ruler, with the spec skill, writes them into the
+# issue body and asks for ready-for-agent, or says the issue needs a spec session.
+draft() {
+  [ -n "${1:-}" ] || { echo "usage: unconscious draft <issue>" >&2; exit 2; }
+  local role; role="$(mktemp)"; trap 'rm -f "$role"' RETURN
+  awk 'f>=2; /^---$/{f++}' "$ud_root/docs/roles/ruler.md" > "$role"
+  pi -p --no-session --no-skills --skill "$ud_root/skills/spec" --append-system-prompt "$role" --tools read,grep,find,ls,bash \
+    "Headless, for issue $1 in this repo. Read it with gh. If it's trivial, follow the spec skill's trivial tier: write its criteria into the body, check them, and comment asking for ready-for-agent. If it needs the designed tier, comment one line saying why and that it needs a spec session, and stop. Change no files and open no PRs."
+}
+
 schedule() {
   case "${1:-}" in
     on)
@@ -175,6 +186,7 @@ case "${1:-status}" in
   status) status; schedule ;;
   schedule) schedule "${2:-}" ;;
   propose) propose ;;
+  draft) draft "${2:-}" ;;
   init|check-spec|spec-to-tasks|on-merge|task-merged|status-page|questions) exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$@" ;;
-  *) echo "usage: unconscious init|enable|disable|status|check-spec|spec-to-tasks|on-merge|status-page|questions|propose|schedule" >&2; exit 2 ;;
+  *) echo "usage: unconscious init|enable|disable|status|check-spec|spec-to-tasks|on-merge|task-merged|status-page|questions|propose|draft|schedule" >&2; exit 2 ;;
 esac
