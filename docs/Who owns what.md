@@ -4,20 +4,27 @@ proposed: 2026-11-17
 revises: "[[Unconscious Development]]"
 ---
 
-Each kind of state in UD has one owner. Everywhere else it appears is a copy, marked as one and stamped with when it was copied. UD stays tied to GitHub and Obsidian; splitting them into adapters waits until UD is released, if ever.
+Work lives on GitHub, and specs live in your repo. That's all a new user needs: issues, PRs and labels where they already are, and specs, plans and Personas as Markdown files beside the code.
 
-The problem this fixes: the same piece of work shows up as a GitHub label, a PR thread, a Now-page line written only in the vault, and `Specs.base` reading whatever branch the local clone has checked out. Nothing says which copy is current. [[Development flow]] draws the owners and one piece of work moving between them.
+Two add-ons are optional, and neither holds anything you can't find on GitHub or in the repo, apart from your planning notes:
 
-## Owners
+- Obsidian, for planning across projects. Its notes show copies of GitHub's state next to your own planning. Properties starting `gh_` or `run_` are copies and get overwritten; everything else is yours.
+- A runner like Bakery, for tasks the cast does without you. Without one, a task is a session you start.
+
+The rest of this note is how UD decides what to copy where, for whoever works on UD itself. It fixes a real problem: today the same piece of work shows up as a GitHub label, a PR thread, a Now-page line written only in the vault, and `Specs.base` reading whatever branch the local clone has checked out, and nothing says which copy is current. [[Development flow]] draws it.
+
+## How UD decides what to sync
+
+Each kind of state has one owner. Everywhere else it appears is a copy, marked as one and stamped with when it was copied. UD stays tied to GitHub and Obsidian; splitting them into adapters waits until UD is released, if ever.
 
 | Owner | Owns | Examples |
 |---|---|---|
 | GitHub | Work state | Issues and their state labels, PRs, checks, question threads, the check comment |
 | The repo | What and how | Specs, plans, Personas |
-| The runner | Execution | A task's stage (queued, running, blocked, retried) and its cost |
-| Obsidian | Planning | The Magician's dreams and judgments, which day work is for, your own notes |
+| The runner (optional) | Execution | A task's stage (queued, running, blocked, retried) and its cost |
+| Obsidian (optional) | Planning | The Magician's dreams and judgments, which day work is for, your own notes |
 
-A task links all four by its key, `gh-42/t1`: the issue on GitHub, the task line in the plan, the card or session in the runner, and the PR whose title starts with the key.
+A task's key, `gh-42/t1`, ties these together: the issue on GitHub, the task line in the plan, the card or session in the runner, and the PR whose title starts with the key.
 
 A task is done when a merged PR names its key, or when its box in the plan is ticked. That is built: `task-merged` reads it to finish the issue. The runner's own state for a task is progress up to the PR, never the answer to "is it done?".
 

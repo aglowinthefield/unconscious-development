@@ -3,68 +3,65 @@ status: needs-review
 proposed: 2026-11-16
 ---
 
-UD runs two loops. In the planning loop, you and the Magician decide what work exists, in Obsidian. In the autonomous loop, the cast turns affirmed work into PRs below your attention. You come back in only to review the PR.
+UD runs two loops. In the planning loop, you decide what work exists: on GitHub, or in Obsidian with the Magician if you use it. In the autonomous loop, the cast turns that work into PRs. You come back in only to review the PR.
 
-## Who owns what
+## Where things live
 
-Each kind of state has one owner. Every other place that shows it is a copy with a sync time. The numbered arrows are one piece of work; the blue boxes are UD's jobs on your Mac.
+GitHub and your repo are all you need. Obsidian and a runner are optional add-ons, drawn dashed. The numbered arrows are one piece of work.
 
 ```mermaid
 flowchart LR
-  Self(["You (the Self)"])
+  Self(["You"])
 
-  subgraph Vault["Obsidian vault: planning"]
+  subgraph GH1["GitHub"]
+    Issues["Issue<br/>(state label)"]
+  end
+
+  subgraph Repo["Your repo"]
+    Specs["Spec, plan, Persona"]
+  end
+
+  subgraph Do["Who does the task"]
     direction TB
-    Dreams["Dreams and the Magician's judgments<br/>(feasibility, stacking, autonomy, day)"]
-    Now["Now pages and item notes<br/>(copies, stamped with sync time)"]
+    Session["A session you start"]
+    Bakery["Runner (optional):<br/>Bakery or a headless agent"]
   end
 
-  subgraph GH["GitHub: work state"]
+  subgraph GH2["GitHub"]
+    PRs["PR, checks,<br/>question threads"]
+  end
+
+  subgraph Vault["Obsidian (optional)"]
     direction TB
-    Issues["Issues and state labels"]
-    PRs["PRs, checks, question threads"]
+    Dreams["Dreams and planning notes<br/>(yours and the Magician's)"]
+    Copies["gh_ and run_ properties<br/>(copies, overwritten on sync)"]
   end
 
-  subgraph Repo["Repo: what and how"]
-    Specs["Specs, plans, Personas"]
-  end
+  Self -- "1 open an issue" --> Issues
+  Issues -- "2 spec it<br/>with the Ruler" --> Specs
+  Specs -- "3 merged:<br/>tasks handed out" --> Session
+  Specs -.-> Bakery
+  Session -- "4 PR names<br/>the task key" --> PRs
+  Bakery -.-> PRs
+  PRs -- "5 you merge; the last task closes the issue" --> Issues
 
-  subgraph Runners["Runners: execution"]
-    direction TB
-    Bakery["Bakery"]
-    Session["Interactive session"]
-    Headless["Headless agent"]
-  end
+  Dreams -. "you affirm a dream" .-> Issues
+  Issues -. "status-page copies" .-> Copies
 
-  Dreams -- "1 you affirm a dream" --> Issues
-  Issues -- "2 you draft with the Ruler" --> Specs
-  Specs -- "3 merged: spec-to-tasks" --> Runners
-  Runners -- "4 PR cites the task key" --> PRs
-  PRs -- "5 you merge" --> Specs
-  Self -.-> Dreams
-  Self -.-> PRs
-
-  Magician["Magician, daily"] -- "reads issues and specs,<br/>writes dreams" --> Dreams
-  Poller["questions, every 2 min"] -- "asks and applies answers" --> PRs
-  Sync["status-page, every 15 min"] -- "reads GitHub and runners,<br/>writes copies" --> Now
-
-  classDef vault fill:#ede7f6,stroke:#7e57c2,color:#311b92
-  classDef gh fill:#eceff1,stroke:#546e7a,color:#263238
+  classDef core fill:#eceff1,stroke:#546e7a,color:#263238
   classDef repo fill:#e8f5e9,stroke:#43a047,color:#1b5e20
-  classDef run fill:#fff3e0,stroke:#fb8c00,color:#e65100
-  classDef mac fill:#e3f2fd,stroke:#1e88e5,color:#0d47a1
-  class Dreams,Now vault
-  class Issues,PRs gh
+  classDef opt fill:#fafafa,stroke:#9e9e9e,stroke-dasharray:5 4,color:#424242
+  class Issues,PRs,Session core
   class Specs repo
-  class Bakery,Session,Headless run
-  class Magician,Poller,Sync mac
+  class Dreams,Copies,Bakery opt
+  style Vault stroke-dasharray:5 4
 ```
 
 ## One piece of work, start to finish
 
 ```mermaid
 flowchart TD
-  subgraph Plan["Planning loop: you and the Magician, in Obsidian"]
+  subgraph Plan["Planning loop: you, with the Magician if you use Obsidian"]
     D["Magician dreams up work<br/>from issues, specs, Personas"] --> A{"You affirm it?"}
     A -- "no" --> X["Dropped or deferred"]
     A -- "yes" --> I["Issue: needs-spec"]
