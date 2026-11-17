@@ -69,7 +69,7 @@ flowchart TD
     A -- "no" --> X["Dropped or deferred"]
     A -- "yes" --> I["Issue: needs-spec"]
     I --> T{"Tier?"}
-    T -- "trivial" --> TC["Criteria in the issue body<br/>You flip it to ready-for-agent"]
+    T -- "trivial" --> TC["The Ruler drafts criteria into the issue<br/>You add ready-for-agent"]
     T -- "designed" --> SP["Spec PR on spec/&lt;issue&gt;<br/>you and the Ruler draft spec and plan"]
     SP --> Q["Open questions arrive as PR threads<br/>your replies are written into the spec"]
     Q --> C{"check-spec green?"}
@@ -82,7 +82,7 @@ flowchart TD
     TC --> R
     R --> RN{"Runner, by autonomy"}
     RN -- "full" --> B["Bakery or a headless agent"]
-    RN -- "needs you" --> S["Interactive session"]
+    RN -- "assisted" --> S["Interactive session"]
     B --> V["Vessel: Creator builds,<br/>Shadow judges criteria and invariants,<br/>Trickster runs what needs a run"]
     S --> V
     V --> PR["Task PR, Refs #issue"]
@@ -93,7 +93,7 @@ flowchart TD
   RV -- "merged" --> L{"Last task of the plan?"}
   L -- "no" --> R
   L -- "yes" --> AD{"After-deploy criteria?"}
-  AD -- "no" --> CL["Spec: built<br/>Issue closed"]
+  AD -- "no" --> CL["task-merged: spec built,<br/>plan removed, issue closed"]
   AD -- "yes" --> VF["Issue: verifying<br/>Trickster checks after deploy"]
   VF --> CL
 
@@ -103,8 +103,7 @@ flowchart TD
 
 The purple steps are yours. Everything else runs without you.
 
-## Not decided yet
+## Decided since
 
-- Which single signal means a task is done. Proposed: its PR merged. The plan's checkbox and the runner's card would be copies.
-- Whether every runner names its branch after the task key (`task/gh-6857-t1`), so git and GitHub show the stage of any runner.
-- Where a dream lives before you affirm it: only in the vault, or as a GitHub issue labelled `proposed`.
+- A task is done when a merged PR names its key, or its plan box is ticked. `task-merged` finishes the issue from that.
+- Who owns what, the key-named branches, and where dreams live: see [[Who owns what]].
