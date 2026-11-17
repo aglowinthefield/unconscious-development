@@ -25,12 +25,12 @@ Each criterion has an id (`AC1`, `AC2`, …) and one observable claim that a rea
 
 ## 3. Write the plan
 
-Copy `templates/plan.md` from this skill's directory to `docs/specs/<domain>/<behaviour>.plan.md`. Frontmatter `issue` and `budget_usd`. Sections:
+Copy `templates/plan.md` from this skill's directory to `docs/specs/<domain>/<behaviour>.plan.md`. Frontmatter `issue` and `budget_usd`. Each plan has its own issue: task keys are `gh-<issue>/tN` and the merge job flips an issue once, so when one issue spans several specs, file a child issue per spec and name the parent in the spec's `issues`. `check-spec` refuses two plans on one issue. Sections:
 
 - Approach: what you chose and why, and the options it beat. Usually the Sage's recommendation.
 - Data model and contracts: types, endpoints, schema, events. Only what changes.
 - Invariants: every invariant id in the domain's Persona, each `holds` (a short note after it may say why) or `exception: <reason>`. Don't skip an id because it seems irrelevant; mark it `holds`. Only the Self approves an exception.
-- Tasks: a checklist. Each task is one Creator vessel, named by an id (`t1`, `t2`), may carry `after: <task-id>`, and lists the criteria it makes true. One task is the default. Split only when a part can merge and ship on its own and is worth reviewing alone, when one part waits on a decision the rest doesn't, or when one task would outgrow a vessel's budget. Each split pays a fresh vessel's setup and review, so a small part (one query, one panel) stays in its neighbour's task. With more than one task, the Approach says which reason each split meets. Never one task per surface.
+- Tasks: a checklist. Each task is one Creator vessel, named by an id (`t1`, `t2`), may carry `after: <task-id>` naming other tasks in this plan (a wait on another spec's work goes in the task's text instead), and lists the criteria it makes true. One task is the default. Split only when a part can merge and ship on its own and is worth reviewing alone, when one part waits on a decision the rest doesn't, or when one task would outgrow a vessel's budget. Each split pays a fresh vessel's setup and review, so a small part (one query, one panel) stays in its neighbour's task. With more than one task, the Approach says which reason each split meets. Never one task per surface.
 
 ## 4. Mark what you can't decide
 

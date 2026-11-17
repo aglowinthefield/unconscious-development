@@ -58,7 +58,7 @@ export function tasksFromPlan(root: string, planPath: string, issue: Issue): { t
       "",
       closing(issue, key),
     ].join("\n");
-    return { key, title: title(key, t.text), body, after: t.after.filter(a => !skipped.includes(a)).map(a => taskKey(issue.number, a)) };
+    return { key, title: title(key, t.text), body, after: t.after.filter(a => /^t\d+$/.test(a) && !skipped.includes(a)).map(a => taskKey(issue.number, a)) };
   });
   return { tasks, skipped };
 }

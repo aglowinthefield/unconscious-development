@@ -48,14 +48,20 @@ export function parseTasks(body: string): Task[] {
     if (!m) return [];
     const rest = m[3];
     const crit = /Criteria:\s*([^.]*)/i.exec(rest);
-    const after = /\bafter:\s*([^.]*)/i.exec(rest);
-    const text = rest.split(/\s*Criteria:/i)[0].replace(/\.\s*$/, "").trim();
+    const afterClause = /\bafter:\s*([^.]*)\.?/i;
+    const after = afterClause.exec(rest);
+    // `after:` may sit anywhere on the line; it's a dependency, not part of the work, so it never
+    // reaches the text a task's title is cut from.
+    const text = rest.replace(afterClause, "").split(/\s*Criteria:/i)[0].replace(/\.\s*$/, "").trim();
     return [{
       id: m[2],
       done: m[1].toLowerCase() === "x",
       text,
       criteria: crit ? [...crit[1].matchAll(/AC\d+/gi)].map(x => x[0].toUpperCase()) : [],
-      after: after ? [...after[1].matchAll(/t\d+/g)].map(x => x[0]) : [],
+      // Every comma-separated name, so the check can refuse one that isn't a task id here instead
+      // of dropping it.
+      // A nested bullet joins the item as " - …", so the list ends there.
+      after: after ? after[1].split(/\s+-\s/)[0].split(",").map(x => x.trim()).filter(Boolean) : [],
     }];
   });
 }
@@ -108,6 +114,11 @@ export function readPersona(root: string, domain: string): Persona | null {
 export const planPathFor = (specPath: string) => specPath.replace(/\.md$/, ".plan.md");
 export const specPathFor = (planPath: string) => planPath.replace(/\.plan\.md$/, ".md");
 export const isPlan = (path: string) => path.endsWith(".plan.md");
+// `#412`, `412` or an issue URL, as a number.
+export const issueNumber = (ref: string): number | null => {
+  const m = /(?:^#?|\/issues\/)(\d+)$/.exec(ref.trim());
+  return m ? Number(m[1]) : null;
+};
 
 function checkSections(file: string, doc: Doc, required: string[], problems: Problem[]) {
   const headings = doc.sections.map(s => s.heading);
@@ -181,6 +192,13 @@ export function checkPlanFile(root: string, path: string): Problem[] {
     return problems;
   }
   const spec = readSpec(specPath);
+  // Task keys are gh-<issue>/tN and the merge job flips an issue once, so a second plan on the same
+  // issue would get no tasks, and its t1 would share a key with the first plan's.
+  const issueNo = issueNumber(plan.issue);
+  if (issueNo !== null)
+    for (const other of specFiles(root).filter(isPlan))
+      if (other !== path && issueNumber(readPlan(other).issue) === issueNo)
+        problems.push({ file, message: `plan issue ${plan.issue} is also the issue of ${relative(root, other)}; give each spec its own issue` });
   if (plan.issue && !spec.issues.includes(plan.issue))
     problems.push({ file, message: `plan issue ${plan.issue} isn't in the spec's \`issues\`` });
 
@@ -216,7 +234,11 @@ export function checkPlanFile(root: string, path: string): Problem[] {
       else if (criteria.get(c)!.afterDeploy)
         problems.push({ file, message: `${t.id} names ${c}, an after-deploy criterion; no task makes those true` });
     }
-    for (const a of t.after) if (!ids.has(a)) problems.push({ file, message: `${t.id} is after ${a}, which isn't a task` });
+    for (const a of t.after)
+      if (!ids.has(a))
+        problems.push({ file, message: /^t\d+$/.test(a)
+          ? `${t.id} is after ${a}, which isn't a task`
+          : `${t.id} is after "${a}", which isn't a task id in this plan; \`after:\` names task ids only, so say a wait on other work in the task's text` });
   }
   const covered = new Set(tasks.flatMap(t => t.criteria));
   for (const c of spec.criteria)
