@@ -200,7 +200,7 @@ export function commandHelp(name: string): string | undefined {
   const out = [`${c.cmd(`unconscious ${cmd.name}`)}  ${cmd.summary}`, "", c.head("Usage")];
   out.push(`  unconscious ${cmd.name}${cmd.args ? ` ${c.arg(cmd.args)}` : ""}`);
   for (const u of cmd.usage ?? []) out.push(`  unconscious ${cmd.name} ${c.arg(u)}`);
-  if (cmd.details) out.push("", ...cmd.details.split("\n").flatMap(p => wrap(p, Math.min(columns(), 100) - 4).map(l => `  ${l}`)));
+  if (cmd.details) out.push("", ...cmd.details.split("\n").flatMap((p, i) => [...(i ? [""] : []), ...wrap(p, Math.min(columns(), 100) - 4).map(l => `  ${l}`)]));
   const table = (title: string, rows: [string, string][], color: (s: string) => string) => {
     const w = Math.max(...rows.map(r => r[0].length)) + 2;
     out.push("", c.head(title), ...rows.map(([a, b]) => `  ${color(pad(a, w))}${b}`.trimEnd()));
