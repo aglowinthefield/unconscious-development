@@ -5,9 +5,10 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { parseDoc, section, type Frontmatter } from "./markdown.ts";
 import { parseTasks } from "./spec.ts";
+import { syncVault } from "./vault-mirror.ts";
 
 export const OWNED = ["Waiting on you", "Stuck", "In flight", "Ready", "Last updated"];
 const STATE_LABELS = ["needs-spec", "ready-for-agent", "ready-for-human", "verifying"];
@@ -311,6 +312,7 @@ export function statusPage(dir: string, only?: string): Row[] {
   for (const { name, file: f, path, text, fm } of projectPages(dir, only)) {
     try {
       const snapshot = gather(fm);
+      snapshot.limits.unshift(...syncVault(fm, dirname(dir)));
       write(path, renderPage(text, snapshot));
       rows.push({ name, file: f, snapshot, next: firstProposal(text) });
     } catch (e: any) {
