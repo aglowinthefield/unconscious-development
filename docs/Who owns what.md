@@ -37,7 +37,9 @@ Two owners share each note, and the property names say which is which:
 - `gh_` properties (`gh_state`, `gh_checks`, `gh_pr`, `gh_url`) and `run_` properties (`run_stage`, `run_spend`) are copies. Each sync rewrites them and sets `synced_at`. Edit them and the next sync puts them back.
 - Every other property, and the note's body, belongs to you and the Magician: `autonomy`, `size`, `stacks_on`, `day`, notes. Sync never touches them.
 
-A note whose issue closes keeps its planning properties and moves to `🌀 Now/<project>/done/`, so a later dream can cite how similar work went. `Specs.base` reads specs from `main` through these notes rather than through the symlinked working copy.
+A note whose issue closes keeps its planning properties and moves to `🌀 Now/<project>/done/`, so a later dream can cite how similar work went.
+
+The specs and Personas themselves show in the vault through two links, `<folder>/Specs` and `<folder>/Personas`, for a project page with `vault: <folder>`. They point into a worktree of the repo, outside it under `~/.local/share/unconscious/mirrors/`, that `status-page` moves to `origin/main` on every run. So `Specs.base` and the Personas read what's merged, never the local clone's branch, and an edit in Obsidian can't land in the checkout other sessions work in. An edit made there anyway stops the mirror following main, and the page's Last updated says so, until it goes into a spec PR.
 
 ## Dreams
 

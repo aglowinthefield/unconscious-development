@@ -106,9 +106,9 @@ export const COMMANDS: Command[] = [
   {
     name: "status-page", group: "Now pages", args: "[PROJECT]",
     summary: "rebuild the 🌀 Now pages",
-    details: "Any page with repo: in its frontmatter is a project page. Sections it doesn't write, like Proposed next, stay as they are.",
+    details: "Any page with repo: in its frontmatter is a project page. Sections it doesn't write, like Proposed next, stay as they are. A page with vault: FOLDER also gets Specs and Personas links in that vault folder, pointing at a worktree of the repo kept at origin/main.",
     options: [["--dir DIR", "the Now folder"]],
-    env: ["UD_NOW_DIR", "DEV_VAULT"],
+    env: ["UD_NOW_DIR", "DEV_VAULT", "UD_MIRROR_DIR"],
   },
   {
     name: "questions", group: "Now pages", args: "[PROJECT]",
@@ -124,6 +124,7 @@ export const ENV: Record<string, string> = {
   UD_HARNESS: "pi or claude: who runs the headless commands (default: pi)",
   UD_NOW_DIR: "the 🌀 Now folder (default: $DEV_VAULT/🌀 Now)",
   DEV_VAULT: "the Obsidian vault the Now folder is in",
+  UD_MIRROR_DIR: "where the origin/main worktrees behind the vault's Specs and Personas live (default: ~/.local/share/unconscious/mirrors)",
   UD_SELF: "logins whose replies count (default: anyone with a stake in the repo)",
   UD_INTERPRETER_MODEL: "the model that reads replies to questions",
   UD_QUESTIONS_INTERVAL: "seconds between questions runs (default: 120)",
