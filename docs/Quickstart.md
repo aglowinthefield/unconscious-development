@@ -56,6 +56,8 @@ When you don't know what to build yet, skip the spec and explore in a chat sessi
 
 Each task has a key like `gh-42/t1` and a body with its criteria.
 
+In pi, `/build <issue>` does steps 1 and 2 for the next task: it opens the worktree, sends the Creator, Shadow and Trickster, and opens the PR, stacked on the parent task's PR when that one hasn't merged yet. Run it again for each task. By hand:
+
 1. Start an agent session in a new worktree and give it the task body. With the cast, start it as the Creator (`claude --agent creator` in Claude Code); it builds the task and has the Shadow review the diff against the criteria. Without it, do the work yourself.
 2. Open a PR whose title starts with the task key, like `gh-42/t1: Add the bulk archive mutation`, and whose body says `Refs #<issue>`. Don't write `Closes`, since a plan can have more tasks.
 3. Review and merge it.
