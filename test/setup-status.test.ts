@@ -11,7 +11,7 @@ const udRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 function withHome(fn: (home: string) => void) {
   const home = mkdtempSync(join(tmpdir(), "ud-status-"));
   const saved = { ...process.env };
-  for (const k of ["PI_AGENTS_DIR", "UD_SKILLS_DIR", "PI_SETTINGS", "BILI_CONFIG", "CLAUDE_AGENTS_DIR", "CLAUDE_SKILLS_DIR", "PI_PROMPTS_DIR"]) delete process.env[k];
+  for (const k of ["PI_AGENTS_DIR", "UD_SKILLS_DIR", "PI_SETTINGS", "BILI_CONFIG", "CLAUDE_AGENTS_DIR", "CLAUDE_SKILLS_DIR", "PI_PROMPTS_DIR", "XDG_CONFIG_HOME"]) delete process.env[k];
   process.env.HOME = home;
   process.env.NO_COLOR = "1";
   try { fn(home); } finally { process.env = saved; }
@@ -34,11 +34,13 @@ test("status reads what enable and schedule wrote", () => withHome(home => {
   writeFileSync(join(home, ".pi/agent/settings.json"), JSON.stringify({ packages: ["npm:pi-subagents"], subagents: { disableBuiltins: true } }));
   mkdirSync(join(home, "Library/LaunchAgents"), { recursive: true });
   writeFileSync(join(home, "Library/LaunchAgents/dev.unconscious.questions.plist"), "<key>StartInterval</key><integer>300</integer>");
+  mkdirSync(join(home, ".config/systemd/user"), { recursive: true });
+  writeFileSync(join(home, ".config/systemd/user/unconscious-propose.timer"), "[Timer]\nOnCalendar=*-*-* 06:00:00\nPersistent=true\n");
   const s = setupStatus(udRoot);
   assert.deepEqual(s.pi.roles, ["ruler"]);
   assert.deepEqual(s.pi.skills.sort(), ["propose", "spec"]);
   assert.equal(s.pi.from, "/elsewhere/ud");
   assert.ok(s.pi.installed && s.pi.builtinsHidden && !s.pi.acpOff);
-  assert.deepEqual(s.jobs.filter(j => j.on).map(j => [j.name, j.when]), [["questions", "every 5 minutes"]]);
+  assert.deepEqual(s.jobs.filter(j => j.on).map(j => [j.name, j.when]), [["questions", "every 5 minutes"], ["propose", "daily at 06:00"]]);
   assert.match(formatStatus(s), /✗ acp_delegate off/);
 }));

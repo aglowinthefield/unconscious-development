@@ -23,6 +23,7 @@ const paths = (udRoot: string, env = process.env, home = env.HOME ?? homedir()) 
   claudeAgents: env.CLAUDE_AGENTS_DIR ?? join(home, ".claude/agents"),
   claudeSkills: env.CLAUDE_SKILLS_DIR ?? join(home, ".claude/skills"),
   launchAgents: join(home, "Library/LaunchAgents"),
+  systemdUser: join(env.XDG_CONFIG_HOME ?? join(home, ".config"), "systemd/user"),
 });
 
 const readJson = (p: string): any => { try { return JSON.parse(readFileSync(p, "utf8")); } catch { return {}; } };
@@ -53,6 +54,15 @@ function when(plist: string, fallback: string): string {
   return hour ? `daily at ${hour[1].padStart(2, "0")}:00` : fallback;
 }
 
+// The same, from a systemd timer (Linux).
+function whenTimer(timer: string, fallback: string): string {
+  const text = readFileSync(timer, "utf8");
+  const every = text.match(/^OnUnitActiveSec=(\d+)$/m);
+  if (every) { const n = Number(every[1]); return n % 60 ? `every ${n} seconds` : `every ${n / 60} minute${n === 60 ? "" : "s"}`; }
+  const hour = text.match(/^OnCalendar=\S+ (\d+):/m);
+  return hour ? `daily at ${hour[1]}:00` : fallback;
+}
+
 export interface SetupStatus {
   pi: { roles: string[]; skills: string[]; prompts: string[]; from?: string; installed: boolean; builtinsHidden: boolean; acpOff: boolean };
   claude: { roles: string[]; skills: string[]; from?: string };
@@ -77,6 +87,8 @@ export function setupStatus(udRoot: string): SetupStatus {
       ...linkedSkills(ours, p.claudeSkills, udRoot),
     },
     jobs: JOBS.map(([name, fallback]) => {
+      const timer = join(p.systemdUser, `unconscious-${name}.timer`);
+      if (existsSync(timer)) return { name, on: true, when: whenTimer(timer, fallback), log: `journalctl --user -u unconscious-${name}` };
       const plist = join(p.launchAgents, `dev.unconscious.${name}.plist`);
       const on = existsSync(plist);
       return { name, on, when: on ? when(plist, fallback) : fallback, log: `~/Library/Logs/unconscious-${name}.log` };

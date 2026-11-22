@@ -51,7 +51,7 @@ Node 24, no dependencies. Run from a project repo; `-h` for options.
 - `bin/unconscious propose`: runs the Magician headless in `pi` over every Now page.
 - `bin/unconscious review N [--comment]`: runs the Shadow headless on existing PR N, in a temporary worktree, against the criteria in the PR or its linked issues, or the ones the PR claims when none were written. A first try that needs no setup.
 - `bin/unconscious draft N`: runs the Ruler headless in `pi` on issue N. A small issue gets its criteria written into its body and a comment asking for `ready-for-agent`; a bigger one gets a comment saying it needs a spec session. Adding `ready-for-agent` is the approval: the furthest-along state label wins, so `needs-spec` doesn't have to come off first.
-- `bin/unconscious schedule on|off`: runs `status-page` every 15 minutes, `questions` every 2 and `propose` daily at 07:00 (`UD_PROPOSE_HOUR`), with launchd.
+- `bin/unconscious schedule on|off`: runs `status-page` every 15 minutes, `questions` every 2 and `propose` daily at 07:00 (`UD_PROPOSE_HOUR`), with launchd on macOS or systemd user timers on Linux. On Linux a missed `propose` runs when the host is back, and a failed one retries every 30 minutes.
 - `npm test`: the tests.
 
 ## The cast

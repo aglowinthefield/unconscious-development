@@ -50,7 +50,7 @@ export const COMMANDS: Command[] = [
   },
   {
     name: "schedule", group: "Set up", args: "on|off",
-    summary: "run the background jobs with launchd",
+    summary: "run the background jobs with launchd or systemd",
     details: "status-page every 15 minutes, questions every 2 minutes, propose daily at 07:00. The jobs keep the PATH, Now folder and UD_HARNESS of the shell that turned them on. With no argument, says whether it's on.",
     examples: [["unconscious schedule on", ""], ["tail -f ~/Library/Logs/unconscious-questions.log", "watch a job"]],
     env: ["UD_HARNESS", "UD_NOW_DIR", "UD_QUESTIONS_INTERVAL", "UD_PROPOSE_HOUR"],
