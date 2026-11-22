@@ -116,6 +116,7 @@ status() { node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" stat
 plist="$HOME/Library/LaunchAgents/dev.unconscious.status-page.plist"
 propose_plist="$HOME/Library/LaunchAgents/dev.unconscious.propose.plist"
 questions_plist="$HOME/Library/LaunchAgents/dev.unconscious.questions.plist"
+mirror_plist="$HOME/Library/LaunchAgents/dev.unconscious.mirror.plist"
 
 # The Magician, headless: one pi run with the propose skill over every project page.
 propose() {
@@ -207,6 +208,7 @@ ExecStart=$ud_root/bin/unconscious $name
 Environment="PATH=$PATH"
 Environment="UD_NOW_DIR=$dir"
 Environment="UD_HARNESS=${UD_HARNESS:-pi}"
+Environment="UD_VAULT_MIRROR=${UD_VAULT_MIRROR:-on}"
 $retry
 UNIT
   done
@@ -327,6 +329,7 @@ PLIST
 </dict>
 </plist>
 PLIST
+      launchctl bootout "gui/$(id -u)" "$mirror_plist" 2>/dev/null || true; rm -f "$mirror_plist"
       for p in "$plist" "$questions_plist" "$propose_plist"; do
         launchctl bootout "gui/$(id -u)" "$p" 2>/dev/null || true
         launchctl bootstrap "gui/$(id -u)" "$p"
@@ -334,9 +337,38 @@ PLIST
       echo "status-page runs every 15 minutes into $dir; log: ~/Library/Logs/unconscious-status-page.log"
       echo "questions runs every ${UD_QUESTIONS_INTERVAL:-120} seconds; log: ~/Library/Logs/unconscious-questions.log"
       echo "propose runs daily at ${UD_PROPOSE_HOUR:-7}:00; log: ~/Library/Logs/unconscious-propose.log" ;;
+    mirror)
+      # Only the vault links, for the machine you read the vault on while another host runs the rest.
+      [ "$(uname)" = Darwin ] || { echo "schedule mirror is for the Mac you read the vault on" >&2; exit 2; }
+      local dir="${UD_NOW_DIR:-}"
+      [ -n "$dir" ] || dir="$(node --disable-warning=ExperimentalWarning -e 'import("'"$ud_root"'/src/status.ts").then(m => console.log(m.nowDir()))')"
+      for p in "$plist" "$questions_plist" "$propose_plist"; do launchctl bootout "gui/$(id -u)" "$p" 2>/dev/null || true; rm -f "$p"; done
+      cat > "$mirror_plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>dev.unconscious.mirror</string>
+  <key>ProgramArguments</key>
+  <array><string>$ud_root/bin/unconscious</string><string>mirror</string></array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>$PATH</string>
+    <key>UD_NOW_DIR</key><string>$dir</string>
+  </dict>
+  <key>StartInterval</key><integer>900</integer>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>$HOME/Library/Logs/unconscious-mirror.log</string>
+  <key>StandardErrorPath</key><string>$HOME/Library/Logs/unconscious-mirror.log</string>
+</dict>
+</plist>
+PLIST
+      launchctl bootout "gui/$(id -u)" "$mirror_plist" 2>/dev/null || true
+      launchctl bootstrap "gui/$(id -u)" "$mirror_plist"
+      echo "only mirror runs here now, every 15 minutes; log: ~/Library/Logs/unconscious-mirror.log" ;;
     off)
       if [ "$(uname)" = Linux ]; then schedule_systemd_off; echo "schedule off"; return; fi
-      for p in "$plist" "$questions_plist" "$propose_plist"; do launchctl bootout "gui/$(id -u)" "$p" 2>/dev/null || true; rm -f "$p"; done
+      for p in "$plist" "$questions_plist" "$propose_plist" "$mirror_plist"; do launchctl bootout "gui/$(id -u)" "$p" 2>/dev/null || true; rm -f "$p"; done
       echo "schedule off" ;;
     *) status ;;
   esac

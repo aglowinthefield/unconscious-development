@@ -56,7 +56,11 @@ export function linkVault(folder: string, mirror: string): string[] {
 }
 
 // The whole step for one project page: problems to list under Last updated.
+// Obsidian Sync doesn't carry symlinks, so the links are per machine. A host that only writes the
+// Now pages (UD_VAULT_MIRROR=off) leaves them to the machine you read the vault on, which runs
+// `unconscious mirror` instead.
 export function syncVault(fm: Record<string, unknown>, vaultRoot: string): string[] {
+  if (process.env.UD_VAULT_MIRROR === "off") return [];
   if (typeof fm.vault !== "string" || typeof fm.path !== "string" || typeof fm.repo !== "string") return [];
   const checkout = fm.path.replace(/^~(?=\/)/, homedir());
   if (!existsSync(checkout)) return [];  // gather already says the path is missing

@@ -69,3 +69,11 @@ test("does nothing without vault: in the page", () => {
   const { vault, fm } = setup();
   assert.deepEqual(syncVault({ ...fm, vault: undefined }, vault), []);
 });
+
+test("leaves the links to another machine when UD_VAULT_MIRROR=off", () => {
+  const { vault, fm, mirror } = setup();
+  process.env.UD_VAULT_MIRROR = "off";
+  try { assert.deepEqual(syncVault(fm, vault), []); } finally { delete process.env.UD_VAULT_MIRROR; }
+  assert.throws(() => readlinkSync(join(vault, "Billing/Specs")));
+  assert.throws(() => readFileSync(join(mirror, "docs/specs/billing/refunds.md")));
+});

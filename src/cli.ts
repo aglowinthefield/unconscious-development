@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { homedir } from "node:os";
 import { parseArgs } from "node:util";
 import {
   checkFiles, checkIssueBody, errorsIn, findPlanForIssue, isPlan, planPathFor, readPlan, readSpec, specFiles, specPathFor, type Problem,
@@ -12,6 +13,7 @@ import { bakeryRunner } from "./runner/bakery.ts";
 import { sessionRunner } from "./runner/session.ts";
 import type { Runner, TaskInput } from "./runner/runner.ts";
 import { nowDir, projectPages, statusPage } from "./status.ts";
+import { syncVault } from "./vault-mirror.ts";
 import { piInterpreter } from "./interpret.ts";
 import { pollChangeRequest, pollQuestions, type PollOptions } from "./questions.ts";
 import { postCheckResult } from "./check-comment.ts";
@@ -285,6 +287,22 @@ async function main(argv: string[]): Promise<number> {
         console.error(`${page.file}: ${String(e.stderr || e.message).split("\n")[0]}`);
       }
     }
+    return failed ? 1 : 0;
+  }
+  if (command === "mirror") {
+    const dir = values.dir ? resolve(values.dir) : nowDir();
+    let failed = 0;
+    for (const { name, fm } of projectPages(dir, positionals[0])) {
+      if (typeof fm.vault !== "string" || typeof fm.path !== "string") continue;
+      const checkout = fm.path.replace(/^~(?=\/)/, homedir());
+      if (!existsSync(checkout)) { console.error(`${name}: ${checkout} is missing`); failed++; continue; }
+      try { execFileSync("git", ["fetch", "-q", "origin", "main"], { cwd: checkout, stdio: ["ignore", "pipe", "pipe"] }); }
+      catch (e: any) { console.error(`${name}: fetch failed: ${String(e.stderr || e.message).split("\n")[0]}`); failed++; continue; }
+      const problems = syncVault(fm, dirname(dir));
+      for (const p of problems) console.error(`${name}: ${p}`);
+      if (problems.length) failed++;
+    }
+    console.log(`mirror: ${failed ? `${failed} project(s) had problems` : "every vault mirror is at origin/main"}`);
     return failed ? 1 : 0;
   }
   if (command === "status-page") {

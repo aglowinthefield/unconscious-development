@@ -49,9 +49,9 @@ export const COMMANDS: Command[] = [
     details: "For pi and Claude Code: which roles and skills enable installed, and for pi the settings it changed. Then which schedule jobs are on, how often they run and where they log.",
   },
   {
-    name: "schedule", group: "Set up", args: "on|off",
+    name: "schedule", group: "Set up", args: "on|mirror|off",
     summary: "run the background jobs with launchd or systemd",
-    details: "status-page every 15 minutes, questions every 2 minutes, propose daily at 07:00. The jobs keep the PATH, Now folder and UD_HARNESS of the shell that turned them on. With no argument, says whether it's on.",
+    details: "status-page every 15 minutes, questions every 2 minutes, propose daily at 07:00. The jobs keep the PATH, Now folder and UD_HARNESS of the shell that turned them on. `mirror` runs only `mirror`, every 15 minutes, for a machine that reads the vault while another host runs the rest. With no argument, says whether it's on.",
     examples: [["unconscious schedule on", ""], ["tail -f ~/Library/Logs/unconscious-questions.log", "watch a job"]],
     env: ["UD_HARNESS", "UD_NOW_DIR", "UD_QUESTIONS_INTERVAL", "UD_PROPOSE_HOUR"],
   },
@@ -104,11 +104,18 @@ export const COMMANDS: Command[] = [
     env: ["UD_HARNESS", "UD_NOW_DIR"],
   },
   {
+    name: "mirror", group: "Now pages", args: "[PROJECT]",
+    summary: "keep this machine's vault Specs and Personas links at origin/main",
+    details: "What status-page does for the links, without writing the pages. Obsidian Sync doesn't carry symlinks, so when another host writes the Now pages (UD_VAULT_MIRROR=off there), the machine you read the vault on runs this, or `schedule mirror`.",
+    options: [["--dir DIR", "the Now folder"]],
+    env: ["UD_NOW_DIR", "DEV_VAULT", "UD_MIRROR_DIR"],
+  },
+  {
     name: "status-page", group: "Now pages", args: "[PROJECT]",
     summary: "rebuild the 🌀 Now pages",
     details: "Any page with repo: in its frontmatter is a project page. Sections it doesn't write, like Proposed next, stay as they are. A page with vault: FOLDER also gets Specs and Personas links in that vault folder, pointing at a worktree of the repo kept at origin/main.",
     options: [["--dir DIR", "the Now folder"]],
-    env: ["UD_NOW_DIR", "DEV_VAULT", "UD_MIRROR_DIR"],
+    env: ["UD_NOW_DIR", "DEV_VAULT", "UD_MIRROR_DIR", "UD_VAULT_MIRROR"],
   },
   {
     name: "questions", group: "Now pages", args: "[PROJECT]",
@@ -129,6 +136,7 @@ export const ENV: Record<string, string> = {
   UD_INTERPRETER_MODEL: "the model that reads replies to questions",
   UD_QUESTIONS_INTERVAL: "seconds between questions runs (default: 120)",
   UD_PROPOSE_HOUR: "hour propose runs at (default: 7)",
+  UD_VAULT_MIRROR: "off: status-page leaves the vault's Specs and Personas links to `mirror` on another machine",
 };
 
 // The cast as a row of tarot cards, coloured night to dawn, each with its role's name below.

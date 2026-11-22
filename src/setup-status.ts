@@ -11,6 +11,7 @@ export const JOBS = [
   ["status-page", "every 15 minutes"],
   ["questions", `every ${process.env.UD_QUESTIONS_INTERVAL ?? 120} seconds`],
   ["propose", `daily at ${(process.env.UD_PROPOSE_HOUR ?? "7").padStart(2, "0")}:00`],
+  ["mirror", "every 15 minutes"],
 ] as const;
 
 const paths = (udRoot: string, env = process.env, home = env.HOME ?? homedir()) => ({
