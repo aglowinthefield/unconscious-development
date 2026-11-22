@@ -78,10 +78,20 @@ export const COMMANDS: Command[] = [
     options: [["--base SHA", "the commit before the merge"], ["--head SHA", "the merge (default: HEAD)"], ["--runner bakery|session", ""], ["--board ID", ""], ...ROOT_REPO],
   },
   {
-    name: "task-merged", group: "Specs and tasks", args: "--pr N",
+    name: "task-merged", group: "Specs and tasks", args: "--pr N | --head SHA [--base SHA]",
     summary: "after a task merges, close out its issue",
-    details: "When every task of the issue has a merged PR, sets the spec to built, removes its plan, and closes the issue, or moves it to verifying when the spec has after-deploy criteria. Pushes the spec change to the base branch, or opens a PR when the branch refuses.",
-    options: [["--pr N", "the task PR that merged"], ["--branch B", "where the spec change goes (default: the current branch)"], ...ROOT_REPO, ["--dry-run", "say what it would do"]],
+    details: "When every task of the issue has a merged PR, sets the spec to built, removes its plan, and closes the issue, or moves it to verifying when the spec has after-deploy criteria. Pushes the spec change to the base branch, or opens a PR when the branch refuses. With --via-pr it always opens the PR, from a scratch worktree, so the checkout it runs in is never touched. The PR's title is a conventional commit, docs(<domain>): mark the <name> spec built. On GitHub, set UD_PR_TOKEN to open it with a token whose PRs run checks; one opened with Actions' GITHUB_TOKEN runs none.",
+    options: [
+      ["--pr N", "the task PR that merged"],
+      ["--head SHA", "instead of --pr: every PR merged in a push, up to this commit"],
+      ["--base SHA", "with --head: the commit before the push (default: just --head)"],
+      ["--branch B", "where the spec change goes (default: the current branch)"],
+      ["--via-pr", "always land the spec change through a PR, never a direct push"],
+      ["--title T", "that PR's title, with {domain} and {name} filled in"],
+      ["--body-tail FILE", "appended to that PR's body, for a repo's required PR sections"],
+      ...ROOT_REPO, ["--dry-run", "say what it would do"],
+    ],
+    env: ["UD_PR_TOKEN"],
   },
   {
     name: "draft", group: "Cast on demand", args: "ISSUE",
@@ -129,6 +139,7 @@ export const COMMANDS: Command[] = [
 
 export const ENV: Record<string, string> = {
   UD_HARNESS: "pi or claude: who runs the headless commands (default: pi)",
+  UD_PR_TOKEN: "GitHub token that opens task-merged's PR, so its checks run (default: the ambient gh token)",
   UD_NOW_DIR: "the 🌀 Now folder (default: $DEV_VAULT/🌀 Now)",
   DEV_VAULT: "the Obsidian vault the Now folder is in",
   UD_MIRROR_DIR: "where the origin/main worktrees behind the vault's Specs and Personas live (default: ~/.local/share/unconscious/mirrors)",

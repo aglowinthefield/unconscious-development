@@ -1,8 +1,8 @@
 import { execFileSync } from "node:child_process";
 import { STATES, type Change, type ChangeRequest, type Issue, type Note, type State, type Tracker } from "./tracker.ts";
 
-const gh = (args: string[], cwd?: string, input?: string) =>
-  execFileSync("gh", args, { cwd, input, encoding: "utf8", stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"] }).trim();
+const gh = (args: string[], cwd?: string, input?: string, env?: NodeJS.ProcessEnv) =>
+  execFileSync("gh", args, { cwd, input, env, encoding: "utf8", stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"] }).trim();
 
 const enc = (path: string) => path.split("/").map(encodeURIComponent).join("/");
 const CR_FIELDS = "number,headRefOid,headRefName,files";
@@ -78,8 +78,27 @@ export function githubTracker(repo: string): Tracker {
       return JSON.parse(gh(["pr", "list", "-R", repo, "--state", "merged", "--search", String(issue.number), "--limit", "100", "--json", CHANGE_FIELDS]))
         .map(toChange);
     },
+    mergedChangesIn(base, head) {
+      const shas = !base || /^0+$/.test(base)
+        ? [head]
+        : gh(["api", `repos/${repo}/compare/${base}...${head}`, "--jq", ".commits[].sha"]).split("\n").filter(Boolean);
+      const seen = new Set<number>();
+      const changes: Change[] = [];
+      for (const sha of shas) {
+        const numbers = gh(["api", `repos/${repo}/commits/${sha}/pulls`, "--jq", ".[] | select(.merged_at != null) | .number"])
+          .split("\n").filter(Boolean).map(Number);
+        for (const n of numbers) {
+          if (seen.has(n)) continue;
+          seen.add(n);
+          changes.push(this.getChange(n));
+        }
+      }
+      return changes;
+    },
     openChange({ branch, base, title, body }) {
-      return gh(["pr", "create", "-R", repo, "--head", branch, "--base", base, "--title", title, "--body", body]);
+      const token = process.env.UD_PR_TOKEN;
+      const env = token ? { ...process.env, GH_TOKEN: token } : undefined;
+      return gh(["pr", "create", "-R", repo, "--head", branch, "--base", base, "--title", title, "--body", body], undefined, undefined, env);
     },
     getChangeRequest(ref) {
       const n = String(ref).replace(/^.*\/pull\//, "").replace(/^#/, "");

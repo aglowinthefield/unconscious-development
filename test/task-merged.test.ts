@@ -1,9 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { closingComment, decide, markBuilt, refersTo, taskIdsIn } from "../src/task-merged.ts";
-import type { Change, Issue } from "../src/tracker/tracker.ts";
+import { builtChange, closingComment, decide, markBuilt, refersTo, taskIdsIn, taskMerged } from "../src/task-merged.ts";
+import type { Change, Issue, Tracker } from "../src/tracker/tracker.ts";
 import { PLAN, SPEC, repo } from "./fixtures.ts";
 
 const issue = (over: Partial<Issue> = {}): Issue =>
@@ -60,4 +62,67 @@ test("the furthest-along state label wins, so adding ready-for-agent approves", 
   assert.equal(stateOf(issue({ labels: ["needs-spec", "ready-for-agent"] })), "ready-for-agent");
   assert.equal(stateOf(issue({ labels: ["ready-for-agent", "verifying"] })), "verifying");
   assert.equal(stateOf(issue({ labels: ["bug"] })), null);
+});
+
+test("the built PR gets a conventional title and the repo's required sections", () => {
+  const root = files();
+  const d = decide(root, issue(), [pr(1, "gh-412/t1"), pr(2, "gh-412/t2")]);
+  if (d.kind !== "done") throw new Error("expected done");
+  const { title, body } = builtChange(d, issue(), { tail: "## Staging QA\n\nNo manual step.\n" });
+  assert.equal(title, "docs(orders): mark the bulk-archive spec built");
+  assert.equal(body, "Marks `docs/specs/orders/bulk-archive.md` built and removes its plan: every task of #412 has merged (#1, #2).\n\nRefs #412\n\n## Staging QA\n\nNo manual step.");
+  assert.equal(builtChange(d, issue(), { template: "chore: {name} ({domain}) built" }).title, "chore: bulk-archive (orders) built");
+});
+
+// A project repo with an origin to push to, and a tracker that records what it was asked to do.
+function project() {
+  const git = (cwd: string, ...args: string[]) => execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  const origin = mkdtempSync(join(tmpdir(), "ud-origin-"));
+  git(origin, "init", "-q", "--bare", "-b", "main");
+  const root = files();
+  git(root, "init", "-q", "-b", "main");
+  git(root, "config", "user.name", "t");
+  git(root, "config", "user.email", "t@t");
+  git(root, "add", "-A");
+  git(root, "commit", "-q", "-m", "spec");
+  git(root, "remote", "add", "origin", origin);
+  git(root, "push", "-q", "origin", "main");
+  const calls: string[] = [];
+  const it = issue();
+  const tracker = {
+    getIssue: () => it,
+    mergedChangesFor: () => [pr(1, "gh-412/t1"), pr(2, "gh-412/t2")],
+    setState: (_: Issue, s: string) => { calls.push(`state ${s}`); },
+    comment: (_: Issue, body: string) => { calls.push(`comment ${body.split("\n")[0]}`); },
+    close: () => { calls.push("close"); },
+    openChange: (c: { branch: string; base: string; title: string }) => { calls.push(`pr ${c.branch} -> ${c.base}: ${c.title}`); return "https://x/pull/9"; },
+  } as unknown as Tracker;
+  return { root, origin, git, calls, tracker };
+}
+
+test("--via-pr lands the spec change on a side branch and a PR, leaving the checkout alone", () => {
+  const { root, origin, git, calls, tracker } = project();
+  const head = git(root, "rev-parse", "HEAD");
+  taskMerged(root, tracker, [pr(2, "gh-412/t2")], { viaPr: true });
+  assert.equal(git(root, "rev-parse", "HEAD"), head, "the checkout's HEAD doesn't move");
+  assert.equal(git(root, "status", "--porcelain"), "", "nor does its working tree");
+  assert.match(git(origin, "show", "ud/built-412:docs/specs/orders/bulk-archive.md"), /^status: built$/m);
+  assert.equal(git(origin, "ls-tree", "--name-only", "ud/built-412", "docs/specs/orders/"), "docs/specs/orders/bulk-archive.md");
+  assert.equal(git(origin, "rev-parse", "main"), head, "main is untouched");
+  assert.equal(git(root, "worktree", "list").split("\n").length, 1, "the scratch worktree is gone");
+  assert.deepEqual(calls, [
+    "pr ud/built-412 -> main: docs(orders): mark the bulk-archive spec built",
+    "state verifying",
+    "comment Every task has merged (#2, #1). Marking the spec `built` is in https://x/pull/9.",
+  ]);
+});
+
+test("without --via-pr, a refused push falls back to the same PR", () => {
+  const { root, origin, git, calls, tracker } = project();
+  // A hook that refuses every push to main, as a protected branch does.
+  execFileSync("sh", ["-c", `printf '#!/bin/sh\nwhile read o n r; do [ "$r" = refs/heads/main ] && exit 1; done; exit 0\n' > hooks/pre-receive && chmod +x hooks/pre-receive`], { cwd: origin });
+  taskMerged(root, tracker, [pr(2, "gh-412/t2")], {});
+  assert.match(git(origin, "show", "ud/built-412:docs/specs/orders/bulk-archive.md"), /^status: built$/m);
+  assert.equal(calls[0], "pr ud/built-412 -> main: docs(orders): mark the bulk-archive spec built");
+  assert.match(calls[2], /^comment .*main refused a direct push, so marking the spec `built` is in https:\/\/x\/pull\/9\.$/);
 });

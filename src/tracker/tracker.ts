@@ -59,7 +59,12 @@ export interface Tracker {
   // Merged change requests whose title or body mentions the issue. May miss some; callers add the
   // one they know about.
   mergedChangesFor(issue: Issue): Change[];
-  // Push nothing; open a change request from a branch already pushed. Returns its URL.
+  // Merged change requests whose merge landed in base..head on the default branch, oldest first.
+  // A base of all zeros (a new branch) or "" means just head.
+  mergedChangesIn(base: string, head: string): Change[];
+  // Push nothing; open a change request from a branch already pushed. Returns its URL. On GitHub,
+  // UD_PR_TOKEN, when set, opens it instead of the ambient token: a PR opened with Actions'
+  // GITHUB_TOKEN runs no workflows, so its checks never start.
   openChange(input: { branch: string; base: string; title: string; body: string }): string;
   fileAt(path: string, ref: string): string | null; // null when the file doesn't exist at ref
   // Replace one file on the change request's branch as a new commit. Returns the commit id.
