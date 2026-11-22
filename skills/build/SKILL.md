@@ -64,4 +64,6 @@ On a task that has an open PR: reuse its worktree and branch, read its review th
 
 The task and PR link, its base, each criterion's verdict, anything blocked or unmet, and the next task this issue has (or that it was the last). Then stop. The Self runs `/build <n>` again for the next one.
 
+If the task fixed stored data that broke a rule the code assumed (it needed a backfill, merged two definitions of one rule, routed a write through a normalizer, fixed a collation fold, a stale reader or twins), run the `data-hygiene` skill in sweep mode for that rule before you report, and put its report path in yours. It's read-only and files nothing.
+
 When you name a criterion or task (`AC13`, `t5`), say what it is in a few words the first time.
