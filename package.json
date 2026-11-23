@@ -2,6 +2,19 @@
   "name": "unconscious-development",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24" },
-  "scripts": { "test": "node --test test/*.test.ts" }
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsrs -p .",
+    "lint": "oxlint && oxfmt --check",
+    "format": "oxfmt"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "oxfmt": "0.79.0",
+    "oxlint": "1.94.0",
+    "tsrs": "7.1.0-beta.tsrs4"
+  }
 }

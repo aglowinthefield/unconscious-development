@@ -99,7 +99,7 @@ function specsOnMain(path: string): SpecState[] {
     const tasksBody = files.includes(planFile) ? section(parseDoc(show(planFile)), "Tasks")?.body ?? "" : "";
     const tasks = parseTasks(tasksBody);
     if (status === "draft" && !tasks.some(t => t.done)) continue; // an ordinary draft
-    const issues = spec.frontmatter.issues;
+    const issues = spec.frontmatter?.issues;
     out.push({ path: f, status, issues: Array.isArray(issues) ? issues : issues ? [issues] : [], done: tasks.filter(t => t.done).length, total: tasks.length });
   }
   return out;
@@ -219,7 +219,7 @@ export function renderPage(previous: string, s: Snapshot): string {
   let rest = previous;
   if (lines[0] === "---") {
     const end = lines.indexOf("---", 1);
-    fmLines = lines.slice(1, end).filter(l => !/^updated:/.test(l));
+    fmLines = lines.slice(1, end).filter(l => !l.startsWith("updated:"));
     rest = lines.slice(end + 1).join("\n");
   }
   const doc = parseDoc(rest);
