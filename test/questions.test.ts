@@ -5,10 +5,28 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { CARDS, card, drawCard } from "../src/cards.ts";
 import { render } from "../src/comments.ts";
-import { fitSpan, literal, parseVerdict, prompt, type InterpretInput, type Interpreter, type Verdict } from "../src/interpret.ts";
+import {
+  fitSpan,
+  literal,
+  parseVerdict,
+  prompt,
+  type InterpretInput,
+  type Interpreter,
+  type Verdict,
+} from "../src/interpret.ts";
 import type { ChangeRequest, Note, Tracker } from "../src/tracker/tracker.ts";
 import {
-  pollChangeRequest, pollQuestions, parseReplyTag, answerablePath, mayAnswer, normaliseAnswer, parseQuestionTag, questionBody, questionTag, questionsIn, unasked,
+  pollChangeRequest,
+  pollQuestions,
+  parseReplyTag,
+  answerablePath,
+  mayAnswer,
+  normaliseAnswer,
+  parseQuestionTag,
+  questionBody,
+  questionTag,
+  questionsIn,
+  unasked,
 } from "../src/questions.ts";
 
 const SPEC = `## Acceptance criteria
@@ -27,7 +45,10 @@ test("each marker becomes a question on its line", () => {
 test("the comment body shows the question and carries a tag that finds the marker again", () => {
   const [q] = questionsIn("docs/specs/a/b.md", SPEC);
   const body = questionBody(q, { rng: () => 0 });
-  assert.match(body, /<img align="left" width="68" height="120" src="[^"]+\/tarot\/ace-of-cups\.png" alt="Ace of Cups">/);
+  assert.match(
+    body,
+    /<img align="left" width="68" height="120" src="[^"]+\/tarot\/ace-of-cups\.png" alt="Ace of Cups">/,
+  );
   assert.match(body, /\*\*Open question:\*\* bit cutoff; 31 proposed\n/);
   assert.deepEqual(parseQuestionTag(body), { path: q.path, marker: q.marker, card: "ace-of-cups" });
   assert.equal(parseQuestionTag("a plain comment"), null);
@@ -55,8 +76,14 @@ test("a template fills its variables, and a custom one overrides the shipped one
 test("a question already asked, or asked twice in one file, is posted once", () => {
   const qs = questionsIn("docs/specs/a/b.md", SPEC + SPEC.split("\n")[2] + "\n");
   assert.equal(qs.length, 3);
-  assert.deepEqual(unasked(qs, []).map(q => q.line), [3, 4]);
-  assert.deepEqual(unasked(qs, ["hi", questionBody(qs[0])]).map(q => q.line), [4]);
+  assert.deepEqual(
+    unasked(qs, []).map((q) => q.line),
+    [3, 4],
+  );
+  assert.deepEqual(
+    unasked(qs, ["hi", questionBody(qs[0])]).map((q) => q.line),
+    [4],
+  );
 });
 
 test("a reply is read on one line", () => {
@@ -74,13 +101,19 @@ test("a quoted reply goes in as written; anything else goes to the interpreter",
 
 test("only a well-formed verdict from the model is used", () => {
   assert.deepEqual(parseVerdict('Sure! {"verdict":"answer","text":" 31\\n"}'), { verdict: "answer", text: "31" });
-  assert.deepEqual(parseVerdict('{"verdict":"unclear","note":"Which floor?"}'), { verdict: "unclear", note: "Which floor?" });
+  assert.deepEqual(parseVerdict('{"verdict":"unclear","note":"Which floor?"}'), {
+    verdict: "unclear",
+    note: "Which floor?",
+  });
   assert.equal(parseVerdict('{"verdict":"answer","text":""}'), null);
   assert.equal(parseVerdict('{"verdict":"maybe"}'), null);
   assert.equal(parseVerdict("31"), null);
   assert.equal(fitSpan("- AC1: at most 28 of 256 bits.", "- AC1: at most ", " of 256 bits."), "28");
   assert.equal(fitSpan("28", "- AC1: at most ", " of 256 bits."), "28");
-  assert.match(prompt({ question: "q", before: "at most ", span: "[M]", after: " bits", reply: "31" }), /Line: at most ⟦\[M\]⟧ bits/);
+  assert.match(
+    prompt({ question: "q", before: "at most ", span: "[M]", after: " bits", reply: "31" }),
+    /Line: at most ⟦\[M\]⟧ bits/,
+  );
 });
 
 test("only specs, plans and Personas can be edited", () => {
@@ -118,9 +151,10 @@ function fakeTracker(files: Record<string, string>) {
       commits.push(f.message);
       return `c${commits.length}abcdef`;
     },
-    notes: () => notes.map(n => ({ ...n })),
-    getNote: (_: ChangeRequest, id: number) => notes.find(n => n.id === id)!,
-    postNote: (_: ChangeRequest, n: { body: string }) => void notes.push({ id: notes.length + 1, body: n.body, author: me }),
+    notes: () => notes.map((n) => ({ ...n })),
+    getNote: (_: ChangeRequest, id: number) => notes.find((n) => n.id === id)!,
+    postNote: (_: ChangeRequest, n: { body: string }) =>
+      void notes.push({ id: notes.length + 1, body: n.body, author: me }),
     reply: (_: ChangeRequest, threadId: number, body: string) =>
       void notes.push({ id: notes.length + 1, body, author: me, replyTo: threadId }),
     resolve: (_: ChangeRequest, threadId: number) => void resolved.add(threadId),
@@ -143,14 +177,17 @@ function fakeInterpreter() {
 }
 
 test("a poll asks each open question once, on spec change requests only", () => {
-  const { tracker, notes } = fakeTracker({ "docs/specs/a/b.md": SPEC, "src/x.ts": "[NEEDS CLARIFICATION: not a spec]" });
+  const { tracker, notes } = fakeTracker({
+    "docs/specs/a/b.md": SPEC,
+    "src/x.ts": "[NEEDS CLARIFICATION: not a spec]",
+  });
   const opts = { self: [], rng: () => 0, interpreter: fakeInterpreter().interpreter };
   assert.equal(pollQuestions(tracker, opts).length, 2);
   assert.deepEqual(pollQuestions(tracker, opts), []);
-  assert.deepEqual(notes.map(n => parseQuestionTag(n.body)?.marker), [
-    "[NEEDS CLARIFICATION: bit cutoff; 31 proposed]",
-    "[NEEDS CLARIFICATION: floor; 50 proposed]",
-  ]);
+  assert.deepEqual(
+    notes.map((n) => parseQuestionTag(n.body)?.marker),
+    ["[NEEDS CLARIFICATION: bit cutoff; 31 proposed]", "[NEEDS CLARIFICATION: floor; 50 proposed]"],
+  );
 });
 
 test("a plain-words reply is interpreted, written in place of the marker, and shown as a diff", () => {
@@ -161,12 +198,16 @@ test("a plain-words reply is interpreted, written in place of the marker, and sh
   notes.push({ id: 10, body: "yeah 31 is fine\n", author: me, replyTo: 1 });
   notes.push({ id: 11, body: "50", author: { login: "drive-by", bot: false, member: false }, replyTo: 2 });
 
-  assert.deepEqual(pollChangeRequest(tracker, cr, { ...opts, dryRun: true }),
-    ["#1 docs/specs/a/b.md: would write: - AC1: Hashes differ in at most 31 of 256 bits."]);
+  assert.deepEqual(pollChangeRequest(tracker, cr, { ...opts, dryRun: true }), [
+    "#1 docs/specs/a/b.md: would write: - AC1: Hashes differ in at most 31 of 256 bits.",
+  ]);
   assert.equal(commits.length, 0);
   assert.deepEqual(seen[0], {
-    question: "bit cutoff; 31 proposed", before: "- AC1: Hashes differ in at most ",
-    span: "[NEEDS CLARIFICATION: bit cutoff; 31 proposed]", after: " of 256 bits.", reply: "yeah 31 is fine",
+    question: "bit cutoff; 31 proposed",
+    before: "- AC1: Hashes differ in at most ",
+    span: "[NEEDS CLARIFICATION: bit cutoff; 31 proposed]",
+    after: " of 256 bits.",
+    reply: "yeah 31 is fine",
   });
 
   assert.deepEqual(pollChangeRequest(tracker, cr, opts), ["#1 docs/specs/a/b.md: answered in c1abcde"]);
@@ -176,7 +217,10 @@ test("a plain-words reply is interpreted, written in place of the marker, and sh
   const answered = notes.at(-1)!;
   assert.equal(answered.replyTo, 1);
   assert.equal(parseReplyTag(answered.body)?.note, 10);
-  assert.match(answered.body, /```diff\n- - AC1: Hashes differ in at most \[NEEDS[^\n]+\n\+ - AC1: Hashes differ in at most 31 of 256 bits\.\n```/);
+  assert.match(
+    answered.body,
+    /```diff\n- - AC1: Hashes differ in at most \[NEEDS[^\n]+\n\+ - AC1: Hashes differ in at most 31 of 256 bits\.\n```/,
+  );
   assert.match(answered.body, /```\n\nReply here to correct it\./);
   assert.doesNotMatch(answered.body, /open question/, "a thread speaks for its own question only");
   assert.deepEqual([...resolved], [1], "the answered thread is resolved; the other stays open");
@@ -192,7 +236,7 @@ test("replies in a thread show the question's card, even when the deck draws ano
   notes.push({ id: 10, body: "why?", author: me, replyTo: 1 });
   notes.push({ id: 11, body: "31", author: me, replyTo: 1 });
   pollChangeRequest(tracker, cr, opts);
-  const replies = notes.filter(n => n.replyTo === 1 && parseReplyTag(n.body));
+  const replies = notes.filter((n) => n.replyTo === 1 && parseReplyTag(n.body));
   assert.equal(replies.length, 2);
   for (const r of replies) assert.match(r.body, /\/tarot\/ace-of-cups\.png" alt="Ace of Cups"/);
 });
@@ -203,7 +247,7 @@ test("a question asked before its tag named a card lends its image's card to rep
   notes.push({ id: 1, body: `${card("the-moon").html}\n\n${questionTag(q)}`, author: me });
   notes.push({ id: 10, body: "why?", author: me, replyTo: 1 });
   pollChangeRequest(tracker, cr, { self: [], rng: () => 0, interpreter: fakeInterpreter().interpreter });
-  assert.match(notes.find(n => n.replyTo === 1 && parseReplyTag(n.body))!.body, /alt="The Moon"/);
+  assert.match(notes.find((n) => n.replyTo === 1 && parseReplyTag(n.body))!.body, /alt="The Moon"/);
 });
 
 test("a later reply corrects the answer on its line; a question back changes nothing", () => {
@@ -224,24 +268,36 @@ test("a later reply corrects the answer on its line; a question back changes not
   assert.equal(seen[1].span, "31");
   assert.match(files["docs/specs/a/b.md"], /^- AC1: Hashes differ in at most 28 of 256 bits\.$/m);
   assert.match(commits[1], /^Correct the answer to an open question/);
-  assert.match(notes.find(n => parseReplyTag(n.body)?.note === 20)!.body, /Say which cutoff to use\.\n\nNothing changed\./);
+  assert.match(
+    notes.find((n) => parseReplyTag(n.body)?.note === 20)!.body,
+    /Say which cutoff to use\.\n\nNothing changed\./,
+  );
   assert.deepEqual(pollChangeRequest(tracker, cr, opts), []);
 });
 
 test("a reply whose line has changed is told so, and a failing interpreter leaves the reply for next time", () => {
   const { tracker, notes, files, commits, cr, me } = fakeTracker({ "docs/specs/a/b.md": SPEC });
   let fail = true;
-  const interpreter: Interpreter = { interpret: i => { if (fail) throw new Error("pi: rate limited"); return fakeInterpreter().interpreter.interpret(i); } };
+  const interpreter: Interpreter = {
+    interpret: (i) => {
+      if (fail) throw new Error("pi: rate limited");
+      return fakeInterpreter().interpreter.interpret(i);
+    },
+  };
   const opts = { self: [], rng: () => 0, interpreter };
   pollChangeRequest(tracker, cr, opts);
   notes.push({ id: 10, body: "31 please", author: me, replyTo: 1 });
-  assert.deepEqual(pollChangeRequest(tracker, cr, opts), ["#1 docs/specs/a/b.md: reply 10 not read, will retry: pi: rate limited"]);
+  assert.deepEqual(pollChangeRequest(tracker, cr, opts), [
+    "#1 docs/specs/a/b.md: reply 10 not read, will retry: pi: rate limited",
+  ]);
   fail = false;
   assert.deepEqual(pollChangeRequest(tracker, cr, opts), ["#1 docs/specs/a/b.md: answered in c1abcde"]);
 
   files["docs/specs/a/b.md"] = files["docs/specs/a/b.md"].replace("31 of 256", "31 out of 256");
   notes.push({ id: 30, body: "make it 28", author: me, replyTo: 1 });
-  assert.deepEqual(pollChangeRequest(tracker, cr, opts), ["#1 docs/specs/a/b.md: the answered line has changed since; correction not applied"]);
+  assert.deepEqual(pollChangeRequest(tracker, cr, opts), [
+    "#1 docs/specs/a/b.md: the answered line has changed since; correction not applied",
+  ]);
   assert.match(notes.at(-1)!.body, /has changed since/);
   assert.equal(commits.length, 1);
 });
@@ -259,25 +315,36 @@ const NOTED = `## Acceptance criteria
 
 test("a short slot asks the full question from its note, and answering removes the note", () => {
   const qs = questionsIn("docs/specs/a/b.md", NOTED);
-  assert.deepEqual(qs.map(q => q.note), [
-    "what p95 target, in ms, for a cold first page?", "is a page without the look lane acceptable?", "how long may it stay partial?",
-  ]);
-  assert.match(questionBody(qs[0], { rng: () => 0 }), /\*\*Open question:\*\* what p95 target, in ms, for a cold first page\?\n/);
+  assert.deepEqual(
+    qs.map((q) => q.note),
+    [
+      "what p95 target, in ms, for a cold first page?",
+      "is a page without the look lane acceptable?",
+      "how long may it stay partial?",
+    ],
+  );
+  assert.match(
+    questionBody(qs[0], { rng: () => 0 }),
+    /\*\*Open question:\*\* what p95 target, in ms, for a cold first page\?\n/,
+  );
 
   const { tracker, notes, files, cr, me } = fakeTracker({ "docs/specs/a/b.md": NOTED });
   const { interpreter, seen } = fakeInterpreter();
   const opts = { self: [], rng: () => 0, interpreter };
   pollChangeRequest(tracker, cr, opts);
-  const ids = notes.filter(n => !n.replyTo).map(n => n.id);
-  notes.push({ id: 20, body: "\"800 ms\"", author: me, replyTo: ids[0] });
-  notes.push({ id: 21, body: "\"10 minutes\"", author: me, replyTo: ids[2] });
+  const ids = notes.filter((n) => !n.replyTo).map((n) => n.id);
+  notes.push({ id: 20, body: '"800 ms"', author: me, replyTo: ids[0] });
+  notes.push({ id: 21, body: '"10 minutes"', author: me, replyTo: ids[2] });
   pollChangeRequest(tracker, cr, opts);
   assert.equal(seen.length, 0);
-  assert.equal(files["docs/specs/a/b.md"], `## Acceptance criteria
+  assert.equal(
+    files["docs/specs/a/b.md"],
+    `## Acceptance criteria
 
 - AC2: A cold first page returns in at most 800 ms at p95.
 - AC3: Partial pages are fine. [NEEDS CLARIFICATION: acceptable?] 10 minutes
   > **Open:** is a page without the look lane acceptable?
 - AC4: Done.
-`);
+`,
+  );
 });

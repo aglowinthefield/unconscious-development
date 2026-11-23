@@ -5,9 +5,7 @@
 
 import { execFileSync } from "node:child_process";
 
-export type Verdict =
-  | { verdict: "answer"; text: string }
-  | { verdict: "not-an-answer" | "unclear"; note: string };
+export type Verdict = { verdict: "answer"; text: string } | { verdict: "not-an-answer" | "unclear"; note: string };
 
 export interface InterpretInput {
   question: string; // the marker's question, without the brackets
@@ -34,7 +32,11 @@ export function parseVerdict(raw: string): Verdict | null {
   const json = /\{[\s\S]*\}/.exec(raw)?.[0];
   if (!json) return null;
   let v: any;
-  try { v = JSON.parse(json); } catch { return null; }
+  try {
+    v = JSON.parse(json);
+  } catch {
+    return null;
+  }
   if (v?.verdict === "answer" && typeof v.text === "string") {
     const text = v.text.replace(/\s*\n\s*/g, " ").trim();
     return text && text.length <= MAX ? { verdict: "answer", text } : null;
@@ -70,7 +72,8 @@ export function prompt(i: InterpretInput): string {
 // A model sometimes returns the whole line; keep only what stands in the span.
 export function fitSpan(text: string, before: string, after: string): string {
   let t = text;
-  const b = before.trim(), a = after.trim();
+  const b = before.trim(),
+    a = after.trim();
   if (b && t.startsWith(b)) t = t.slice(b.length);
   if (a && t.endsWith(a)) t = t.slice(0, -a.length);
   return t.trim() || text;
@@ -80,10 +83,29 @@ export function fitSpan(text: string, before: string, after: string): string {
 export function piInterpreter(model = process.env.UD_INTERPRETER_MODEL ?? "anthropic/claude-haiku-5-5"): Interpreter {
   return {
     interpret(input) {
-      const ask = () => execFileSync("pi", [
-        "-p", "--no-session", "--no-tools", "--no-skills", "--no-extensions", "--no-mcp", "--no-context-files",
-        "--no-prompt-templates", "--no-themes", "--model", model, "--thinking", "low", "--system-prompt", SYSTEM, prompt(input),
-      ], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 120_000 });
+      const ask = () =>
+        execFileSync(
+          "pi",
+          [
+            "-p",
+            "--no-session",
+            "--no-tools",
+            "--no-skills",
+            "--no-extensions",
+            "--no-mcp",
+            "--no-context-files",
+            "--no-prompt-templates",
+            "--no-themes",
+            "--model",
+            model,
+            "--thinking",
+            "low",
+            "--system-prompt",
+            SYSTEM,
+            prompt(input),
+          ],
+          { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 120_000 },
+        );
       const v = parseVerdict(ask()) ?? parseVerdict(ask());
       if (!v) throw new Error("the interpreter returned no usable verdict twice");
       return v.verdict === "answer" ? { ...v, text: fitSpan(v.text, input.before, input.after) } : v;

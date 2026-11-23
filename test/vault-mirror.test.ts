@@ -7,12 +7,18 @@ import { join } from "node:path";
 import { syncVault } from "../src/vault-mirror.ts";
 
 const git = (cwd: string, ...args: string[]) =>
-  execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", ...args], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", ...args], {
+    cwd,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  }).trim();
 
 // An origin with docs/specs and docs/personas on main, and a clone of it.
 function setup() {
   const root = mkdtempSync(join(tmpdir(), "ud-mirror-"));
-  const origin = join(root, "origin.git"), checkout = join(root, "checkout"), vault = join(root, "vault");
+  const origin = join(root, "origin.git"),
+    checkout = join(root, "checkout"),
+    vault = join(root, "vault");
   git(root, "init", "-q", "--bare", "-b", "main", origin);
   git(root, "clone", "-q", origin, checkout);
   mkdirSync(join(checkout, "docs/specs/billing"), { recursive: true });
@@ -73,7 +79,11 @@ test("does nothing without vault: in the page", () => {
 test("leaves the links to another machine when UD_VAULT_MIRROR=off", () => {
   const { vault, fm, mirror } = setup();
   process.env.UD_VAULT_MIRROR = "off";
-  try { assert.deepEqual(syncVault(fm, vault), []); } finally { delete process.env.UD_VAULT_MIRROR; }
+  try {
+    assert.deepEqual(syncVault(fm, vault), []);
+  } finally {
+    delete process.env.UD_VAULT_MIRROR;
+  }
   assert.throws(() => readlinkSync(join(vault, "Billing/Specs")));
   assert.throws(() => readFileSync(join(mirror, "docs/specs/billing/refunds.md")));
 });

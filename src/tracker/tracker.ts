@@ -88,5 +88,4 @@ export interface Tracker {
 // With more than one state label, the furthest along wins, so adding `ready-for-agent` is the
 // whole approval: nobody has to remove `needs-spec` first.
 const PRECEDENCE: State[] = ["verifying", "ready-for-agent", "ready-for-human", "needs-spec"];
-export const stateOf = (issue: Issue): State | null =>
-  PRECEDENCE.find(s => issue.labels.includes(s)) ?? null;
+export const stateOf = (issue: Issue): State | null => PRECEDENCE.find((s) => issue.labels.includes(s)) ?? null;

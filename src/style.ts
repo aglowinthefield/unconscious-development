@@ -7,8 +7,13 @@ export const useColor = () =>
 export const paint = (code: string) => (s: string) => (useColor() ? `\x1b[${code}m${s}\x1b[0m` : s);
 
 export const c = {
-  bold: paint("1"), dim: paint("2"), cmd: paint("38;5;141"), arg: paint("38;5;180"), head: paint("1;38;5;183"),
-  ok: paint("38;5;114"), bad: paint("38;5;174"),
+  bold: paint("1"),
+  dim: paint("2"),
+  cmd: paint("38;5;141"),
+  arg: paint("38;5;180"),
+  head: paint("1;38;5;183"),
+  ok: paint("38;5;114"),
+  bad: paint("38;5;174"),
 };
 
 export const yes = (s: string) => `${c.ok("✓")} ${s}`;

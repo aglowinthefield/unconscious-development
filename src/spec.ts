@@ -2,16 +2,38 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 import { listItems, markers, parseDoc, section, tableRows, type Doc } from "./markdown.ts";
 
-export const SPEC_SECTIONS = ["Goal", "Non-goals", "Acceptance criteria", "Setup note", "Surfaces touched", "Cost and scale"];
+export const SPEC_SECTIONS = [
+  "Goal",
+  "Non-goals",
+  "Acceptance criteria",
+  "Setup note",
+  "Surfaces touched",
+  "Cost and scale",
+];
 export const PLAN_SECTIONS = ["Approach", "Data model and contracts", "Invariants", "Tasks"];
 export const SPEC_STATUSES = ["draft", "approved", "built"];
 
-export interface Criterion { id: string; afterDeploy: boolean; text: string }
-export interface Task { id: string; done: boolean; text: string; criteria: string[]; after: string[] }
+export interface Criterion {
+  id: string;
+  afterDeploy: boolean;
+  text: string;
+}
+export interface Task {
+  id: string;
+  done: boolean;
+  text: string;
+  criteria: string[];
+  after: string[];
+}
 // A warning is reported but doesn't fail the check.
-export interface Problem { file: string; line?: number; message: string; warning?: boolean }
+export interface Problem {
+  file: string;
+  line?: number;
+  message: string;
+  warning?: boolean;
+}
 
-export const errorsIn = (problems: Problem[]) => problems.filter(p => !p.warning);
+export const errorsIn = (problems: Problem[]) => problems.filter((p) => !p.warning);
 
 export interface Spec {
   path: string;
@@ -36,14 +58,14 @@ const str = (v: unknown) => (typeof v === "string" ? v : "");
 const arr = (v: unknown) => (Array.isArray(v) ? v : typeof v === "string" && v ? [v] : []);
 
 export function parseCriteria(body: string): Criterion[] {
-  return listItems(body).flatMap(item => {
+  return listItems(body).flatMap((item) => {
     const m = /^(AC\d+)\s*(\(after deploy\))?\s*:\s*(.*)$/i.exec(item);
     return m ? [{ id: m[1].toUpperCase(), afterDeploy: Boolean(m[2]), text: m[3] }] : [];
   });
 }
 
 export function parseTasks(body: string): Task[] {
-  return listItems(body).flatMap(item => {
+  return listItems(body).flatMap((item) => {
     const m = /^\[( |x|X)\]\s+(t\d+)\s*:\s*(.*)$/.exec(item);
     if (!m) return [];
     const rest = m[3];
@@ -52,17 +74,29 @@ export function parseTasks(body: string): Task[] {
     const after = afterClause.exec(rest);
     // `after:` may sit anywhere on the line; it's a dependency, not part of the work, so it never
     // reaches the text a task's title is cut from.
-    const text = rest.replace(afterClause, "").split(/\s*Criteria:/i)[0].replace(/\.\s*$/, "").trim();
-    return [{
-      id: m[2],
-      done: m[1].toLowerCase() === "x",
-      text,
-      criteria: crit ? [...crit[1].matchAll(/AC\d+/gi)].map(x => x[0].toUpperCase()) : [],
-      // Every comma-separated name, so the check can refuse one that isn't a task id here instead
-      // of dropping it.
-      // A nested bullet joins the item as " - …", so the list ends there.
-      after: after ? after[1].split(/\s+-\s/)[0].split(",").map(x => x.trim()).filter(Boolean) : [],
-    }];
+    const text = rest
+      .replace(afterClause, "")
+      .split(/\s*Criteria:/i)[0]
+      .replace(/\.\s*$/, "")
+      .trim();
+    return [
+      {
+        id: m[2],
+        done: m[1].toLowerCase() === "x",
+        text,
+        criteria: crit ? [...crit[1].matchAll(/AC\d+/gi)].map((x) => x[0].toUpperCase()) : [],
+        // Every comma-separated name, so the check can refuse one that isn't a task id here instead
+        // of dropping it.
+        // A nested bullet joins the item as " - …", so the list ends there.
+        after: after
+          ? after[1]
+              .split(/\s+-\s/)[0]
+              .split(",")
+              .map((x) => x.trim())
+              .filter(Boolean)
+          : [],
+      },
+    ];
   });
 }
 
@@ -88,7 +122,7 @@ export function readPlan(path: string, text = readFileSync(path, "utf8")): Plan 
     path,
     issue: str(fm.issue),
     budgetUsd: str(fm.budget_usd) !== "" && Number.isFinite(budget) ? budget : null,
-    invariants: listItems(section(doc, "Invariants")?.body ?? "").flatMap(item => {
+    invariants: listItems(section(doc, "Invariants")?.body ?? "").flatMap((item) => {
       const m = /^`?([\w-]+\/I\d+)`?\s*:\s*(.*)$/.exec(item);
       return m ? [{ id: m[1], verdict: m[2].trim() }] : [];
     }),
@@ -97,7 +131,11 @@ export function readPlan(path: string, text = readFileSync(path, "utf8")): Plan 
   };
 }
 
-export interface Persona { path: string; status: string; invariants: string[] }
+export interface Persona {
+  path: string;
+  status: string;
+  invariants: string[];
+}
 
 export function readPersona(root: string, domain: string): Persona | null {
   const path = join(root, "docs/personas", `${domain}.md`);
@@ -107,7 +145,10 @@ export function readPersona(root: string, domain: string): Persona | null {
   return {
     path,
     status: str(doc.frontmatter?.status),
-    invariants: rows.map(r => r[0]).filter(id => /^I\d+$/.test(id)).map(id => `${domain}/${id}`),
+    invariants: rows
+      .map((r) => r[0])
+      .filter((id) => /^I\d+$/.test(id))
+      .map((id) => `${domain}/${id}`),
   };
 }
 
@@ -121,16 +162,17 @@ export const issueNumber = (ref: string): number | null => {
 };
 
 function checkSections(file: string, doc: Doc, required: string[], problems: Problem[]) {
-  const headings = doc.sections.map(s => s.heading);
-  const missing = required.filter(h => !headings.some(x => x.toLowerCase() === h.toLowerCase()));
+  const headings = doc.sections.map((s) => s.heading);
+  const missing = required.filter((h) => !headings.some((x) => x.toLowerCase() === h.toLowerCase()));
   for (const h of missing) problems.push({ file, message: `missing section "## ${h}"` });
   if (missing.length) return;
-  const order = required.map(h => headings.findIndex(x => x.toLowerCase() === h.toLowerCase()));
+  const order = required.map((h) => headings.findIndex((x) => x.toLowerCase() === h.toLowerCase()));
   if (order.some((v, i) => i > 0 && v < order[i - 1]))
     problems.push({ file, message: `sections out of order; expected ${required.join(", ")}` });
   for (const h of required) {
     const s = section(doc, h)!;
-    if (!s.body.trim()) problems.push({ file, line: s.line, message: `"## ${h}" is empty (write \`none\` if nothing applies)` });
+    if (!s.body.trim())
+      problems.push({ file, line: s.line, message: `"## ${h}" is empty (write \`none\` if nothing applies)` });
   }
 }
 
@@ -150,15 +192,17 @@ export function checkSpecFile(root: string, path: string): Problem[] {
     problems.push({ file, message: `domain "${spec.domain}" doesn't match its folder "${basename(dirname(path))}"` });
   if (!SPEC_STATUSES.includes(spec.status))
     problems.push({ file, message: `status must be one of ${SPEC_STATUSES.join(", ")}; got "${spec.status}"` });
-  if (!spec.issues.length) problems.push({ file, message: "frontmatter needs `issues`, every issue that shaped this spec" });
+  if (!spec.issues.length)
+    problems.push({ file, message: "frontmatter needs `issues`, every issue that shaped this spec" });
   if (!arr(fm.surfaces).length) problems.push({ file, message: "frontmatter needs `surfaces`" });
   checkSections(file, spec.doc, SPEC_SECTIONS, problems);
   const ac = section(spec.doc, "Acceptance criteria");
   if (ac && !spec.criteria.length)
     problems.push({ file, line: ac.line, message: "no acceptance criteria; write each as `- AC1: <claim>`" });
   if (ac) {
-    const stray = listItems(ac.body).filter(i => !/^AC\d+\s*(\(after deploy\))?\s*:/i.test(i));
-    for (const s of stray) problems.push({ file, line: ac.line, message: `criterion without an id: "${s.slice(0, 60)}"` });
+    const stray = listItems(ac.body).filter((i) => !/^AC\d+\s*(\(after deploy\))?\s*:/i.test(i));
+    for (const s of stray)
+      problems.push({ file, line: ac.line, message: `criterion without an id: "${s.slice(0, 60)}"` });
   }
   const seen = new Set<string>();
   for (const c of spec.criteria) {
@@ -198,7 +242,10 @@ export function checkPlanFile(root: string, path: string): Problem[] {
   if (issueNo !== null)
     for (const other of specFiles(root).filter(isPlan))
       if (other !== path && issueNumber(readPlan(other).issue) === issueNo)
-        problems.push({ file, message: `plan issue ${plan.issue} is also the issue of ${relative(root, other)}; give each spec its own issue` });
+        problems.push({
+          file,
+          message: `plan issue ${plan.issue} is also the issue of ${relative(root, other)}; give each spec its own issue`,
+        });
   if (plan.issue && !spec.issues.includes(plan.issue))
     problems.push({ file, message: `plan issue ${plan.issue} isn't in the spec's \`issues\`` });
 
@@ -207,8 +254,12 @@ export function checkPlanFile(root: string, path: string): Problem[] {
     // A draft Persona doesn't block a plan, so the first spec can land while the Persona is still
     // being learned; the warning keeps it visible.
     if (persona.status !== "confirmed")
-      problems.push({ file, warning: true, message: `Persona ${relative(root, persona.path)} is ${persona.status || "unconfirmed"}; its invariants aren't settled yet, so check them in review` });
-    const listed = new Map(plan.invariants.map(i => [i.id, i.verdict]));
+      problems.push({
+        file,
+        warning: true,
+        message: `Persona ${relative(root, persona.path)} is ${persona.status || "unconfirmed"}; its invariants aren't settled yet, so check them in review`,
+      });
+    const listed = new Map(plan.invariants.map((i) => [i.id, i.verdict]));
     for (const id of persona.invariants) {
       const v = listed.get(id);
       if (v === undefined) problems.push({ file, message: `invariant ${id} missing from "## Invariants"` });
@@ -226,7 +277,7 @@ export function checkPlanFile(root: string, path: string): Problem[] {
     if (ids.has(t.id)) problems.push({ file, message: `task id ${t.id} used twice` });
     ids.add(t.id);
   }
-  const criteria = new Map(spec.criteria.map(c => [c.id, c]));
+  const criteria = new Map(spec.criteria.map((c) => [c.id, c]));
   for (const t of tasks) {
     if (!t.criteria.length) problems.push({ file, message: `${t.id} names no criteria` });
     for (const c of t.criteria) {
@@ -236,11 +287,14 @@ export function checkPlanFile(root: string, path: string): Problem[] {
     }
     for (const a of t.after)
       if (!ids.has(a))
-        problems.push({ file, message: /^t\d+$/.test(a)
-          ? `${t.id} is after ${a}, which isn't a task`
-          : `${t.id} is after "${a}", which isn't a task id in this plan; \`after:\` names task ids only, so say a wait on other work in the task's text` });
+        problems.push({
+          file,
+          message: /^t\d+$/.test(a)
+            ? `${t.id} is after ${a}, which isn't a task`
+            : `${t.id} is after "${a}", which isn't a task id in this plan; \`after:\` names task ids only, so say a wait on other work in the task's text`,
+        });
   }
-  const covered = new Set(tasks.flatMap(t => t.criteria));
+  const covered = new Set(tasks.flatMap((t) => t.criteria));
   for (const c of spec.criteria)
     if (!c.afterDeploy && !covered.has(c.id)) problems.push({ file, message: `${c.id} isn't covered by any task` });
   const cycle = findCycle(tasks);
@@ -249,7 +303,7 @@ export function checkPlanFile(root: string, path: string): Problem[] {
 }
 
 export function findCycle(tasks: Task[]): string[] | null {
-  const after = new Map(tasks.map(t => [t.id, t.after]));
+  const after = new Map(tasks.map((t) => [t.id, t.after]));
   const state = new Map<string, 1 | 2>();
   const stack: string[] = [];
   const visit = (id: string): string[] | null => {
@@ -275,7 +329,7 @@ export function findCycle(tasks: Task[]): string[] | null {
 
 // Tasks in an order where each comes after everything it waits on.
 export function taskOrder(tasks: Task[]): Task[] {
-  const byId = new Map(tasks.map(t => [t.id, t]));
+  const byId = new Map(tasks.map((t) => [t.id, t]));
   const out: Task[] = [];
   const done = new Set<string>();
   const add = (t: Task) => {
@@ -292,7 +346,7 @@ export function specFiles(root: string): string[] {
   const dir = join(root, "docs/specs");
   if (!existsSync(dir)) return [];
   const walk = (d: string): string[] =>
-    readdirSync(d).flatMap(name => {
+    readdirSync(d).flatMap((name) => {
       const p = join(d, name);
       return statSync(p).isDirectory() ? walk(p) : p.endsWith(".md") ? [p] : [];
     });
@@ -300,7 +354,7 @@ export function specFiles(root: string): string[] {
 }
 
 export function checkFiles(root: string, paths: string[]): Problem[] {
-  return paths.flatMap(p => (isPlan(p) ? checkPlanFile(root, p) : checkSpecFile(root, p)));
+  return paths.flatMap((p) => (isPlan(p) ? checkPlanFile(root, p) : checkSpecFile(root, p)));
 }
 
 // Trivial tier: the criteria live in the issue body.
@@ -311,9 +365,13 @@ export function checkIssueBody(ref: string, body: string): Problem[] {
   if (!ac) problems.push({ file: ref, message: 'issue body has no "## Acceptance criteria"' });
   else {
     const criteria = parseCriteria(ac.body);
-    if (!criteria.length) problems.push({ file: ref, message: "no acceptance criteria; write each as `- AC1: <claim>`" });
-    if (criteria.some(c => c.afterDeploy))
-      problems.push({ file: ref, message: "an after-deploy criterion needs the designed tier: a spec with a setup note" });
+    if (!criteria.length)
+      problems.push({ file: ref, message: "no acceptance criteria; write each as `- AC1: <claim>`" });
+    if (criteria.some((c) => c.afterDeploy))
+      problems.push({
+        file: ref,
+        message: "an after-deploy criterion needs the designed tier: a spec with a setup note",
+      });
   }
   checkMarkers(ref, body, problems);
   return problems;
@@ -321,7 +379,7 @@ export function checkIssueBody(ref: string, body: string): Problem[] {
 
 export function findPlanForIssue(root: string, issue: { number: number; url: string }): string | null {
   const plans = specFiles(root).filter(isPlan);
-  const hit = plans.find(p => {
+  const hit = plans.find((p) => {
     const i = readPlan(p).issue;
     return i === issue.url || i.endsWith(`/issues/${issue.number}`) || i === `#${issue.number}`;
   });

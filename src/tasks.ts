@@ -11,13 +11,17 @@ function title(key: string, text: string) {
   return `${key}: ${first.length > 90 ? first.slice(0, 89) + "…" : first}`;
 }
 
-const criteriaList = (cs: Criterion[]) => cs.map(c => `- ${c.id}: ${c.text}`).join("\n");
+const criteriaList = (cs: Criterion[]) => cs.map((c) => `- ${c.id}: ${c.text}`).join("\n");
 
 function invariantLines(invs: { id: string; verdict: string }[]) {
-  const holds = invs.filter(i => /^holds/i.test(i.verdict)).map(i => i.id);
-  const exceptions = invs.filter(i => !/^holds/i.test(i.verdict)).map(i => `- ${i.id}: ${i.verdict}`);
-  return [holds.length ? `These hold, and the Shadow checks each against the diff: ${holds.join(", ")}.` : "", ...exceptions]
-    .filter(Boolean).join("\n");
+  const holds = invs.filter((i) => /^holds/i.test(i.verdict)).map((i) => i.id);
+  const exceptions = invs.filter((i) => !/^holds/i.test(i.verdict)).map((i) => `- ${i.id}: ${i.verdict}`);
+  return [
+    holds.length ? `These hold, and the Shadow checks each against the diff: ${holds.join(", ")}.` : "",
+    ...exceptions,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 const closing = (issue: Issue, key: string) =>
@@ -30,9 +34,9 @@ export function tasksFromPlan(root: string, planPath: string, issue: Issue): { t
   const plan = readPlan(planPath);
   const spec = readSpec(specPathFor(planPath));
   const persona = readPersona(root, spec.domain);
-  const byId = new Map(spec.criteria.map(c => [c.id, c]));
-  const skipped = plan.tasks.filter(t => t.done).map(t => t.id);
-  const tasks = taskOrder(plan.tasks.filter(t => !t.done)).map(t => {
+  const byId = new Map(spec.criteria.map((c) => [c.id, c]));
+  const skipped = plan.tasks.filter((t) => t.done).map((t) => t.id);
+  const tasks = taskOrder(plan.tasks.filter((t) => !t.done)).map((t) => {
     const key = taskKey(issue.number, t.id);
     const body = [
       `Refs ${issue.url}`,
@@ -46,7 +50,7 @@ export function tasksFromPlan(root: string, planPath: string, issue: Issue): { t
       "",
       "## Criteria",
       "",
-      criteriaList(t.criteria.map(id => byId.get(id)!).filter(Boolean)),
+      criteriaList(t.criteria.map((id) => byId.get(id)!).filter(Boolean)),
       "",
       "## Setup note",
       "",
@@ -58,7 +62,12 @@ export function tasksFromPlan(root: string, planPath: string, issue: Issue): { t
       "",
       closing(issue, key),
     ].join("\n");
-    return { key, title: title(key, t.text), body, after: t.after.filter(a => /^t\d+$/.test(a) && !skipped.includes(a)).map(a => taskKey(issue.number, a)) };
+    return {
+      key,
+      title: title(key, t.text),
+      body,
+      after: t.after.filter((a) => /^t\d+$/.test(a) && !skipped.includes(a)).map((a) => taskKey(issue.number, a)),
+    };
   });
   return { tasks, skipped };
 }

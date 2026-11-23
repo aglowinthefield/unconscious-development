@@ -27,7 +27,12 @@ export interface PR {
   autoMerge: boolean;
 }
 
-export interface IssueRef { number: number; url: string; title: string; labels: string[] }
+export interface IssueRef {
+  number: number;
+  url: string;
+  title: string;
+  labels: string[];
+}
 
 export interface SpecState {
   path: string;
@@ -37,7 +42,13 @@ export interface SpecState {
   total: number;
 }
 
-export interface MainRun { workflow: string; conclusion: string; status: string; at: string; url: string }
+export interface MainRun {
+  workflow: string;
+  conclusion: string;
+  status: string;
+  at: string;
+  url: string;
+}
 
 export interface Snapshot {
   repo: string;
@@ -66,7 +77,8 @@ export function checksOf(rollup: any[]): Checks {
   return pending ? "pending" : "green";
 }
 
-const PR_FIELDS = "number,url,title,isDraft,createdAt,reviewDecision,mergeStateStatus,statusCheckRollup,autoMergeRequest";
+const PR_FIELDS =
+  "number,url,title,isDraft,createdAt,reviewDecision,mergeStateStatus,statusCheckRollup,autoMergeRequest";
 const toPR = (j: any): PR => ({
   number: j.number,
   url: j.url,
@@ -80,27 +92,42 @@ const toPR = (j: any): PR => ({
 });
 
 function prs(repo: string, search: string): PR[] {
-  return JSON.parse(run("gh", ["pr", "list", "-R", repo, "--search", search, "--limit", "100", "--json", PR_FIELDS])).map(toPR);
+  return JSON.parse(
+    run("gh", ["pr", "list", "-R", repo, "--search", search, "--limit", "100", "--json", PR_FIELDS]),
+  ).map(toPR);
 }
 
 // Specs from the remote's main, so a stale local checkout doesn't matter.
 function specsOnMain(path: string): SpecState[] {
-  try { run("git", ["fetch", "-q", "origin", "main"], path); } catch { /* offline: use what we have */ }
+  try {
+    run("git", ["fetch", "-q", "origin", "main"], path);
+  } catch {
+    /* offline: use what we have */
+  }
   let files: string[];
-  try { files = run("git", ["ls-tree", "-r", "--name-only", "origin/main", "docs/specs"], path).split("\n").filter(Boolean); }
-  catch { return []; }
+  try {
+    files = run("git", ["ls-tree", "-r", "--name-only", "origin/main", "docs/specs"], path).split("\n").filter(Boolean);
+  } catch {
+    return [];
+  }
   const show = (f: string) => run("git", ["show", `origin/main:${f}`], path);
   const out: SpecState[] = [];
-  for (const f of files.filter(f => f.endsWith(".md") && !f.endsWith(".plan.md"))) {
+  for (const f of files.filter((f) => f.endsWith(".md") && !f.endsWith(".plan.md"))) {
     const spec = parseDoc(show(f));
     const status = String(spec.frontmatter?.status ?? "");
     if (status !== "approved" && status !== "draft") continue;
     const planFile = f.replace(/\.md$/, ".plan.md");
-    const tasksBody = files.includes(planFile) ? section(parseDoc(show(planFile)), "Tasks")?.body ?? "" : "";
+    const tasksBody = files.includes(planFile) ? (section(parseDoc(show(planFile)), "Tasks")?.body ?? "") : "";
     const tasks = parseTasks(tasksBody);
-    if (status === "draft" && !tasks.some(t => t.done)) continue; // an ordinary draft
+    if (status === "draft" && !tasks.some((t) => t.done)) continue; // an ordinary draft
     const issues = spec.frontmatter?.issues;
-    out.push({ path: f, status, issues: Array.isArray(issues) ? issues : issues ? [issues] : [], done: tasks.filter(t => t.done).length, total: tasks.length });
+    out.push({
+      path: f,
+      status,
+      issues: Array.isArray(issues) ? issues : issues ? [issues] : [],
+      done: tasks.filter((t) => t.done).length,
+      total: tasks.length,
+    });
   }
   return out;
 }
@@ -110,21 +137,45 @@ export function gather(fm: Frontmatter, now = new Date()): Snapshot {
   const limits: string[] = [];
   const mine = [...prs(repo, "is:open author:@me"), ...prs(repo, "is:open assignee:@me -author:@me")];
   const reviewRequested = prs(repo, "is:open user-review-requested:@me -author:@me");
-  const issues: IssueRef[] = JSON.parse(run("gh", [
-    "issue", "list", "-R", repo, "--search", `is:open label:${STATE_LABELS.join(",")}`, "--limit", "100",
-    "--json", "number,url,title,labels",
-  ])).map((j: any) => ({ number: j.number, url: j.url, title: j.title, labels: j.labels.map((l: any) => l.name) }));
+  const issues: IssueRef[] = JSON.parse(
+    run("gh", [
+      "issue",
+      "list",
+      "-R",
+      repo,
+      "--search",
+      `is:open label:${STATE_LABELS.join(",")}`,
+      "--limit",
+      "100",
+      "--json",
+      "number,url,title,labels",
+    ]),
+  ).map((j: any) => ({ number: j.number, url: j.url, title: j.title, labels: j.labels.map((l: any) => l.name) }));
 
   const path = typeof fm.path === "string" ? fm.path.replace(/^~(?=\/)/, homedir()) : "";
   let specs: SpecState[] = [];
   if (path && existsSync(path)) specs = specsOnMain(path);
   else limits.push(path ? `${fm.path} not found, so specs weren't read` : "no `path:`, so specs weren't read");
 
-  const runs = JSON.parse(run("gh", ["run", "list", "-R", repo, "--branch", "main", "--limit", "30",
-    "--json", "workflowName,conclusion,status,createdAt,url,event"]));
+  const runs = JSON.parse(
+    run("gh", [
+      "run",
+      "list",
+      "-R",
+      repo,
+      "--branch",
+      "main",
+      "--limit",
+      "30",
+      "--json",
+      "workflowName,conclusion,status,createdAt,url,event",
+    ]),
+  );
   const ci = typeof fm.ci === "string" ? fm.ci : null;
   const r = runs.find((r: any) => (ci ? r.workflowName === ci : r.event === "push"));
-  const main = r ? { workflow: r.workflowName, conclusion: r.conclusion, status: r.status, at: r.createdAt, url: r.url } : null;
+  const main = r
+    ? { workflow: r.workflowName, conclusion: r.conclusion, status: r.status, at: r.createdAt, url: r.url }
+    : null;
   if (!main) limits.push(ci ? `no "${ci}" run in the last 30 on main` : "no push run in the last 30 on main");
 
   limits.push("Runner tasks aren't read yet; Bakery cards don't show here.");
@@ -147,14 +198,21 @@ export function prStage(p: PR): "stuck" | "yours" | "waiting" {
 function prLine(p: PR, at: string): string {
   const age = `${days(p.createdAt, at)}d`;
   const why =
-    p.mergeable === "DIRTY" ? "conflicts with main"
-    : p.checks === "failing" ? "checks failing"
-    : p.draft ? "draft"
-    : p.autoMerge ? "set to merge when checks pass"
-    : p.checks === "pending" ? "checks running"
-    : p.review === "APPROVED" ? "approved, green: merge it"
-    : p.review === "CHANGES_REQUESTED" ? "changes requested"
-    : "green, needs a review";
+    p.mergeable === "DIRTY"
+      ? "conflicts with main"
+      : p.checks === "failing"
+        ? "checks failing"
+        : p.draft
+          ? "draft"
+          : p.autoMerge
+            ? "set to merge when checks pass"
+            : p.checks === "pending"
+              ? "checks running"
+              : p.review === "APPROVED"
+                ? "approved, green: merge it"
+                : p.review === "CHANGES_REQUESTED"
+                  ? "changes requested"
+                  : "green, needs a review";
   return `- ${p.url} (${age}): ${why}`;
 }
 
@@ -169,45 +227,61 @@ export function mainLine(s: Snapshot): string {
 }
 
 // Task PRs merged against a draft spec: the approval was skipped, so nothing moves the spec or its issue on.
-export const draftWork = (s: Snapshot) => s.specs.filter(sp => sp.status === "draft");
-const approved = (s: Snapshot) => s.specs.filter(sp => sp.status !== "draft");
+export const draftWork = (s: Snapshot) => s.specs.filter((sp) => sp.status === "draft");
+const approved = (s: Snapshot) => s.specs.filter((sp) => sp.status !== "draft");
 
 export function renderOwned(s: Snapshot): Record<string, string> {
-  const stuck = s.mine.filter(p => prStage(p) === "stuck");
-  const yours = s.mine.filter(p => prStage(p) === "yours");
-  const waiting = s.mine.filter(p => prStage(p) === "waiting");
+  const stuck = s.mine.filter((p) => prStage(p) === "stuck");
+  const yours = s.mine.filter((p) => prStage(p) === "yours");
+  const waiting = s.mine.filter((p) => prStage(p) === "waiting");
   const mainRed = s.main?.status === "completed" && !["success", "skipped", "neutral"].includes(s.main.conclusion);
 
   const out: Record<string, string> = {};
   const block = (lines: string[], empty: string) => (lines.length ? lines.join("\n") : empty);
 
-  out["Waiting on you"] = block([
-    ...yours.map(p => prLine(p, s.at)),
-    ...s.reviewRequested.map(p => `- ${p.url} (${days(p.createdAt, s.at)}d): review requested`),
-    ...s.issues.filter(i => has(i, "ready-for-human")).map(i => `${issueLine(i)}: ready for a human`),
-    ...s.issues.filter(i => has(i, "needs-spec")).map(i => `${issueLine(i)}: needs a spec`),
-  ], "Nothing.");
+  out["Waiting on you"] = block(
+    [
+      ...yours.map((p) => prLine(p, s.at)),
+      ...s.reviewRequested.map((p) => `- ${p.url} (${days(p.createdAt, s.at)}d): review requested`),
+      ...s.issues.filter((i) => has(i, "ready-for-human")).map((i) => `${issueLine(i)}: ready for a human`),
+      ...s.issues.filter((i) => has(i, "needs-spec")).map((i) => `${issueLine(i)}: needs a spec`),
+    ],
+    "Nothing.",
+  );
 
-  out["Stuck"] = block([
-    ...(mainRed ? [`- ${mainLine(s)}`] : []),
-    ...stuck.map(p => prLine(p, s.at)),
-    ...draftWork(s).map(sp => `- \`${sp.path}\`: ${sp.done} of ${sp.total} tasks done, but the spec is still \`draft\`. Approve it, or mark it built${sp.issues.length ? ` and move ${sp.issues.join(", ")} on` : ""}.`),
-  ], "Nothing.");
+  out["Stuck"] = block(
+    [
+      ...(mainRed ? [`- ${mainLine(s)}`] : []),
+      ...stuck.map((p) => prLine(p, s.at)),
+      ...draftWork(s).map(
+        (sp) =>
+          `- \`${sp.path}\`: ${sp.done} of ${sp.total} tasks done, but the spec is still \`draft\`. Approve it, or mark it built${sp.issues.length ? ` and move ${sp.issues.join(", ")} on` : ""}.`,
+      ),
+    ],
+    "Nothing.",
+  );
 
   const flight: string[] = [];
   if (approved(s).length) {
     flight.push("### Specs", "");
-    for (const sp of approved(s)) flight.push(`- \`${sp.path}\`: ${sp.done} of ${sp.total} tasks done${sp.issues.length ? `, ${sp.issues.join(", ")}` : ""}`);
+    for (const sp of approved(s))
+      flight.push(
+        `- \`${sp.path}\`: ${sp.done} of ${sp.total} tasks done${sp.issues.length ? `, ${sp.issues.join(", ")}` : ""}`,
+      );
     flight.push("");
   }
-  if (waiting.length) flight.push("### Your PRs", "", ...waiting.map(p => prLine(p, s.at)), "");
-  const verifying = s.issues.filter(i => has(i, "verifying"));
+  if (waiting.length) flight.push("### Your PRs", "", ...waiting.map((p) => prLine(p, s.at)), "");
+  const verifying = s.issues.filter((i) => has(i, "verifying"));
   if (verifying.length) flight.push("### Verifying after deploy", "", ...verifying.map(issueLine), "");
   out["In flight"] = flight.length ? flight.join("\n").trimEnd() : "Nothing.";
 
-  out["Ready"] = block(s.issues.filter(i => has(i, "ready-for-agent")).map(issueLine), "Nothing ready for an agent.");
+  out["Ready"] = block(s.issues.filter((i) => has(i, "ready-for-agent")).map(issueLine), "Nothing ready for an agent.");
 
-  out["Last updated"] = [`${s.at.slice(0, 16)}Z by \`unconscious status-page\`. ${mainLine(s)}`, "", ...s.limits.map(l => `- ${l}`)].join("\n");
+  out["Last updated"] = [
+    `${s.at.slice(0, 16)}Z by \`unconscious status-page\`. ${mainLine(s)}`,
+    "",
+    ...s.limits.map((l) => `- ${l}`),
+  ].join("\n");
   return out;
 }
 
@@ -219,24 +293,38 @@ export function renderPage(previous: string, s: Snapshot): string {
   let rest = previous;
   if (lines[0] === "---") {
     const end = lines.indexOf("---", 1);
-    fmLines = lines.slice(1, end).filter(l => !l.startsWith("updated:"));
+    fmLines = lines.slice(1, end).filter((l) => !l.startsWith("updated:"));
     rest = lines.slice(end + 1).join("\n");
   }
   const doc = parseDoc(rest);
   const owned = renderOwned(s);
-  const kept = doc.sections.filter(x => !OWNED.includes(x.heading)).map(x => `## ${x.heading}\n${x.body.trimEnd()}\n`);
+  const kept = doc.sections
+    .filter((x) => !OWNED.includes(x.heading))
+    .map((x) => `## ${x.heading}\n${x.body.trimEnd()}\n`);
   const sec = (h: string) => `## ${h}\n\n${owned[h]}\n`;
   return [
-    "---", ...fmLines, `updated: ${s.at.slice(0, 19)}Z`, "---", "",
+    "---",
+    ...fmLines,
+    `updated: ${s.at.slice(0, 19)}Z`,
+    "---",
+    "",
     ...["Waiting on you", "Stuck", "In flight", "Ready"].map(sec),
     ...kept,
     sec("Last updated"),
-  ].join("\n").replace(/\n{3,}/g, "\n\n");
+  ]
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n");
 }
 
 // ---- the index ---------------------------------------------------------------------------------
 
-export interface Row { name: string; file: string; snapshot: Snapshot | null; error?: string; next?: string }
+export interface Row {
+  name: string;
+  file: string;
+  snapshot: Snapshot | null;
+  error?: string;
+  next?: string;
+}
 
 // The first proposal in a page's Proposed next section, shortened for a table cell:
 // "[#6680](url): safety.ts prices Gemini at retired flash-lite rates".
@@ -254,16 +342,27 @@ export function firstProposal(page: string): string | undefined {
 
 export function renderProjects(rows: Row[]): string {
   const head = "| Project | Waiting on you | Stuck | In flight | Main | Next |\n| --- | --- | --- | --- | --- | --- |";
-  const body = rows.map(r => {
+  const body = rows.map((r) => {
     const link = `[[${basename(r.file, ".md")}\\|${r.name}]]`; // escaped: a bare | splits the table cell
     const next = r.next ?? "run `propose`";
     if (!r.snapshot) return `| ${link} | | | | unknown | ${next} |`; // the CLI prints the error to stderr
     const o = r.snapshot;
-    const waiting = o.mine.filter(p => prStage(p) === "yours").length + o.reviewRequested.length
-      + o.issues.filter(i => has(i, "ready-for-human") || has(i, "needs-spec")).length;
-    const stuck = o.mine.filter(p => prStage(p) === "stuck").length + draftWork(o).length;
-    const flight = approved(o).length + o.mine.filter(p => prStage(p) === "waiting").length + o.issues.filter(i => has(i, "verifying")).length;
-    const main = !o.main ? "unknown" : o.main.status !== "completed" ? "running" : o.main.conclusion === "success" ? "green" : o.main.conclusion;
+    const waiting =
+      o.mine.filter((p) => prStage(p) === "yours").length +
+      o.reviewRequested.length +
+      o.issues.filter((i) => has(i, "ready-for-human") || has(i, "needs-spec")).length;
+    const stuck = o.mine.filter((p) => prStage(p) === "stuck").length + draftWork(o).length;
+    const flight =
+      approved(o).length +
+      o.mine.filter((p) => prStage(p) === "waiting").length +
+      o.issues.filter((i) => has(i, "verifying")).length;
+    const main = !o.main
+      ? "unknown"
+      : o.main.status !== "completed"
+        ? "running"
+        : o.main.conclusion === "success"
+          ? "green"
+          : o.main.conclusion;
     const n = (x: number) => (x ? String(x) : "");
     return `| ${link} | ${n(waiting)} | ${n(stuck)} | ${n(flight)} | ${main} | ${next} |`;
   });
@@ -279,8 +378,12 @@ export function replaceSection(text: string, heading: string, body: string): str
 // ---- the command -------------------------------------------------------------------------------
 
 export function nowDir(): string {
-  const candidates = [process.env.UD_NOW_DIR, process.env.DEV_VAULT && join(process.env.DEV_VAULT, "🌀 Now"), join(homedir(), "Documents/somewhere.garden/🌀 Now")];
-  const dir = candidates.find(d => d && existsSync(d));
+  const candidates = [
+    process.env.UD_NOW_DIR,
+    process.env.DEV_VAULT && join(process.env.DEV_VAULT, "🌀 Now"),
+    join(homedir(), "Documents/somewhere.garden/🌀 Now"),
+  ];
+  const dir = candidates.find((d) => d && existsSync(d));
   if (!dir) throw new Error(`no 🌀 Now folder; set UD_NOW_DIR`);
   return dir;
 }
@@ -290,12 +393,21 @@ const write = (path: string, text: string) => {
   renameSync(path + ".tmp", path);
 };
 
-export interface ProjectPage { name: string; file: string; path: string; text: string; fm: Frontmatter; repo: string }
+export interface ProjectPage {
+  name: string;
+  file: string;
+  path: string;
+  text: string;
+  fm: Frontmatter;
+  repo: string;
+}
 
 // The project pages in the Now folder (or the one named `only`): pages with `repo:` in frontmatter.
 export function projectPages(dir: string, only?: string): ProjectPage[] {
   const pages: ProjectPage[] = [];
-  for (const f of readdirSync(dir).filter(f => f.endsWith(".md") && f !== "index.md").sort()) {
+  for (const f of readdirSync(dir)
+    .filter((f) => f.endsWith(".md") && f !== "index.md")
+    .sort()) {
     const path = join(dir, f);
     const text = readFileSync(path, "utf8");
     const fm = parseDoc(text).frontmatter;
@@ -316,12 +428,21 @@ export function statusPage(dir: string, only?: string): Row[] {
       write(path, renderPage(text, snapshot));
       rows.push({ name, file: f, snapshot, next: firstProposal(text) });
     } catch (e: any) {
-      rows.push({ name, file: f, snapshot: null, error: String(e.stderr || e.message).split("\n")[0], next: firstProposal(text) });
+      rows.push({
+        name,
+        file: f,
+        snapshot: null,
+        error: String(e.stderr || e.message).split("\n")[0],
+        next: firstProposal(text),
+      });
     }
   }
   const index = join(dir, "index.md");
   if (!only && existsSync(index)) {
-    const text = readFileSync(index, "utf8").replace(/^updated: .*$/m, `updated: ${new Date().toISOString().slice(0, 19)}Z`);
+    const text = readFileSync(index, "utf8").replace(
+      /^updated: .*$/m,
+      `updated: ${new Date().toISOString().slice(0, 19)}Z`,
+    );
     write(index, replaceSection(text, "Projects", renderProjects(rows)));
   }
   return rows;

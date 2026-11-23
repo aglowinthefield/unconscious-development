@@ -12,7 +12,12 @@ const opts = { udRoot, udSha: "abc1234def" };
 test("init lays out the repo, pins the workflow and drafts the Persona", () => {
   const root = mkdtempSync(join(tmpdir(), "ud-init-"));
   const r = init(root, { ...opts, domain: "billing", owner: "tom" });
-  assert.deepEqual(r.created.sort(), [".github/workflows/unconscious-tasks.yml", ".github/workflows/unconscious.yml", "docs/personas/billing.md", "docs/specs/.gitkeep"]);
+  assert.deepEqual(r.created.sort(), [
+    ".github/workflows/unconscious-tasks.yml",
+    ".github/workflows/unconscious.yml",
+    "docs/personas/billing.md",
+    "docs/specs/.gitkeep",
+  ]);
   assert.match(readFileSync(join(root, ".github/workflows/unconscious-tasks.yml"), "utf8"), /^  UD_REF: abc1234def /m);
   const wf = readFileSync(join(root, ".github/workflows/unconscious.yml"), "utf8");
   assert.match(wf, /^  UD_REF: abc1234def /m);
@@ -24,12 +29,20 @@ test("init lays out the repo, pins the workflow and drafts the Persona", () => {
 
 test("init never overwrites, and a dry run writes nothing", () => {
   const root = mkdtempSync(join(tmpdir(), "ud-init-"));
-  assert.deepEqual(init(root, { ...opts, dryRun: true }).created.sort(), [".github/workflows/unconscious-tasks.yml", ".github/workflows/unconscious.yml", "docs/specs/.gitkeep"]);
+  assert.deepEqual(init(root, { ...opts, dryRun: true }).created.sort(), [
+    ".github/workflows/unconscious-tasks.yml",
+    ".github/workflows/unconscious.yml",
+    "docs/specs/.gitkeep",
+  ]);
   assert.ok(!existsSync(join(root, "docs")));
   init(root, opts);
   const again = init(root, { ...opts, domain: "billing" });
   assert.deepEqual(again.created, ["docs/personas/billing.md"]);
-  assert.deepEqual(again.kept.sort(), [".github/workflows/unconscious-tasks.yml", ".github/workflows/unconscious.yml", "docs/specs/.gitkeep"]);
+  assert.deepEqual(again.kept.sort(), [
+    ".github/workflows/unconscious-tasks.yml",
+    ".github/workflows/unconscious.yml",
+    "docs/specs/.gitkeep",
+  ]);
   assert.match(init(root, opts).next[0], /--domain NAME/);
 });
 

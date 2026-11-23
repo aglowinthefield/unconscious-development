@@ -9,23 +9,38 @@ import type { ChangeRequest, Tracker } from "./tracker/tracker.ts";
 
 const TAG = "<!-- ud-check -->";
 export function problemList(problems: Problem[], link: (file: string, line?: number) => string): string {
-  return problems.map(p => {
-    const where = p.line ? `${p.file}:${p.line}` : p.file;
-    return `- [\`${where}\`](${link(p.file, p.line)}): ${p.message}`;
-  }).join("\n");
+  return problems
+    .map((p) => {
+      const where = p.line ? `${p.file}:${p.line}` : p.file;
+      return `- [\`${where}\`](${link(p.file, p.line)}): ${p.message}`;
+    })
+    .join("\n");
 }
 
-export interface CheckCommentOptions { templates?: string[]; rng?: () => number; dryRun?: boolean }
+export interface CheckCommentOptions {
+  templates?: string[];
+  rng?: () => number;
+  dryRun?: boolean;
+}
 
 // Returns what it did, for the log.
-export function postCheckResult(tracker: Tracker, cr: ChangeRequest, problems: Problem[], opts: CheckCommentOptions = {}): string {
-  const existing = tracker.changeComments(cr).find(n => n.body.includes(TAG));
+export function postCheckResult(
+  tracker: Tracker,
+  cr: ChangeRequest,
+  problems: Problem[],
+  opts: CheckCommentOptions = {},
+): string {
+  const existing = tracker.changeComments(cr).find((n) => n.body.includes(TAG));
   const failing = errorsIn(problems).length > 0;
-  const warnings = problems.filter(p => p.warning);
+  const warnings = problems.filter((p) => p.warning);
   if (!failing && !warnings.length && !existing) return "check passes; no comment to update";
   const c = (existing && cardIn(existing.body)) || drawCard(opts.rng);
   const vars = {
-    card: c.html, card_name: c.name, card_url: c.url, sha: cr.head.slice(0, 7), count: problems.length,
+    card: c.html,
+    card_name: c.name,
+    card_url: c.url,
+    sha: cr.head.slice(0, 7),
+    count: problems.length,
     problems: problemList(errorsIn(problems), (file, line) => tracker.fileUrl(file, cr.head, line)),
     warnings: warnings.length
       ? `Worth a look in review:\n\n${problemList(warnings, (file, line) => tracker.fileUrl(file, cr.head, line))}`

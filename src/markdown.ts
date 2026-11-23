@@ -60,7 +60,7 @@ function parseFrontmatter(lines: string[]): Frontmatter {
 }
 
 export function section(doc: Doc, heading: string) {
-  return doc.sections.find(s => s.heading.toLowerCase() === heading.toLowerCase());
+  return doc.sections.find((s) => s.heading.toLowerCase() === heading.toLowerCase());
 }
 
 // Top-level list items, each joined with its indented continuation lines.
@@ -79,9 +79,16 @@ export function listItems(body: string): string[] {
 export function tableRows(body: string): string[][] {
   return body
     .split("\n")
-    .filter(l => /^\s*\|/.test(l))
-    .map(l => l.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => c.trim()))
-    .filter(cells => !cells.every(c => /^:?-+:?$/.test(c)));
+    .filter((l) => /^\s*\|/.test(l))
+    .map((l) =>
+      l
+        .trim()
+        .replace(/^\|/, "")
+        .replace(/\|$/, "")
+        .split("|")
+        .map((c) => c.trim()),
+    )
+    .filter((cells) => !cells.every((c) => /^:?-+:?$/.test(c)));
 }
 
 export const MARKER = /\[NEEDS CLARIFICATION:[^\]]*\]/g;

@@ -27,9 +27,27 @@ const paths = (udRoot: string, env = process.env, home = env.HOME ?? homedir()) 
   systemdUser: join(env.XDG_CONFIG_HOME ?? join(home, ".config"), "systemd/user"),
 });
 
-const readJson = (p: string): any => { try { return JSON.parse(readFileSync(p, "utf8")); } catch { return {}; } };
-const ls = (dir: string) => { try { return readdirSync(dir); } catch { return []; } };
-const linkOf = (p: string) => { try { return lstatSync(p).isSymbolicLink() ? readlinkSync(p) : undefined; } catch { return undefined; } };
+const readJson = (p: string): any => {
+  try {
+    return JSON.parse(readFileSync(p, "utf8"));
+  } catch {
+    return {};
+  }
+};
+const ls = (dir: string) => {
+  try {
+    return readdirSync(dir);
+  } catch {
+    return [];
+  }
+};
+const linkOf = (p: string) => {
+  try {
+    return lstatSync(p).isSymbolicLink() ? readlinkSync(p) : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 // Skills linked from another checkout of Unconscious Development (the main one, when this is a
 // worktree) still count; `from` names that checkout.
@@ -50,7 +68,10 @@ function linkedSkills(names: string[], dir: string, udRoot: string): { skills: s
 function when(plist: string, fallback: string): string {
   const text = readFileSync(plist, "utf8");
   const every = text.match(/<key>StartInterval<\/key>\s*<integer>(\d+)</);
-  if (every) { const n = Number(every[1]); return n % 60 ? `every ${n} seconds` : `every ${n / 60} minute${n === 60 ? "" : "s"}`; }
+  if (every) {
+    const n = Number(every[1]);
+    return n % 60 ? `every ${n} seconds` : `every ${n / 60} minute${n === 60 ? "" : "s"}`;
+  }
   const hour = text.match(/<key>Hour<\/key>\s*<integer>(\d+)</);
   return hour ? `daily at ${hour[1].padStart(2, "0")}:00` : fallback;
 }
@@ -59,37 +80,56 @@ function when(plist: string, fallback: string): string {
 function whenTimer(timer: string, fallback: string): string {
   const text = readFileSync(timer, "utf8");
   const every = text.match(/^OnUnitActiveSec=(\d+)$/m);
-  if (every) { const n = Number(every[1]); return n % 60 ? `every ${n} seconds` : `every ${n / 60} minute${n === 60 ? "" : "s"}`; }
+  if (every) {
+    const n = Number(every[1]);
+    return n % 60 ? `every ${n} seconds` : `every ${n / 60} minute${n === 60 ? "" : "s"}`;
+  }
   const hour = text.match(/^OnCalendar=\S+ (\d+):/m);
   return hour ? `daily at ${hour[1]}:00` : fallback;
 }
 
 export interface SetupStatus {
-  pi: { roles: string[]; skills: string[]; prompts: string[]; from?: string; installed: boolean; builtinsHidden: boolean; acpOff: boolean };
+  pi: {
+    roles: string[];
+    skills: string[];
+    prompts: string[];
+    from?: string;
+    installed: boolean;
+    builtinsHidden: boolean;
+    acpOff: boolean;
+  };
   claude: { roles: string[]; skills: string[]; from?: string };
   jobs: { name: string; when: string; on: boolean; log: string }[];
 }
 
 export function setupStatus(udRoot: string): SetupStatus {
   const p = paths(udRoot);
-  const ours = ls(p.skills).filter(s => !s.startsWith("."));
-  const settings = readJson(p.piSettings), bili = readJson(p.bili);
+  const ours = ls(p.skills).filter((s) => !s.startsWith("."));
+  const settings = readJson(p.piSettings),
+    bili = readJson(p.bili);
   return {
     pi: {
-      roles: ls(p.piAgents).filter(f => f.endsWith(".md")).map(f => basename(f, ".md")),
+      roles: ls(p.piAgents)
+        .filter((f) => f.endsWith(".md"))
+        .map((f) => basename(f, ".md")),
       ...linkedSkills(ours, p.piSkills, udRoot),
-      prompts: ls(join(udRoot, "prompts")).filter(f => f.endsWith(".md") && linkOf(join(p.piPrompts, f))).map(f => `/${basename(f, ".md")}`),
+      prompts: ls(join(udRoot, "prompts"))
+        .filter((f) => f.endsWith(".md") && linkOf(join(p.piPrompts, f)))
+        .map((f) => `/${basename(f, ".md")}`),
       installed: (settings.packages ?? []).some((x: unknown) => JSON.stringify(x).includes("pi-subagents")),
       builtinsHidden: settings.subagents?.disableBuiltins === true,
       acpOff: bili.pi?.subagents === false,
     },
     claude: {
-      roles: ls(p.claudeAgents).filter(f => f.endsWith(".md") && readFileSync(join(p.claudeAgents, f), "utf8").includes(CLAUDE_MARK)).map(f => basename(f, ".md")),
+      roles: ls(p.claudeAgents)
+        .filter((f) => f.endsWith(".md") && readFileSync(join(p.claudeAgents, f), "utf8").includes(CLAUDE_MARK))
+        .map((f) => basename(f, ".md")),
       ...linkedSkills(ours, p.claudeSkills, udRoot),
     },
     jobs: JOBS.map(([name, fallback]) => {
       const timer = join(p.systemdUser, `unconscious-${name}.timer`);
-      if (existsSync(timer)) return { name, on: true, when: whenTimer(timer, fallback), log: `journalctl --user -u unconscious-${name}` };
+      if (existsSync(timer))
+        return { name, on: true, when: whenTimer(timer, fallback), log: `journalctl --user -u unconscious-${name}` };
       const plist = join(p.launchAgents, `dev.unconscious.${name}.plist`);
       const on = existsSync(plist);
       return { name, on, when: on ? when(plist, fallback) : fallback, log: `~/Library/Logs/unconscious-${name}.log` };
@@ -99,7 +139,8 @@ export function setupStatus(udRoot: string): SetupStatus {
 
 export function formatStatus(s: SetupStatus): string {
   const out: string[] = [];
-  const line = (ok: boolean, label: string, value = "") => out.push(`  ${(ok ? yes : no)(pad(label, 24))}${value}`.trimEnd());
+  const line = (ok: boolean, label: string, value = "") =>
+    out.push(`  ${(ok ? yes : no)(pad(label, 24))}${value}`.trimEnd());
   const hint = (cmd: string) => out.push(`  ${c.dim("→")} ${c.cmd(cmd)}`);
   const list = (xs: string[]) => (xs.length ? xs.join(" ") : c.dim("none"));
 
@@ -122,8 +163,8 @@ export function formatStatus(s: SetupStatus): string {
   if (!s.claude.roles.length) hint("unconscious enable --harness claude");
 
   out.push("", c.head("Schedule"));
-  const w = Math.max(...s.jobs.map(j => j.when.length)) + 2;
+  const w = Math.max(...s.jobs.map((j) => j.when.length)) + 2;
   for (const j of s.jobs) line(j.on, j.name, j.on ? `${pad(j.when, w)}${c.dim(j.log)}` : c.dim(j.when));
-  if (!s.jobs.some(j => j.on)) hint("unconscious schedule on");
+  if (!s.jobs.some((j) => j.on)) hint("unconscious schedule on");
   return out.join("\n");
 }

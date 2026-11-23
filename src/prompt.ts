@@ -9,8 +9,15 @@ let rl: Interface | undefined;
 
 export async function ask(question: string): Promise<string> {
   rl ??= createInterface({ input: process.stdin, output: process.stdout });
-  try { return await rl.question(question); }
-  catch (e: any) { if (e?.code === "ABORT_ERR") throw new Cancelled("cancelled"); throw e; }
+  try {
+    return await rl.question(question);
+  } catch (e: any) {
+    if (e?.code === "ABORT_ERR") throw new Cancelled("cancelled");
+    throw e;
+  }
 }
 
-export function doneAsking() { rl?.close(); rl = undefined; }
+export function doneAsking() {
+  rl?.close();
+  rl = undefined;
+}

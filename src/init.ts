@@ -13,32 +13,49 @@ export interface InitOptions {
   dryRun?: boolean;
 }
 
-export interface InitResult { created: string[]; kept: string[]; next: string[] }
+export interface InitResult {
+  created: string[];
+  kept: string[];
+  next: string[];
+}
 
 export const domainProblem = (domain: string) =>
-  /^[a-z0-9][a-z0-9-]*$/.test(domain) ? undefined : `domain "${domain}" must be lowercase letters, digits and dashes, like billing or ingestion-search`;
+  /^[a-z0-9][a-z0-9-]*$/.test(domain)
+    ? undefined
+    : `domain "${domain}" must be lowercase letters, digits and dashes, like billing or ingestion-search`;
 
 export function init(root: string, opts: InitOptions): InitResult {
   const problem = opts.domain === undefined ? undefined : domainProblem(opts.domain);
   if (problem) throw new Error(problem);
-  const workflow = (name: string) => readFileSync(join(opts.udRoot, "workflows", name), "utf8")
-    .replace(/^# Copy to .*\n#\n/, "")
-    .replace(/^  UD_REF: .*$/m, `  UD_REF: ${opts.udSha} # the Unconscious Development commit this repo runs; bump it to update`);
+  const workflow = (name: string) =>
+    readFileSync(join(opts.udRoot, "workflows", name), "utf8")
+      .replace(/^# Copy to .*\n#\n/, "")
+      .replace(
+        /^  UD_REF: .*$/m,
+        `  UD_REF: ${opts.udSha} # the Unconscious Development commit this repo runs; bump it to update`,
+      );
   const files: Record<string, string> = {
     "docs/specs/.gitkeep": "",
     ".github/workflows/unconscious.yml": workflow("unconscious.yml"),
     ".github/workflows/unconscious-tasks.yml": workflow("unconscious-tasks.yml"),
   };
   if (opts.domain) {
-    files[`docs/personas/${opts.domain}.md`] = readFileSync(join(opts.udRoot, "skills/spec/templates/persona.md"), "utf8")
+    files[`docs/personas/${opts.domain}.md`] = readFileSync(
+      join(opts.udRoot, "skills/spec/templates/persona.md"),
+      "utf8",
+    )
       .replace("domain: <domain>", `domain: ${opts.domain}`)
       .replace("owner: <person>", `owner: ${opts.owner ?? "<person>"}`);
   }
 
-  const created: string[] = [], kept: string[] = [];
+  const created: string[] = [],
+    kept: string[] = [];
   for (const [path, content] of Object.entries(files)) {
     const full = join(root, path);
-    if (existsSync(full)) { kept.push(path); continue; }
+    if (existsSync(full)) {
+      kept.push(path);
+      continue;
+    }
     created.push(path);
     if (opts.dryRun) continue;
     mkdirSync(dirname(full), { recursive: true });

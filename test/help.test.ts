@@ -11,11 +11,11 @@ test("every command the CLI runs has help, and nothing else does", () => {
   const cli = readFileSync(join(root, "src/cli.ts"), "utf8");
   const bash = readFileSync(join(root, "bin/unconscious"), "utf8");
   const handled = new Set([
-    ...[...cli.matchAll(/command === "([a-z][a-z-]*)"/g)].map(m => m[1]),
-    ...[...bash.slice(bash.lastIndexOf('case "$1" in')).matchAll(/^  ([a-z-]+)\)/gm)].map(m => m[1]),
+    ...[...cli.matchAll(/command === "([a-z][a-z-]*)"/g)].map((m) => m[1]),
+    ...[...bash.slice(bash.lastIndexOf('case "$1" in')).matchAll(/^  ([a-z-]+)\)/gm)].map((m) => m[1]),
   ]);
   handled.delete("help");
-  assert.deepEqual([...handled].sort(), COMMANDS.map(c => c.name).sort());
+  assert.deepEqual([...handled].sort(), COMMANDS.map((c) => c.name).sort());
 });
 
 test("help names only environment variables it describes", () => {
