@@ -79,7 +79,7 @@ export function fitSpan(text: string, before: string, after: string): string {
   return t.trim() || text;
 }
 
-// The model runs through `pi`, with no tools, skills or context files.
+// The model runs through `pi` with your skills and the read tool to load them, and no context files.
 export function piInterpreter(model = process.env.UD_INTERPRETER_MODEL ?? "anthropic/claude-haiku-5-5"): Interpreter {
   return {
     interpret(input) {
@@ -89,8 +89,8 @@ export function piInterpreter(model = process.env.UD_INTERPRETER_MODEL ?? "anthr
           [
             "-p",
             "--no-session",
-            "--no-tools",
-            "--no-skills",
+            "--tools",
+            "read",
             "--no-extensions",
             "--no-mcp",
             "--no-context-files",
