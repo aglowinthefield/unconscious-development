@@ -61,7 +61,7 @@ Decide first
 ```
 
 - The date line only. No recap of what merged, and no reminder that Waiting on you and Stuck come first; the page already shows both.
-- Do next is your first choice: the issue as a bare URL on the callout line, then one line with the why-now in under 15 words, the tier and the spend. Several issues that are one problem go on the callout line together.
+- Do next is your first choice: the issue as a bare URL on the callout line, then one line with the why-now in under 15 words, the tier and the spend. Several issues that are one problem go on the callout line together. Put only the picked issues and PRs on that line: when all of them are closed, `unconscious tick` runs you again for this project. A pick with no issue says `(no issue yet)` and waits for the daily run.
 - The other proposals (at most four) go under three plain-text labels, in your order within each: `Fix` for trivial work an agent can start once the Self says go, `Spec` for designed work that needs a Ruler session, `Decide first` for anything that waits on a call from the Self (a Persona to pick or draft, a product question). Leave out a label with nothing under it, and don't repeat Do next.
 - Each line is the issue as a bare URL, a colon, the why-now in under 12 words, then the spend when you know it. The issue's title already says what it is, so don't restate it. Steps, criteria and other figures belong in the issue.
 - Not now goes in the folded callout, with its count in the title, one line each, under 10 words after the URL.

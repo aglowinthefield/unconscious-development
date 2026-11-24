@@ -23,6 +23,7 @@ import { bakeryRunner } from "./runner/bakery.ts";
 import { sessionRunner } from "./runner/session.ts";
 import type { Runner, TaskInput } from "./runner/runner.ts";
 import { nowDir, projectPages, statusPage } from "./status.ts";
+import { dueProjects } from "./propose-due.ts";
 import { syncVault } from "./vault-mirror.ts";
 import { piInterpreter } from "./interpret.ts";
 import { pollChangeRequest, pollQuestions, type PollOptions } from "./questions.ts";
@@ -361,6 +362,11 @@ async function main(argv: string[]): Promise<number> {
     }
     console.log(`mirror: ${failed ? `${failed} project(s) had problems` : "every vault mirror is at origin/main"}`);
     return failed ? 1 : 0;
+  }
+  if (command === "propose-due") {
+    const dir = values.dir ? resolve(values.dir) : nowDir();
+    for (const page of dueProjects(dir)) console.log(page);
+    return 0;
   }
   if (command === "status-page") {
     const dir = values.dir ? resolve(values.dir) : nowDir();

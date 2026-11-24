@@ -75,7 +75,7 @@ export const COMMANDS: Command[] = [
     args: "on|mirror|off",
     summary: "run the background jobs with launchd or systemd",
     details:
-      "status-page every 15 minutes, questions every 2 minutes, propose daily at 07:00. The jobs keep the PATH, Now folder and UD_HARNESS of the shell that turned them on. `mirror` runs only `mirror`, every 15 minutes, for a machine that reads the vault while another host runs the rest. With no argument, says whether it's on.",
+      "status-page every 15 minutes, questions every 2 minutes, propose daily at 07:00. After each status-page, a project whose Do next is done gets its own propose run (see propose-due). The jobs keep the PATH, Now folder and UD_HARNESS of the shell that turned them on. `mirror` runs only `mirror`, every 15 minutes, for a machine that reads the vault while another host runs the rest. With no argument, says whether it's on.",
     examples: [
       ["unconscious schedule on", ""],
       ["tail -f ~/Library/Logs/unconscious-questions.log", "watch a job"],
@@ -179,8 +179,28 @@ export const COMMANDS: Command[] = [
   {
     name: "propose",
     group: "Cast on demand",
+    args: "[PROJECT]",
     summary: "the Magician proposes what to spec next",
+    details:
+      "With no project, writes Proposed next on every project page. Runs one at a time: a second propose waits for the first, so two never write the same page.",
     env: ["UD_HARNESS", "UD_NOW_DIR"],
+  },
+  {
+    name: "tick",
+    group: "Now pages",
+    summary: "status-page, then propose for each project whose Do next is done",
+    details:
+      "What the schedule runs every 15 minutes. On Linux each due project's propose runs as its own systemd unit, unconscious-propose@<page>; elsewhere they run in turn.",
+    env: ["UD_NOW_DIR", "UD_HARNESS"],
+  },
+  {
+    name: "propose-due",
+    group: "Now pages",
+    summary: "list the projects whose Do next is done",
+    details:
+      "A project is due when every issue and PR on its Do next line is closed on GitHub. Each Do next is listed once; the state is in ~/.local/state/unconscious/propose-due.json. The scheduled status-page runs propose for each one it lists.",
+    options: [["--dir DIR", "the Now folder"]],
+    env: ["UD_NOW_DIR", "DEV_VAULT"],
   },
   {
     name: "mirror",
