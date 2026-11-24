@@ -14,13 +14,6 @@ claude_agents="${CLAUDE_AGENTS_DIR:-$HOME/.claude/agents}"
 claude_skills="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
 claude_mark="<!-- written by unconscious enable --harness claude; disable removes it -->"
 
-# Headless pi runs skip skill discovery, so they'd write without the writing skills an interactive
-# session has. Load them by path: UD_WRITING_SKILLS is a colon-separated list, empty for none.
-# Claude Code loads ~/.claude/skills on its own.
-writing_skills=()
-IFS=: read -ra _ws <<<"${UD_WRITING_SKILLS-$skills_dir/clear-voice}"
-for _s in "${_ws[@]}"; do [ -n "$_s" ] && [ -e "$_s" ] && writing_skills+=(--skill "$_s"); done
-
 json_set() { # file, python statement on dict d
   python3 - "$1" "$2" <<'PY'
 import json, os, sys
@@ -135,7 +128,7 @@ propose() {
     claude -p --add-dir "${UD_NOW_DIR:-$(node --disable-warning=ExperimentalWarning -e 'import("'"$ud_root"'/src/status.ts").then(m => console.log(m.nowDir()))')}" \
       --allowedTools "Read Grep Glob Bash Edit Write Skill" "$prompt"
   else
-    pi -p --no-session --no-skills --skill "$ud_root/skills/propose" "${writing_skills[@]}" --tools read,bash,edit,write "$prompt"
+    pi -p --no-session --skill "$ud_root/skills/propose" --tools read,bash,edit,write "$prompt"
   fi
   "$ud_root/bin/unconscious" status-page
 }
@@ -150,7 +143,7 @@ draft() {
   fi
   local role; role="$(mktemp)"; trap 'rm -f "$role"' RETURN
   awk 'f>=2; /^---$/{f++}' "$ud_root/docs/roles/ruler.md" > "$role"
-  pi -p --no-session --no-skills --skill "$ud_root/skills/spec" "${writing_skills[@]}" --append-system-prompt "$role" --tools read,grep,find,ls,bash "$prompt"
+  pi -p --no-session --skill "$ud_root/skills/spec" --append-system-prompt "$role" --tools read,grep,find,ls,bash "$prompt"
 }
 
 # Run the Shadow on a PR that already exists, as a first try of UD with no setup: criteria from the
@@ -183,7 +176,7 @@ $context"
   else
     local role; role="$(mktemp)"
     awk 'f>=2; /^---$/{f++}' "$ud_root/docs/roles/shadow.md" > "$role"
-    out="$(cd "$wt" && pi -p --no-session --no-skills "${writing_skills[@]}" --append-system-prompt "$role" --tools read,grep,find,ls,bash "$prompt")"
+    out="$(cd "$wt" && pi -p --no-session --append-system-prompt "$role" --tools read,grep,find,ls,bash "$prompt")"
     rm -f "$role"
   fi
   printf '%s\n' "$out"
