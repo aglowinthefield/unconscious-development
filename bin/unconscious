@@ -122,6 +122,7 @@ mirror_plist="$HOME/Library/LaunchAgents/dev.unconscious.mirror.plist"
 # one named. Runs hold a lock, so the daily run and a project's own run never write a page at once.
 propose() {
   local page="${1:-}" where
+  export PATH="$ud_root/bin:$PATH" # the skill runs `unconscious status-page`; units don't have it on PATH
   echo "== $(date -u +%FT%TZ) propose${page:+ $page}"
   if command -v flock >/dev/null; then
     local lock="${XDG_STATE_HOME:-$HOME/.local/state}/unconscious/propose.lock"
