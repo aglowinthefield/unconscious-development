@@ -136,6 +136,12 @@ test("the index shows each page's first proposal, short and table-safe", () => {
     firstProposal("## Proposed next\n\n1. [[Token sources]], designed: tokens | sources.\n"),
     "[[Token sources]]: tokens \\| sources",
   );
+  assert.equal(
+    firstProposal(
+      "## Proposed next\n\n2026-11-24, by the Magician.\n\n> [!tip] Do next: https://github.com/o/r/issues/7342\n> 176 dead jobs, alert firing since 19 Nov. Trivial, ~$15.\n\nFix\n- https://github.com/o/r/issues/7516: CI minutes up.\n",
+    ),
+    "[#7342](https://github.com/o/r/issues/7342): 176 dead jobs, alert firing since 19 Nov",
+  );
   assert.equal(firstProposal("## Ready\n\nx\n"), undefined);
   const table = renderProjects([{ name: "Silk", file: "silk.md", snapshot: snap(), next: firstProposal(page) }]);
   assert.match(table, /\| green \| \[#6680\]/);

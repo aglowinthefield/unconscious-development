@@ -43,17 +43,28 @@ The Self reads this section first, at a glance. Write it to be scanned, not read
 
 2026-11-15, by the Magician.
 
-1. https://github.com/o/r/issues/412 (designed, ~$10): support closes 30 orders by hand each morning.
-2. https://github.com/o/r/issues/377 (trivial, spend unknown): needs an orders Persona first.
+> [!tip] Do next: https://github.com/o/r/issues/412
+> Support closes 30 orders by hand each morning. Trivial, ~$10.
 
-Not now:
-- https://github.com/o/r/issues/398: waits on pricing (#390).
+Fix
+- https://github.com/o/r/issues/377: refunds email the wrong address. ~$5.
+
+Spec
+- https://github.com/o/r/issues/401: bulk export times out past 10k rows. ~$30.
+
+Decide first
+- https://github.com/o/r/issues/388: which Persona owns invoices.
+
+> [!note]- Not now (2)
+> - https://github.com/o/r/issues/398: waits on pricing (#390).
+> - https://github.com/o/r/issues/402: after #401.
 ```
 
 - The date line only. No recap of what merged, and no reminder that Waiting on you and Stuck come first; the page already shows both.
-- Each proposal is the issue as a bare URL, `(tier, spend)`, a colon, then the why-now in under 15 words. The issue's title already says what it is, so don't restate it. Steps, criteria and figures beyond the one that makes it urgent belong in the issue, not here.
-- Name the domain only when it blocks the work (no Persona yet).
-- Not now is a list, one line each, under 10 words after the URL.
+- Do next is your first choice: the issue as a bare URL on the callout line, then one line with the why-now in under 15 words, the tier and the spend. Several issues that are one problem go on the callout line together.
+- The other proposals (at most four) go under three plain-text labels, in your order within each: `Fix` for trivial work an agent can start once the Self says go, `Spec` for designed work that needs a Ruler session, `Decide first` for anything that waits on a call from the Self (a Persona to pick or draft, a product question). Leave out a label with nothing under it, and don't repeat Do next.
+- Each line is the issue as a bare URL, a colon, the why-now in under 12 words, then the spend when you know it. The issue's title already says what it is, so don't restate it. Steps, criteria and other figures belong in the issue.
+- Not now goes in the folded callout, with its count in the title, one line each, under 10 words after the URL.
 - No headings inside the section.
 
 Run headless (`unconscious propose`), you write every project page and reply with one line per page. Don't ask questions; put what you'd ask under "Not now".

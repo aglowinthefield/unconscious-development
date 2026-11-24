@@ -334,7 +334,9 @@ export interface Row {
 // "[#6680](url): safety.ts prices Gemini at retired flash-lite rates".
 export function firstProposal(page: string): string | undefined {
   const body = section(parseDoc(page), "Proposed next")?.body;
-  const line = body && /^1\.\s+(.+)$/m.exec(body)?.[1];
+  // The Do next callout ("> [!tip] Do next: URL" then "> why"), or a numbered list's first line.
+  const tip = body && /^>\s*\[!tip\][^:\n]*:\s*(.+)\n>\s*(.+)$/m.exec(body);
+  const line = tip ? `${tip[1].trim()}: ${tip[2].trim()}` : body && /^1\.\s+(.+)$/m.exec(body)?.[1];
   if (!line) return undefined;
   const url = /https:\/\/github\.com\/[^\s,)]+\/(?:issues|pull)\/(\d+)/.exec(line);
   const reason = (line.split(/:\s+/).slice(1).join(": ") || line).split(/(?<=[^.]{12})\.\s/)[0].replace(/\.$/, "");
