@@ -34,20 +34,27 @@ Group issues that are one problem into one proposal and say why they're one. Ski
 
 ## 3. Write the section
 
-Replace the whole `## Proposed next` section of the page, and nothing else. `status-page` keeps it as you leave it. If the section doesn't exist, add it after `## Ready`.
+Replace the whole `## Proposed next` section of the page, and nothing else. `status-page` keeps it as you leave it, at the top of the page. If the section doesn't exist, add it right after the frontmatter.
+
+The Self reads this section first, at a glance. Write it to be scanned, not read:
 
 ```markdown
 ## Proposed next
 
 2026-11-15, by the Magician.
 
-1. https://github.com/o/r/issues/412, orders, designed: bulk archive. Support closes 30 orders by hand each morning (#412 thread). The orders Persona is confirmed. About 2 tasks, $10.
-2. ...
+1. https://github.com/o/r/issues/412 (designed, ~$10): support closes 30 orders by hand each morning.
+2. https://github.com/o/r/issues/377 (trivial, spend unknown): needs an orders Persona first.
 
-Not now: https://github.com/o/r/issues/398 waits on the pricing decision in #390.
+Not now:
+- https://github.com/o/r/issues/398: waits on pricing (#390).
 ```
 
-Issues as bare URLs. One proposal per numbered line, under 40 words. No headings inside the section.
+- The date line only. No recap of what merged, and no reminder that Waiting on you and Stuck come first; the page already shows both.
+- Each proposal is the issue as a bare URL, `(tier, spend)`, a colon, then the why-now in under 15 words. The issue's title already says what it is, so don't restate it. Steps, criteria and figures beyond the one that makes it urgent belong in the issue, not here.
+- Name the domain only when it blocks the work (no Persona yet).
+- Not now is a list, one line each, under 10 words after the URL.
+- No headings inside the section.
 
 Run headless (`unconscious propose`), you write every project page and reply with one line per page. Don't ask questions; put what you'd ask under "Not now".
 

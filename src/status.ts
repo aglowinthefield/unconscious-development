@@ -286,7 +286,9 @@ export function renderOwned(s: Snapshot): Record<string, string> {
 }
 
 // Rewrites the page: frontmatter gets `updated`, owned sections are replaced in OWNED order, every
-// other section keeps its text and goes after "Ready", before "Last updated".
+// other section keeps its text and goes after "Ready", before "Last updated". Proposed next goes
+// first, so the page opens on what to do.
+const FIRST = "Proposed next";
 export function renderPage(previous: string, s: Snapshot): string {
   const lines = previous.replace(/\r\n/g, "\n").split("\n");
   let fmLines: string[] = [];
@@ -298,9 +300,10 @@ export function renderPage(previous: string, s: Snapshot): string {
   }
   const doc = parseDoc(rest);
   const owned = renderOwned(s);
-  const kept = doc.sections
-    .filter((x) => !OWNED.includes(x.heading))
-    .map((x) => `## ${x.heading}\n${x.body.trimEnd()}\n`);
+  const keep = (x: { heading: string; body: string }) => `## ${x.heading}\n${x.body.trimEnd()}\n`;
+  const kept = doc.sections.filter((x) => !OWNED.includes(x.heading));
+  const first = kept.filter((x) => x.heading === FIRST).map(keep);
+  const others = kept.filter((x) => x.heading !== FIRST).map(keep);
   const sec = (h: string) => `## ${h}\n\n${owned[h]}\n`;
   return [
     "---",
@@ -308,8 +311,9 @@ export function renderPage(previous: string, s: Snapshot): string {
     `updated: ${s.at.slice(0, 19)}Z`,
     "---",
     "",
+    ...first,
     ...["Waiting on you", "Stuck", "In flight", "Ready"].map(sec),
-    ...kept,
+    ...others,
     sec("Last updated"),
   ]
     .join("\n")

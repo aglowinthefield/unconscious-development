@@ -64,7 +64,8 @@ test("a PR is stuck, yours, or waiting", () => {
 });
 
 test("the page replaces owned sections and keeps the rest", () => {
-  const previous = "---\nrepo: o/r\nupdated: old\n---\n\n## Stuck\n\nold\n\n## Proposed next\n\n- spec #9 next\n";
+  const previous =
+    "---\nrepo: o/r\nupdated: old\n---\n\n## Stuck\n\nold\n\n## Proposed next\n\n- spec #9 next\n\n## Notes\n\nmine\n";
   const page = renderPage(
     previous,
     snap({
@@ -75,8 +76,9 @@ test("the page replaces owned sections and keeps the rest", () => {
   assert.match(page, /## Stuck\n\n- https:\/\/github.com\/o\/r\/pull\/1 \(2d\): checks failing\n/);
   assert.match(page, /## Waiting on you\n\n- https:\/\/github.com\/o\/r\/pull\/2 \(2d\): approved, green: merge it\n/);
   assert.match(page, /## Proposed next\n\n- spec #9 next\n/);
-  assert.ok(page.indexOf("## Proposed next") > page.indexOf("## Ready"));
-  assert.ok(page.indexOf("## Proposed next") < page.indexOf("## Last updated"));
+  assert.match(page, /^---\n[^]*?\n---\n\n## Proposed next\n/);
+  assert.ok(page.indexOf("## Notes") > page.indexOf("## Ready"));
+  assert.ok(page.indexOf("## Notes") < page.indexOf("## Last updated"));
   assert.doesNotMatch(page, /\nold\n/);
   assert.equal(renderPage(page, snap()).match(/## Proposed next/g)?.length, 1);
 });
