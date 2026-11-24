@@ -160,7 +160,7 @@ export const COMMANDS: Command[] = [
     details:
       "Runs headless. A trivial issue gets its criteria in its body and a comment asking for ready-for-agent. A bigger one gets a comment saying it needs a spec session. Changes no files.",
     examples: [["unconscious draft 42", ""]],
-    env: ["UD_HARNESS"],
+    env: ["UD_HARNESS", "UD_WRITING_SKILLS"],
   },
   {
     name: "review",
@@ -174,13 +174,13 @@ export const COMMANDS: Command[] = [
       ["unconscious review 128", "print the verdicts"],
       ["unconscious review 128 --comment", "and post them"],
     ],
-    env: ["UD_HARNESS"],
+    env: ["UD_HARNESS", "UD_WRITING_SKILLS"],
   },
   {
     name: "propose",
     group: "Cast on demand",
     summary: "the Magician proposes what to spec next",
-    env: ["UD_HARNESS", "UD_NOW_DIR"],
+    env: ["UD_HARNESS", "UD_NOW_DIR", "UD_WRITING_SKILLS"],
   },
   {
     name: "mirror",
@@ -222,6 +222,8 @@ export const COMMANDS: Command[] = [
 
 export const ENV: Record<string, string> = {
   UD_HARNESS: "pi or claude: who runs the headless commands (default: pi)",
+  UD_WRITING_SKILLS:
+    "colon-separated skill paths every headless pi run loads, empty for none (default: ~/.agents/skills/clear-voice)",
   UD_PR_TOKEN: "GitHub token that opens task-merged's PR, so its checks run (default: the ambient gh token)",
   UD_NOW_DIR: "the 🌀 Now folder (default: $DEV_VAULT/🌀 Now)",
   DEV_VAULT: "the Obsidian vault the Now folder is in",
