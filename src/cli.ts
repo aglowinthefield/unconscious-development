@@ -22,7 +22,7 @@ import { STATES, stateOf, type Issue, type Tracker } from "./tracker/tracker.ts"
 import { bakeryRunner } from "./runner/bakery.ts";
 import { sessionRunner } from "./runner/session.ts";
 import type { Runner, TaskInput } from "./runner/runner.ts";
-import { nowDir, projectPages, statusPage } from "./status.ts";
+import { isTransient, nowDir, projectPages, statusPage } from "./status.ts";
 import { dueProjects } from "./propose-due.ts";
 import { syncVault } from "./vault-mirror.ts";
 import { piInterpreter } from "./interpret.ts";
@@ -372,9 +372,10 @@ async function main(argv: string[]): Promise<number> {
     const dir = values.dir ? resolve(values.dir) : nowDir();
     const rows = statusPage(dir, positionals[0]);
     const failed = rows.filter((r) => !r.snapshot);
-    for (const r of failed) console.error(`${r.file}: ${r.error}`);
+    for (const r of failed)
+      console.error(`${r.file}: ${r.error}${isTransient(r.error) ? " (GitHub hiccup; next run retries)" : ""}`);
     console.log(`status-page: ${rows.length - failed.length} of ${rows.length} project pages rebuilt in ${dir}`);
-    return failed.length ? 1 : 0;
+    return failed.some((r) => !isTransient(r.error)) ? 1 : 0;
   }
   return help([command]);
 }

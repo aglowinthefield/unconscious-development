@@ -218,7 +218,7 @@ export const COMMANDS: Command[] = [
     args: "[PROJECT]",
     summary: "rebuild the 🌀 Now pages",
     details:
-      "Any page with repo: in its frontmatter is a project page. Sections it doesn't write stay as they are; Proposed next goes first. A page with vault: FOLDER also gets Specs and Personas links in that vault folder, pointing at a worktree of the repo kept at origin/main.",
+      "Any page with repo: in its frontmatter is a project page. Sections it doesn't write stay as they are; Proposed next goes first. A page with vault: FOLDER also gets Specs and Personas links in that vault folder, pointing at a worktree of the repo kept at origin/main. Exits 1 when a page fails, unless every failure was a GitHub 5xx or dropped connection, which the next run retries.",
     options: [["--dir DIR", "the Now folder"]],
     env: ["UD_NOW_DIR", "DEV_VAULT", "UD_MIRROR_DIR", "UD_VAULT_MIRROR"],
   },

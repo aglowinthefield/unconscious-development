@@ -425,6 +425,15 @@ export function projectPages(dir: string, only?: string): ProjectPage[] {
   return pages;
 }
 
+// GitHub's own hiccups: a 5xx or a dropped connection. The next run, 15 minutes on, usually
+// succeeds, so a page that failed only this way isn't worth failing the unit (and paging) over.
+// A 403 rate limit is not one of these: it means the schedule asks GitHub too often.
+export function isTransient(error: string | undefined): boolean {
+  return /\bHTTP 5\d\d\b|error connecting to|connection (reset|refused)|timed? ?out|ETIMEDOUT|ECONNRESET|EAI_AGAIN/i.test(
+    error ?? "",
+  );
+}
+
 export function statusPage(dir: string, only?: string): Row[] {
   const rows: Row[] = [];
   for (const { name, file: f, path, text, fm } of projectPages(dir, only)) {

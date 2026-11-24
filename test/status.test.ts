@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   checksOf,
   firstProposal,
+  isTransient,
   prStage,
   renderPage,
   renderProjects,
@@ -157,4 +158,21 @@ test("tasks merged against a draft spec are stuck, not in flight", () => {
   const stuck = page.split("## Stuck")[1].split("## In flight")[0];
   assert.match(stuck, /`docs\/specs\/f\/g.md`: 5 of 6 tasks done, but the spec is still `draft`/);
   assert.match(page.split("## In flight")[1].split("## Ready")[0], /Nothing\./);
+});
+
+test("isTransient: GitHub 5xx and dropped connections, not rate limits or real errors", () => {
+  for (const e of [
+    "failed to get runs: HTTP 500 (https://api.github.com/repos/o/r/actions/runs)",
+    "HTTP 503: 503 Service Unavailable (https://api.github.com/graphql)",
+    "error connecting to api.github.com",
+    'Post "https://api.github.com/graphql": net/http: TLS handshake timeout',
+  ])
+    assert.equal(isTransient(e), true, e);
+  for (const e of [
+    "failed to get runs: HTTP 403: API rate limit exceeded for user ID 1.",
+    "HTTP 404: Not Found (https://api.github.com/repos/o/gone)",
+    "Could not resolve to a Repository with the name 'o/r'.",
+    undefined,
+  ])
+    assert.equal(isTransient(e), false, String(e));
 });
