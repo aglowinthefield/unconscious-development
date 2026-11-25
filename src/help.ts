@@ -401,7 +401,9 @@ export function help(args: string[]): number {
     return 0;
   }
   const near = suggest(name);
-  console.error(`unconscious: no command "${name}".${near ? ` Did you mean ${c.cmd(near)}?` : ""}`);
-  console.error(`Run ${c.cmd("unconscious help")} to see them all.`);
+  // The same line as bakery-cli and impression (house-style references/cli.md).
+  console.error(
+    `unconscious: Unknown command: ${name}.${near ? ` Did you mean ${near}?` : ""} Run unconscious help to see them all.`,
+  );
   return 2;
 }
