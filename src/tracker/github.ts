@@ -180,12 +180,9 @@ export function githubTracker(repo: string): Tracker {
       );
     },
     commitFile(cr, { path, content, message }) {
-      const sha = gh([
-        "api",
-        `repos/${repo}/contents/${enc(path)}?ref=${encodeURIComponent(cr.branch)}`,
-        "--jq",
-        ".sha",
-      ]);
+      // The blob sha comes from the head the content was built from, so GitHub refuses the write
+      // (409) when anyone has changed the file since, instead of overwriting their change.
+      const sha = gh(["api", `repos/${repo}/contents/${enc(path)}?ref=${encodeURIComponent(cr.head)}`, "--jq", ".sha"]);
       const input = JSON.stringify({
         message,
         branch: cr.branch,

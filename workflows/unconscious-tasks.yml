@@ -23,9 +23,13 @@ permissions:
   issues: write
   pull-requests: write
 
+# One run at a time, and every push waits its turn. Each run handles only the PRs its own push
+# merged, so without `queue: max` GitHub cancels a waiting run when a newer one arrives, and that
+# push's tasks are never marked done.
 concurrency:
   group: unconscious-tasks
   cancel-in-progress: false
+  queue: max
 
 env:
   UD_REF: main

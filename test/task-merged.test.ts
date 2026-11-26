@@ -111,12 +111,12 @@ test("the built PR gets a conventional title and the repo's required sections", 
 });
 
 // A project repo with an origin to push to, and a tracker that records what it was asked to do.
-function project() {
+function project(spec = SPEC) {
   const git = (cwd: string, ...args: string[]) =>
     execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
   const origin = mkdtempSync(join(tmpdir(), "ud-origin-"));
   git(origin, "init", "-q", "--bare", "-b", "main");
-  const root = files();
+  const root = repo({ "docs/specs/orders/bulk-archive.md": spec, "docs/specs/orders/bulk-archive.plan.md": PLAN });
   git(root, "init", "-q", "-b", "main");
   git(root, "config", "user.name", "t");
   git(root, "config", "user.email", "t@t");
@@ -184,4 +184,13 @@ test("without --via-pr, a refused push falls back to the same PR", () => {
     calls[2],
     /^comment .*main refused a direct push, so marking the spec `built` is in https:\/\/x\/pull\/9\.$/,
   );
+});
+
+test("a closing comment that fails doesn't stop the issue closing", () => {
+  const { root, calls, tracker } = project(SPEC.replace(/- AC3 \(after deploy\).*\n/, ""));
+  tracker.comment = () => {
+    throw new Error("gh: HTTP 502");
+  };
+  taskMerged(root, tracker, [pr(2, "gh-412/t2")], {});
+  assert.equal(calls.at(-1), "close");
 });

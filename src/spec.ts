@@ -176,8 +176,21 @@ function checkSections(file: string, doc: Doc, required: string[], problems: Pro
   }
 }
 
+// Each marker is asked as its own question, keyed by its text, so two identical markers in one file
+// would get one question between them and the second would never be asked.
 function checkMarkers(file: string, text: string, problems: Problem[]) {
-  for (const m of markers(text)) problems.push({ file, line: m.line, message: `open question: ${m.text}` });
+  const seen = new Map<string, number>();
+  for (const m of markers(text)) {
+    problems.push({ file, line: m.line, message: `open question: ${m.text}` });
+    const first = seen.get(m.text);
+    if (first === undefined) seen.set(m.text, m.line);
+    else
+      problems.push({
+        file,
+        line: m.line,
+        message: `same marker as line ${first}; give each its own slot label so each gets its own question`,
+      });
+  }
 }
 
 export function checkSpecFile(root: string, path: string): Problem[] {

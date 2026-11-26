@@ -112,7 +112,7 @@ function specToTasks(root: string, tracker: Tracker, issue: Issue, runner: Runne
 
 // After a merge to main: every approved spec the merge touched flips its plan's issue to
 // ready-for-agent and gets its tasks.
-function onMerge(root: string, tracker: Tracker, runner: Runner, base: string, head: string) {
+export function onMerge(root: string, tracker: Tracker, runner: Runner, base: string, head: string) {
   const changed = execFileSync("git", ["diff", "--name-only", `${base}..${head}`, "--", "docs/specs"], {
     cwd: root,
     encoding: "utf8",
@@ -136,13 +136,19 @@ function onMerge(root: string, tracker: Tracker, runner: Runner, base: string, h
     }
     const issue = tracker.getIssue(issueRef);
     const rel = specPath.slice(root.length + 1);
-    if (!issue.open || stateOf(issue) === "ready-for-agent" || stateOf(issue) === "verifying") {
+    if (!issue.open || stateOf(issue) === "verifying") {
       console.log(`#${issue.number} is already ${issue.open ? stateOf(issue) : "closed"}; not flipping`);
       continue;
     }
-    tracker.setState(issue, "ready-for-agent");
-    tracker.comment(issue, `Spec approved: \`${rel}\`. Creating its tasks.`);
-    console.log(`#${issue.number} → ready-for-agent (${rel})`);
+    // An issue already ready-for-agent may be from an earlier run that failed partway through
+    // creating tasks. Creating them again is safe, since a runner keys each task, so finish it.
+    if (stateOf(issue) === "ready-for-agent")
+      console.log(`#${issue.number} is already ready-for-agent; creating any missing tasks`);
+    else {
+      tracker.setState(issue, "ready-for-agent");
+      tracker.comment(issue, `Spec approved: \`${rel}\`. Creating its tasks.`);
+      console.log(`#${issue.number} → ready-for-agent (${rel})`);
+    }
     specToTasks(root, tracker, issue, runner, false);
   }
 }
@@ -380,21 +386,25 @@ async function main(argv: string[]): Promise<number> {
   return help([command]);
 }
 
-try {
-  process.exitCode = await main(process.argv.slice(2));
-  doneAsking();
-} catch (e) {
-  doneAsking();
-  if (e instanceof Cancelled) {
-    console.error("\nCancelled; nothing written.");
-    process.exitCode = 130;
-  } else if (e instanceof Refusal) {
-    console.error(e.message);
-    process.exitCode = 1;
-  } else if ((e as any)?.code?.startsWith?.("ERR_PARSE_ARGS")) {
-    console.error(
-      `unconscious ${process.argv[2]}: ${(e as Error).message.split(". ")[0]}.\nRun unconscious help ${process.argv[2]} for its options.`,
-    );
-    process.exitCode = 2;
-  } else throw e;
+if (import.meta.main) await run();
+
+async function run() {
+  try {
+    process.exitCode = await main(process.argv.slice(2));
+    doneAsking();
+  } catch (e) {
+    doneAsking();
+    if (e instanceof Cancelled) {
+      console.error("\nCancelled; nothing written.");
+      process.exitCode = 130;
+    } else if (e instanceof Refusal) {
+      console.error(e.message);
+      process.exitCode = 1;
+    } else if ((e as any)?.code?.startsWith?.("ERR_PARSE_ARGS")) {
+      console.error(
+        `unconscious ${process.argv[2]}: ${(e as Error).message.split(". ")[0]}.\nRun unconscious help ${process.argv[2]} for its options.`,
+      );
+      process.exitCode = 2;
+    } else throw e;
+  }
 }
