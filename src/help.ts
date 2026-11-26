@@ -49,7 +49,9 @@ export const COMMANDS: Command[] = [
     summary: "install the cast into pi and Claude Code",
     details:
       "pi: links docs/roles/*.md into ~/.pi/agent/agents/unconscious and skills/* into ~/.agents/skills and prompts/*.md into ~/.pi/agent/prompts, hides pi-subagents' builtin presets and turns off billion-context's acp_delegate.\nclaude: writes the roles into ~/.claude/agents and links skills/* into ~/.claude/skills.\nClaude Code gets copies, so run enable again after pulling role changes.\nIt touches only what it owns, so running it twice is safe. Changes apply to new sessions.",
-    options: [["--harness pi|claude", "which harness to install into (default: each one on PATH, or pi if neither is)"]],
+    options: [
+      ["--harness pi|claude", "which harness to install into (default: each one on PATH, or pi if neither is)"],
+    ],
     examples: [
       ["unconscious enable", "install into every harness on PATH"],
       ["unconscious enable --harness pi", "install into pi only"],
