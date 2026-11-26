@@ -22,7 +22,7 @@ The contract is files and scripts: Personas, specs, `🌀 Now/`
 pages, `check-spec`, `spec-to-tasks`. No harness, tracker or runner is a
 dependency.
 
-Opt-in. Nothing here is loaded by default. `bin/unconscious enable` installs the cast into pi; `enable --harness claude` installs it into Claude Code.
+Opt-in. Nothing here is loaded by default. `bin/unconscious enable` installs the cast into every harness on PATH, pi and Claude Code; `--harness pi` or `--harness claude` picks one.
 
 `bin/unconscious help` lists every command, and `bin/unconscious help <command>` shows one command's options and examples. Each command's help lives in `src/help.ts`; a new command goes there too, or the tests fail.
 

@@ -11,10 +11,10 @@ You need:
 - A repo on GitHub that you can push to and merge PRs into.
 - This repo cloned somewhere, for example `~/code/unconscious-development`. The commands below call `bin/unconscious` from there.
 
-An agent harness is optional. The cast runs in Claude Code or in pi:
+An agent harness is optional. The cast runs in Claude Code or in pi, and `bin/unconscious enable` installs it into whichever of the two is on PATH:
 
-- Claude Code: `bin/unconscious enable --harness claude` writes the roles into `~/.claude/agents/` and the skills into `~/.claude/skills/`. Start a role as the main agent with `claude --agent ruler` or `claude --agent creator`, so it can send out the others. Set `UD_HARNESS=claude` for the headless commands (`draft`, `propose`).
-- pi, with the pi-subagents package: `bin/unconscious enable`.
+- Claude Code: `enable` writes the roles into `~/.claude/agents/` and the skills into `~/.claude/skills/`. Start a role as the main agent with `claude --agent ruler` or `claude --agent creator`, so it can send out the others. These are copies, so run `enable` again after pulling role changes. Set `UD_HARNESS=claude` for the headless commands (`draft`, `propose`).
+- pi, with the pi-subagents package: `enable` links the roles and skills, so they follow the checkout.
 
 Without either, you write specs by hand and start each task yourself, and everything else here works the same.
 
