@@ -44,7 +44,7 @@ What this domain refuses. Each id is written in full as `automation/I1` elsewher
 
 ## Recent decisions
 
-- [State review 2026-11-26](https://github.com/aglowinthefield/unconscious-development/pull/): found the lost-update and dropped-run bugs behind I1 to I5.
+- [#30](https://github.com/aglowinthefield/unconscious-development/pull/30): the 2026-11-26 state review found the lost-update and dropped-run bugs behind I1 to I5, and fixed them.
 
 ## How to run things here
 
