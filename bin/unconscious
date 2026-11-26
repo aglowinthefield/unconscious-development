@@ -26,7 +26,7 @@ PY
 }
 
 enable() {
-  mkdir -p "$agents_dir"
+  mkdir -p "$agents_dir" "$skills_dir"
   for f in "$ud_root"/docs/roles/*.md; do
     grep -q '^name: ' "$f" || continue  # role files only, not Roles.md
     ln -sfn "$f" "$agents_dir/$(basename "$f")"
@@ -43,9 +43,8 @@ enable() {
     ln -sfn "$p" "$dest"
   done
   json_set "$pi_settings" 'd.setdefault("subagents", {})["disableBuiltins"] = True'
-  json_set "$bili_config" 'd.setdefault("pi", {})["subagents"] = False'
+  if [ -d "$(dirname "$bili_config")" ]; then json_set "$bili_config" 'd.setdefault("pi", {})["subagents"] = False'; fi
   grep -q 'pi-subagents' "$pi_settings" || echo "warning: pi-subagents isn't in $pi_settings packages; the roles have no harness to run them" >&2
-  status
 }
 
 disable() {
@@ -58,13 +57,12 @@ disable() {
     dest="$prompts_dir/$(basename "$p")"
     [ -L "$dest" ] && [ "$(readlink "$dest")" = "$p" ] && rm "$dest"
   done
-  json_set "$pi_settings" '
+  if [ -f "$pi_settings" ]; then json_set "$pi_settings" '
 s = d.get("subagents", {}); s.pop("disableBuiltins", None)
-if not s: d.pop("subagents", None)'
-  json_set "$bili_config" '
+if not s: d.pop("subagents", None)'; fi
+  if [ -f "$bili_config" ]; then json_set "$bili_config" '
 p = d.get("pi", {}); p.pop("subagents", None)
-if not p: d.pop("pi", None)'
-  status
+if not p: d.pop("pi", None)'; fi
 }
 
 # Claude Code reads subagents from Markdown files with nearly the same frontmatter, so each role is
@@ -96,7 +94,6 @@ PY
     if [ -e "$dest" ] && [ ! -L "$dest" ]; then echo "warning: $dest exists and isn't ours; skipped" >&2; continue; fi
     ln -sfn "$s" "$dest"
   done
-  status
 }
 
 disable_claude() {
@@ -105,7 +102,6 @@ disable_claude() {
     dest="$claude_skills/$(basename "${s%/}")"
     [ -L "$dest" ] && [ "$(readlink "$dest")" = "${s%/}" ] && rm "$dest"
   done
-  status
 }
 
 status() { node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" status; }
@@ -427,13 +423,26 @@ cli() { exec node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" "$
 case "${1:-}" in ""|help|-h|--help) shift || true; cli help "$@" ;; esac
 for a in "${@:2}"; do case "$a" in -h|--help) cli help "$1" ;; esac; done
 
-harness=pi
+harness=
 [ "${1:-}" != review ] && [ "${2:-}" = "--harness" ] && harness="${3:-}"
-case "$harness" in pi|claude) ;; *) echo "unknown harness \"$harness\"; use pi or claude" >&2; exit 2 ;; esac
+case "$harness" in ""|pi|claude) ;; *) echo "unknown harness \"$harness\"; use pi or claude" >&2; exit 2 ;; esac
+
+# Without --harness, enable installs into every harness on PATH (pi when neither is), and
+# disable removes from both, since each only removes what it wrote.
+installed_harnesses() {
+  local found=""
+  command -v pi >/dev/null && found="pi"
+  command -v claude >/dev/null && found="$found claude"
+  echo "${found:-pi}"
+}
 
 case "$1" in
-  enable) if [ "$harness" = claude ]; then enable_claude; else enable; fi ;;
-  disable) if [ "$harness" = claude ]; then disable_claude; else disable; fi ;;
+  enable)
+    for h in ${harness:-$(installed_harnesses)}; do if [ "$h" = claude ]; then enable_claude; else enable; fi; done
+    status ;;
+  disable)
+    for h in ${harness:-pi claude}; do if [ "$h" = claude ]; then disable_claude; else disable; fi; done
+    status ;;
   schedule) schedule "${2:-}" ;;
   propose) propose "${2:-}" ;;
   tick) tick ;;
