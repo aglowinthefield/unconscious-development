@@ -43,7 +43,7 @@ Send one Creator subagent (`creator`) with the task's body, the worktree path, a
 Send a Shadow (`shadow`) with the task's criteria (its `## Criteria` section, plus its `## Invariants` line and the Persona path) and the worktree path, and tell it the diff is `git diff <base>...HEAD` there. Give it nothing from the Creator's report. Where the harness can reach another model family, send the Shadow and Trickster on it, as `docs/roles/Roles.md` says.
 
 - `unmet`: send the Creator again with those criteria and the Shadow's evidence, then the Shadow again. Two rounds at most; after that, stop and report what's still unmet.
-- `needs-run`: send a Trickster (`trickster`) with those criteria, the Shadow's instructions for each, the worktree path and the Persona path. A `fail` goes back to the Creator like an `unmet`; a `blocked` goes in the report.
+- `needs-run` and ordering questions: send a Trickster (`trickster`) with those criteria and questions, the Shadow's instructions for each, the worktree path and the Persona path. A `fail` goes back to the Creator like an `unmet`; a `blocked` goes in the report.
 - Proposed invariants: the Creator adds them to the Persona, as its role says.
 
 ## 6. Open the PR
