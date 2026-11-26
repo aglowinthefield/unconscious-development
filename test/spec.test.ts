@@ -45,6 +45,18 @@ test("an open question blocks", () => {
   assert.deepEqual(m, ["open question: [NEEDS CLARIFICATION: soft delete?]"]);
 });
 
+test("two identical markers in one file are refused, since they'd share one question", () => {
+  const m = messages(
+    base({
+      "docs/specs/orders/bulk-archive.md": SPEC.replace(
+        "Undo.",
+        "Undo. [NEEDS CLARIFICATION: ok?]\n- Export. [NEEDS CLARIFICATION: ok?]",
+      ),
+    }),
+  );
+  assert.ok(m.some((x) => /^same marker as line \d+; give each its own slot label/.test(x)));
+});
+
 test("every Persona invariant must be in the plan", () => {
   const m = messages(base({ "docs/specs/orders/bulk-archive.plan.md": PLAN.replace("- orders/I1: holds\n", "") }));
   assert.deepEqual(m, ['invariant orders/I1 missing from "## Invariants"']);

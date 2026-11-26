@@ -195,7 +195,12 @@ export function taskMerged(root: string, tracker: Tracker, changes: Change[], op
         }
       }
       if (d.afterDeploy.length) tracker.setState(issue, "verifying");
-      tracker.comment(issue, closingComment(d, landed));
+      // The comment is a courtesy: if it fails, say so and close the issue anyway.
+      try {
+        tracker.comment(issue, closingComment(d, landed));
+      } catch (e: any) {
+        console.error(`#${n}: closing comment not posted: ${String(e.stderr || e.message).split("\n")[0]}`);
+      }
       if (!d.afterDeploy.length) tracker.close(issue);
       console.log(`#${n}: every task merged; ${next}${landed ? `. ${landed}` : ""}`);
     }
