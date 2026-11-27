@@ -28,6 +28,8 @@ Then check its `Start after:` parents:
 - Exactly one unmerged, with an open PR: stack. Base is that PR's branch, and the PR you open targets it.
 - An unmerged parent with no PR, or two unmerged parents: refuse, and name the parent to build first.
 
+Then claim it from Alice, when `alice` is on the path. In the checkout, run `alice cards --json` and find the card whose `idempotencyKey` is the task key. If its status is `running` or `review`, Alice has the task: say so and stop. If it's `ready` or `failed`, run `alice triage <card id>` so pickup or a retry can't start it while you build, and say so. If that command refuses, stop and report it. With no card, or no `alice`, go on.
+
 ## 3. Open the worktree
 
 `git worktree add .worktrees/gh-<n>-tK -b gh-<n>/tK <base>` from the checkout's main worktree, or reuse the worktree or branch if it exists. Run the repo's post-create steps from its `AGENTS.md` (dependencies, secrets preflight). Use absolute paths into the worktree from here on. Never edit the main checkout.
@@ -36,7 +38,7 @@ Before you send anyone, tell the Self in three lines at most: the task key and t
 
 ## 4. Send the Creator
 
-Send one Creator subagent (`creator`) with the task's body, the worktree path, and these overrides of the body's last paragraph: commit in the worktree, don't push or open a PR, and don't summon a Shadow, since you will. Wait for its report.
+Send one Creator subagent (`creator`) with the task's body, the worktree path, and these overrides of the body's last paragraph: commit in the worktree, and don't push or open a PR. Wait for its report.
 
 ## 5. Send the Shadow, then the Trickster
 

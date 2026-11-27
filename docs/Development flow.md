@@ -33,7 +33,7 @@ flowchart LR
 
   subgraph Vault["Obsidian (optional)"]
     direction TB
-    Dreams["Dreams and planning notes<br/>(yours and the Magician's)"]
+    Proposals["Proposals and planning notes<br/>(yours and the Magician's)"]
     Copies["gh_ and run_ properties<br/>(copies, overwritten on sync)"]
   end
 
@@ -45,7 +45,7 @@ flowchart LR
   Alice -.-> PRs
   PRs -- "5 you merge; the last task closes the issue" --> Issues
 
-  Dreams -. "you affirm a dream" .-> Issues
+  Proposals -. "you accept a proposal" .-> Issues
   Issues -. "status-page copies" .-> Copies
 
   classDef core fill:#eceff1,stroke:#546e7a,color:#263238
@@ -53,7 +53,7 @@ flowchart LR
   classDef opt fill:#fafafa,stroke:#9e9e9e,stroke-dasharray:5 4,color:#424242
   class Issues,PRs,Session core
   class Specs repo
-  class Dreams,Copies,Alice opt
+  class Proposals,Copies,Alice opt
   style Vault stroke-dasharray:5 4
 ```
 
@@ -62,7 +62,7 @@ flowchart LR
 ```mermaid
 flowchart TD
   subgraph Plan["Planning loop: you, with the Magician if you use Obsidian"]
-    D["Magician dreams up work<br/>from issues, specs, Personas"] --> A{"You affirm it?"}
+    D["Magician proposes work<br/>from issues, specs, Personas"] --> A{"You accept it?"}
     A -- "no" --> X["Dropped or deferred"]
     A -- "yes" --> I["Issue: needs-spec"]
     I --> T{"Tier?"}
