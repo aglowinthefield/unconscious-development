@@ -1,79 +1,47 @@
 ---
 status: accepted
 proposed: 2026-11-17
+revised: 2026-11-27
 revises: "[[Unconscious Development]]"
 ---
 
-Work lives on GitHub, and specs live in your repo. That's all a new user needs: issues, PRs and labels where they already are, and specs, plans and Personas as Markdown files beside the code.
+UD is the method: Personas, specs, plans, tasks, and review against the criteria. Two tools sit beside it, and each one works without the other two.
 
-Two add-ons are optional, and neither holds anything you can't find on GitHub or in the repo, apart from your planning notes:
-
-- Obsidian, for planning across projects. Its notes show copies of GitHub's state next to your own planning. Properties starting `gh_` or `run_` are copies and get overwritten; everything else is yours.
-- A runner like Alice, for tasks the cast does without you. Without one, a task is a session you start.
-
-The rest of this note is how UD decides what to copy where, for whoever works on UD itself. It fixes a real problem: today the same piece of work shows up as a GitHub label, a PR thread, a Now-page line written only in the vault, and `Specs.base` reading whatever branch the local clone has checked out, and nothing says which copy is current. [[Development flow]] draws it.
-
-## How UD decides what to sync
-
-Each kind of state has one owner. Everywhere else it appears is a copy, marked as one and stamped with when it was copied. UD stays tied to GitHub and Obsidian; splitting them into adapters waits until UD is released, if ever.
-
-| Owner | Owns | Examples |
+| Tool | Job | Depends on |
 |---|---|---|
-| GitHub | Work state | Issues and their state labels, PRs, checks, question threads, the check comment |
-| The repo | What and how | Specs, plans, Personas |
-| The runner (optional) | Execution | A task's stage (queued, running, blocked, retried) and its cost |
-| Obsidian (optional) | Planning | The Magician's dreams and judgments, which day work is for, your own notes |
+| Alice | Runs agents. One card per task in its own worktree, a review gate, and the cost of each run. | Impression, optionally |
+| Impression | Remembers. Preferences, history, gotchas, and facts that span repos. | Nothing |
+| UD | The method. Specs and criteria in the repo, tasks to PRs, and review against the criteria. | Alice and Impression, both optionally |
 
-A task's key, `gh-42/t1`, ties these together: the issue on GitHub, the task line in the plan, the card or session in the runner, and the PR whose title starts with the key.
+Alice never learns UD's concepts. To Alice, a task key like `gh-42/t1` is an opaque `--key`, and Alice writes it into the footer of every PR it opens.
 
-A task is done when a merged PR names its key, or when its box in the plan is ticked. That is built: `task-merged` reads it to finish the issue. The runner's own state for a task is progress up to the PR, never the answer to "is it done?".
+## Where state lives
 
-## In the vault
+| Owner | Owns |
+|---|---|
+| The tracker (GitHub today) | Work state: issues and their labels, PRs, and checks |
+| The repo | Specs, plans, Personas, and `AGENTS.md` |
+| The runner | A task's stage (queued, running, blocked, or retried) and its cost |
 
-`status-page` stops writing lists into the Now page and writes one note per open issue and spec PR instead, under `🌀 Now/<project>/`. Bases views group them across projects: Waiting on you, Stuck, In flight, Ready, Dreams. The Now page becomes a short summary that embeds those views.
+UD reaches the tracker only through `src/tracker/`. GitHub is the only tracker so far, and code outside that folder doesn't assume it.
 
-Two owners share each note, and the property names say which is which:
+A task is done when a merged PR names its key, or when its box in the plan is ticked. `task-merged` reads that to finish the issue. The runner's state is progress up to the PR, never the answer to "is it done?". Each runner reports stage its own way: Alice through `alice --json`, and a `/build` session through its branch.
 
-- `gh_` properties (`gh_state`, `gh_checks`, `gh_pr`, `gh_url`) and `run_` properties (`run_stage`, `run_spend`) are copies. Each sync rewrites them and sets `synced_at`. Edit them and the next sync puts them back.
-- Every other property, and the note's body, belongs to you and the Magician: `autonomy`, `size`, `stacks_on`, `day`, notes. Sync never touches them.
+## Rules and memories
 
-A note whose issue closes keeps its planning properties and moves to `🌀 Now/<project>/done/`, so a later dream can cite how similar work went.
+- A rule a reviewer checks against a diff is a Persona invariant.
+- How to run or build something goes in `AGENTS.md`.
+- Preferences, history, gotchas, and facts that span repos live in Impression. A memory that reads like an invariant becomes a proposed invariant in the Persona.
 
-The specs and Personas themselves show in the vault through two links, `<folder>/Specs` and `<folder>/Personas`, for a project page with `vault: <folder>`. They point into a worktree of the repo, outside it under `~/.local/share/unconscious/mirrors/`, that `status-page` moves to `origin/main` on every run. So `Specs.base` and the Personas read what's merged, never the local clone's branch, and an edit in Obsidian can't land in the checkout other sessions work in. An edit made there anyway stops the mirror following main, and the page's Last updated says so, until it goes into a spec PR.
+Alice sets `IMPRESSION_SESSION` on every Pi process it starts. Card runs get `read`, so they get memories but never upload their transcripts. Reviewers get `off`, so they judge from the card, the diff, and the repo alone.
 
-## Dreams
+## Runners and review
 
-A dream is the Magician's proposal: a vault note with no `gh_state`, a short pitch, and the Magician's judgments (feasibility, what it stacks on, how much autonomy it can have).
+- `spec-to-tasks` creates Alice cards when Alice is installed. `/build` claims the task's card before it starts, and refuses when the card is already running.
+- On Alice, Alice's reviewer is the only gate. The task body carries the criteria and invariants, and the review model comes from a different model family than the author's.
+- `/build` runs the Creator, the Shadow, and the Trickster in one session.
 
-- You affirm one by creating its issue, from the note or with `gh issue create`. The next sync fills in its `gh_` properties.
-- You reject one by deleting it, or by setting `rejected: <why>` so the Magician doesn't propose it again.
+## Parked
 
-Dreams live only in the vault. They are planning, and planning is Obsidian's.
-
-## Runners by autonomy
-
-The Magician's `autonomy` judgment picks the runner when a task is handed out:
-
-- `full`: Alice or a headless agent. You see only the PR.
-- `assisted`: an interactive session in the task's worktree, opened with the task body, for work that needs you partway.
-- `manual`: you, by hand.
-
-Every runner names the task's branch after its key (`task/gh-42-t1`), so a runner that reports nothing still shows its stage: no branch means queued, a branch means in progress, an open PR means in review, and a merged PR means done. Alice adds blocked, retries and cost on top.
-
-## What this changes in the design doc
-
-- "One vault page per project": the page becomes a summary over per-item notes.
-- "The Magician's contract is its inputs and the page it writes": it writes dream notes and the planning properties of item notes.
-- "Alice is the first runner": runner choice comes from the item's `autonomy`.
-
-## Build order
-
-1. `status-page` writes item notes with `gh_` properties and `synced_at`, plus the Bases views. The Now page's owned sections become embeds.
-2. The `propose` skill writes dreams as notes and sets planning properties on item notes.
-3. `run_` properties from Alice, and the key-named branch convention in the Creator's prompt and `spec-to-tasks`.
-4. Runner choice from `autonomy` in `spec-to-tasks`.
-
-## Open
-
-1. Should item notes cover only issues UD manages (they carry a state label), or every open issue? Proposed: only managed ones, plus open spec PRs.
-2. How long do done notes stay? Proposed: forever. They're small, and they're the Magician's record of how work went.
+- The Magician, `propose`, `status-page`, the vault mirror, and the `schedule` timers. The code stays, and the timers are off until the vault's role is decided.
+- Whether Impression's memories would help reviewers. Revisit it when a review misses something a memory would have caught.
