@@ -47,10 +47,6 @@ Run them from your project's repo. `bin/unconscious help` lists every command, a
 | `task-merged` | After the last task PR of an issue merges, marks the spec built and closes the issue. CI runs it. |
 | `review N` | The Shadow reviews PR N against its criteria. |
 | `propose` | Parked. The Magician writes the Proposed next section of each Now page. |
-<<<<<<< HEAD
-=======
-| `questions` | Posts a spec PR's open questions as comments, and writes replies into the spec. |
->>>>>>> origin/main
 | `status-page` | Parked. Rebuilds the `🌀 Now/` pages from GitHub. |
 
 ## Parked
