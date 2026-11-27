@@ -25,8 +25,6 @@ import type { Runner, TaskInput } from "./runner/runner.ts";
 import { isTransient, nowDir, projectPages, statusPage } from "./status.ts";
 import { dueProjects } from "./propose-due.ts";
 import { syncVault } from "./vault-mirror.ts";
-import { piInterpreter } from "./interpret.ts";
-import { pollChangeRequest, pollQuestions, type PollOptions } from "./questions.ts";
 import { postCheckResult } from "./check-comment.ts";
 import { domainProblem, init } from "./init.ts";
 import { ask, Cancelled, doneAsking } from "./prompt.ts";
@@ -333,28 +331,6 @@ async function main(argv: string[]): Promise<number> {
     if (!values.base) throw new Refusal("on-merge needs --base SHA");
     onMerge(root, tracker(), pickRunner(values.runner, root, values.board), values.base, values.head ?? "HEAD");
     return 0;
-  }
-  if (command === "questions") {
-    const opts: PollOptions = {
-      self: (process.env.UD_SELF ?? "").split(/[\s,]+/).filter(Boolean),
-      dryRun: Boolean(values["dry-run"]),
-      interpreter: piInterpreter(),
-    };
-    if (values.pr) {
-      const t = tracker();
-      pollChangeRequest(t, t.getChangeRequest(values.pr), opts).forEach((l) => console.log(l));
-      return 0;
-    }
-    let failed = 0;
-    for (const page of projectPages(values.dir ? resolve(values.dir) : nowDir(), positionals[0])) {
-      try {
-        pollQuestions(githubTracker(page.repo), opts).forEach((l) => console.log(`${page.repo}${l}`));
-      } catch (e: any) {
-        failed++;
-        console.error(`${page.file}: ${String(e.stderr || e.message).split("\n")[0]}`);
-      }
-    }
-    return failed ? 1 : 0;
   }
   if (command === "mirror") {
     const dir = values.dir ? resolve(values.dir) : nowDir();

@@ -78,12 +78,12 @@ export const COMMANDS: Command[] = [
     args: "on|mirror|off",
     summary: "run the background jobs with launchd or systemd",
     details:
-      "status-page every 15 minutes, questions every 2 minutes, propose daily at 07:00. After each status-page, a project whose Do next is done gets its own propose run (see propose-due). The jobs keep the PATH, Now folder and UD_HARNESS of the shell that turned them on. `mirror` runs only `mirror`, every 15 minutes, for a machine that reads the vault while another host runs the rest. With no argument, says whether it's on.",
+      "status-page every 15 minutes and propose daily at 07:00. Both are parked, so leave this off. After each status-page, a project whose Do next is done gets its own propose run (see propose-due). The jobs keep the PATH, Now folder and UD_HARNESS of the shell that turned them on. `mirror` runs only `mirror`, every 15 minutes, for a machine that reads the vault while another host runs the rest. With no argument, says whether it's on.",
     examples: [
       ["unconscious schedule on", ""],
-      ["tail -f ~/Library/Logs/unconscious-questions.log", "watch a job"],
+      ["tail -f ~/Library/Logs/unconscious-status-page.log", "watch a job"],
     ],
-    env: ["UD_HARNESS", "UD_NOW_DIR", "UD_QUESTIONS_INTERVAL", "UD_PROPOSE_HOUR"],
+    env: ["UD_HARNESS", "UD_NOW_DIR", "UD_PROPOSE_HOUR"],
   },
   {
     name: "check-spec",
@@ -156,16 +156,6 @@ export const COMMANDS: Command[] = [
     env: ["UD_PR_TOKEN"],
   },
   {
-    name: "draft",
-    group: "Cast on demand",
-    args: "ISSUE",
-    summary: "the Ruler drafts a small issue's criteria",
-    details:
-      "Runs headless. A trivial issue gets its criteria in its body and a comment asking for ready-for-agent. A bigger one gets a comment saying it needs a spec session. Changes no files.",
-    examples: [["unconscious draft 42", ""]],
-    env: ["UD_HARNESS"],
-  },
-  {
     name: "review",
     group: "Cast on demand",
     args: "PR [--comment]",
@@ -225,22 +215,6 @@ export const COMMANDS: Command[] = [
     options: [["--dir DIR", "the Now folder"]],
     env: ["UD_NOW_DIR", "DEV_VAULT", "UD_MIRROR_DIR", "UD_VAULT_MIRROR"],
   },
-  {
-    name: "questions",
-    group: "Now pages",
-    args: "[PROJECT]",
-    summary: "ask spec PRs' open questions, apply replies",
-    usage: ["--pr N [--repo O/R]"],
-    details:
-      "Posts each open marker on a spec PR as a review comment, once, and turns a reply in that thread into the text that replaces the marker, committed to the PR branch. Plain replies are read by a small model; a reply in quotes or backticks goes in as written. A reply that asks back or is unclear changes nothing, and a later reply corrects the answer. A marker can be a short slot with the full question in a `> **Open:**` note on the line below; the answer removes the note.",
-    options: [
-      ["--pr N", "only PR N"],
-      ["--dir DIR", "the Now folder"],
-      ["--repo O/R", ""],
-      ["--dry-run", "say what it would post and commit"],
-    ],
-    env: ["UD_SELF", "UD_INTERPRETER_MODEL", "UD_NOW_DIR"],
-  },
 ];
 
 export const ENV: Record<string, string> = {
@@ -250,9 +224,6 @@ export const ENV: Record<string, string> = {
   DEV_VAULT: "the Obsidian vault the Now folder is in",
   UD_MIRROR_DIR:
     "where the origin/main worktrees behind the vault's Specs and Personas live (default: ~/.local/share/unconscious/mirrors)",
-  UD_SELF: "logins whose replies count (default: anyone with a stake in the repo)",
-  UD_INTERPRETER_MODEL: "the model that reads replies to questions",
-  UD_QUESTIONS_INTERVAL: "seconds between questions runs (default: 120)",
   UD_PROPOSE_HOUR: "hour propose runs at (default: 7)",
   UD_VAULT_MIRROR: "off: status-page leaves the vault's Specs and Personas links to `mirror` on another machine",
 };

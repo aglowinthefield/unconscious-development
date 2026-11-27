@@ -54,7 +54,7 @@ test("status reads what enable and schedule wrote", () =>
     );
     mkdirSync(join(home, "Library/LaunchAgents"), { recursive: true });
     writeFileSync(
-      join(home, "Library/LaunchAgents/dev.unconscious.questions.plist"),
+      join(home, "Library/LaunchAgents/dev.unconscious.status-page.plist"),
       "<key>StartInterval</key><integer>300</integer>",
     );
     mkdirSync(join(home, ".config/systemd/user"), { recursive: true });
@@ -70,7 +70,7 @@ test("status reads what enable and schedule wrote", () =>
     assert.deepEqual(
       s.jobs.filter((j) => j.on).map((j) => [j.name, j.when]),
       [
-        ["questions", "every 5 minutes"],
+        ["status-page", "every 5 minutes"],
         ["propose", "daily at 06:00"],
       ],
     );
