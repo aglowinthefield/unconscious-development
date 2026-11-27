@@ -43,7 +43,7 @@ Run them from your project's repo. `bin/unconscious help` lists every command, a
 | `schedule on\|mirror\|off` | Runs the background jobs with launchd (macOS) or systemd (Linux). |
 | `check-spec` | Checks the specs and plans in `docs/specs/`. With `--pr N`, explains a failure in a PR comment. |
 | `spec-to-tasks N` | Turns issue N's plan into tasks, in Alice if installed, otherwise printed. |
-| `on-merge` | After a spec merges, marks its issue `ready-for-agent` and creates its tasks. CI runs it. |
+| `on-merge` | After a spec merges, marks its issue `ud:build` and creates its tasks. CI runs it. |
 | `task-merged` | After the last task PR of an issue merges, marks the spec built and closes the issue. CI runs it. |
 | `draft N` | The Ruler writes criteria for small issue N, or says it needs a spec. |
 | `review N` | The Shadow reviews PR N against its criteria. |

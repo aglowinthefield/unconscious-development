@@ -64,9 +64,9 @@ flowchart TD
   subgraph Plan["Planning loop: you, with the Magician if you use Obsidian"]
     D["Magician dreams up work<br/>from issues, specs, Personas"] --> A{"You affirm it?"}
     A -- "no" --> X["Dropped or deferred"]
-    A -- "yes" --> I["Issue: needs-spec"]
+    A -- "yes" --> I["Issue: ud:spec"]
     I --> T{"Tier?"}
-    T -- "trivial" --> TC["The Ruler drafts criteria into the issue<br/>You add ready-for-agent"]
+    T -- "trivial" --> TC["The Ruler drafts criteria into the issue<br/>You add ud:build"]
     T -- "designed" --> SP["Spec PR on spec/&lt;issue&gt;<br/>you and the Ruler draft spec and plan"]
     SP --> Q["Open questions arrive as PR threads<br/>your replies are written into the spec"]
     Q --> C{"check-spec green?"}
@@ -75,7 +75,7 @@ flowchart TD
   end
 
   subgraph Auto["Autonomous loop: the cast"]
-    M --> R["Issue: ready-for-agent<br/>spec-to-tasks makes gh-&lt;issue&gt;/t1…"]
+    M --> R["Issue: ud:build<br/>spec-to-tasks makes gh-&lt;issue&gt;/t1…"]
     TC --> R
     R --> RN{"Runner, by autonomy"}
     RN -- "full" --> B["Alice or a headless agent"]
@@ -91,7 +91,7 @@ flowchart TD
   L -- "no" --> R
   L -- "yes" --> AD{"After-deploy criteria?"}
   AD -- "no" --> CL["task-merged: spec built,<br/>plan removed, issue closed"]
-  AD -- "yes" --> VF["Issue: verifying<br/>Trickster checks after deploy"]
+  AD -- "yes" --> VF["Issue: ud:verify<br/>Trickster checks after deploy"]
   VF --> CL
 
   classDef you fill:#ede7f6,stroke:#7e57c2,color:#311b92

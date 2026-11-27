@@ -32,21 +32,21 @@ Without either, you write specs by hand and start each task yourself, and everyt
 
 ## Your first change
 
-1. Open an issue that says what should change and why, and label it `needs-spec`.
+1. Open an issue that says what should change and why, and label it `ud:spec`.
 2. Decide the tier. If the change is one task with no design choice (a constant, copy, a config flag), it's trivial: go to [A trivial change](#a-trivial-change). Otherwise it's designed: continue here. If it's a change you'd rather just make yourself, skip UD: open a normal PR, with no issue or criteria.
 3. Create a branch named `spec/<issue number>`.
 4. Write the spec and plan. With the cast, ask your pi session to use the spec skill on the issue; the Ruler drafts both with you. By hand, copy `skills/spec/templates/spec.md` to `docs/specs/<domain>/<behaviour>.md` and `plan.md` to `<behaviour>.plan.md` beside it, and fill them in. The spec's `issues` and the plan's `issue` are the issue's URL.
 5. Where you can't decide something yet, write `[NEEDS CLARIFICATION: <question>]` at the spot the answer belongs.
 6. Run `~/code/unconscious-development/bin/unconscious check-spec` until it reports only your open questions, then push and open the PR. CI runs the same check and leaves a comment on the PR saying why it fails.
 7. Answer each open question by replacing its marker in the file and pushing.
-8. When no questions remain, set the spec's `status: approved` and merge the PR. The workflow moves the issue to `ready-for-agent` and lists the plan's tasks in its job log.
+8. When no questions remain, set the spec's `status: approved` and merge the PR. The workflow moves the issue to `ud:build` and lists the plan's tasks in its job log.
 
 Then go to [Do the tasks](#do-the-tasks).
 
 ### A trivial change
 
 1. Get criteria into the issue body: one `- AC1: <claim>` line per thing a reviewer could check, under `## Acceptance criteria`. With the cast, run `bin/unconscious draft <number>` from your repo, or ask your agent to spec the issue; the Ruler writes them and comments asking for your approval. By hand, write them and run `bin/unconscious check-spec --issue <number>`.
-2. Read the criteria, edit any that are wrong, and add the `ready-for-agent` label. That's the whole approval. The workflow lists the issue's one task in the job log.
+2. Read the criteria, edit any that are wrong, and add the `ud:build` label. That's the whole approval. The workflow lists the issue's one task in the job log.
 
 ### Exploring first
 
@@ -62,7 +62,7 @@ In pi, `/build <issue>` does steps 1 and 2 for the next task: it opens the workt
 2. Open a PR whose title starts with the task key, like `gh-42/t1: Add the bulk archive mutation`, and whose body says `Refs #<issue>`. Don't write `Closes`, since a plan can have more tasks.
 3. Review and merge it.
 
-When the last task's PR merges, the workflow marks the spec `built`, removes the plan, and closes the issue. If the spec has after-deploy criteria, the issue moves to `verifying` instead and stays open until you've checked them in production. If your default branch refuses pushes from GitHub Actions, the spec change arrives as a PR for you to merge.
+When the last task's PR merges, the workflow marks the spec `built`, removes the plan, and closes the issue. If the spec has after-deploy criteria, the issue moves to `ud:verify` instead and stays open until you've checked them in production. If your default branch refuses pushes from GitHub Actions, the spec change arrives as a PR for you to merge.
 
 ## Optional extras
 

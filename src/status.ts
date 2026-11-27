@@ -9,9 +9,9 @@ import { basename, dirname, join } from "node:path";
 import { parseDoc, section, type Frontmatter } from "./markdown.ts";
 import { parseTasks } from "./spec.ts";
 import { syncVault } from "./vault-mirror.ts";
+import { issueLabels, STATE_LABELS } from "./tracker/github.ts";
 
 export const OWNED = ["Waiting on you", "Stuck", "In flight", "Ready", "Last updated"];
-const STATE_LABELS = ["needs-spec", "ready-for-agent", "ready-for-human", "verifying"];
 
 export type Checks = "failing" | "pending" | "green" | "none";
 
@@ -144,13 +144,18 @@ export function gather(fm: Frontmatter, now = new Date()): Snapshot {
       "-R",
       repo,
       "--search",
-      `is:open label:${STATE_LABELS.join(",")}`,
+      `is:open label:${STATE_LABELS.map((l) => `"${l}"`).join(",")}`,
       "--limit",
       "100",
       "--json",
       "number,url,title,labels",
     ]),
-  ).map((j: any) => ({ number: j.number, url: j.url, title: j.title, labels: j.labels.map((l: any) => l.name) }));
+  ).map((j: any) => ({
+    number: j.number,
+    url: j.url,
+    title: j.title,
+    labels: issueLabels(j.labels.map((l: any) => l.name)),
+  }));
 
   const path = typeof fm.path === "string" ? fm.path.replace(/^~(?=\/)/, homedir()) : "";
   let specs: SpecState[] = [];

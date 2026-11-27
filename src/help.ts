@@ -105,12 +105,22 @@ export const COMMANDS: Command[] = [
     ],
   },
   {
+    name: "next",
+    group: "Specs and tasks",
+    args: "",
+    summary: "what's waiting on you, stuck, in flight and ready",
+    details:
+      "Reads this repo's open PRs and ud: labelled issues from GitHub, the specs on origin/main, and, when the alice CLI is on the path, the board's task cards that aren't done. Prints the same sections as a Now page, without the vault.",
+    options: [["--board ID", "the Alice board"], ...ROOT_REPO],
+    examples: [["unconscious next", ""]],
+  },
+  {
     name: "spec-to-tasks",
     group: "Specs and tasks",
     args: "ISSUE",
     summary: "turn an issue's plan into tasks",
     details:
-      "Tasks are keyed gh-N/t1, gh-N/t2… They go to Alice when the alice CLI (or the older bakery-cli) is on the path, else they're printed for you to start in a session. Refuses unless the issue is ready-for-agent and its spec is approved and passes check-spec.",
+      "Tasks are keyed gh-N/t1, gh-N/t2… They go to Alice when the alice CLI (or the older bakery-cli) is on the path, else they're printed for you to start in a session. Refuses unless the issue is labelled ud:build and its spec is approved and passes check-spec.",
     options: [
       ["--runner alice|session", "where tasks go (default: alice if installed; bakery still works)"],
       ["--board ID", "the Alice board"],
