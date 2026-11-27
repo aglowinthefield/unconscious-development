@@ -4,7 +4,7 @@ Unconscious Development (UD) takes a GitHub issue from an approved spec to a rev
 
 ## How a change moves through it
 
-1. You open an issue, then write its spec and plan with the Ruler on a `spec/<issue>` branch. Each open question in the spec becomes a PR comment thread, and your reply is written into the spec.
+1. You open an issue, then write its spec and plan with the Ruler on a `spec/<issue>` branch. The Ruler marks each question it can't decide, and the spec can't merge until you answer them all.
 2. Merging the spec PR approves it. CI splits the plan into tasks named `gh-<issue>/t1`, `gh-<issue>/t2`, and so on.
 3. For each task, a Creator makes the change in its own worktree. A Shadow checks the diff against the spec's acceptance criteria, and a Trickster runs the criteria that reading the code can't settle.
 4. You review and merge each task PR. When the last one merges, CI marks the spec built and closes the issue.
