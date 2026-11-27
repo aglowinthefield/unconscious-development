@@ -232,7 +232,7 @@ export const COMMANDS: Command[] = [
     summary: "ask spec PRs' open questions, apply replies",
     usage: ["--pr N [--repo O/R]"],
     details:
-      "Posts each open marker on a spec PR as a review comment, once, and turns a reply in that thread into the text that replaces the marker, committed to the PR branch. Plain replies are read by a small model; a reply in quotes or backticks goes in as written.",
+      "Posts each open marker on a spec PR as a review comment, once, and turns a reply in that thread into the text that replaces the marker, committed to the PR branch. Plain replies are read by a small model; a reply in quotes or backticks goes in as written. A reply that asks back or is unclear changes nothing, and a later reply corrects the answer. A marker can be a short slot with the full question in a `> **Open:**` note on the line below; the answer removes the note.",
     options: [
       ["--pr N", "only PR N"],
       ["--dir DIR", "the Now folder"],

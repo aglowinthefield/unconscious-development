@@ -74,7 +74,7 @@ flowchart TD
     C -- "yes" --> M["You merge the spec PR<br/>(merging approves it)"]
   end
 
-  subgraph Auto["Autonomous loop: the cast, below your attention"]
+  subgraph Auto["Autonomous loop: the cast"]
     M --> R["Issue: ready-for-agent<br/>spec-to-tasks makes gh-&lt;issue&gt;/t1…"]
     TC --> R
     R --> RN{"Runner, by autonomy"}
