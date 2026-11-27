@@ -1,58 +1,80 @@
 # Unconscious Development
 
-<p align="center">
-  <img src="assets/tarot/RWS_Tarot_21_World.jpg" width="80" alt="Self: The World" title="Self: The World">
-  <img src="assets/tarot/RWS_Tarot_01_Magician.jpg" width="80" alt="Magician: The Magician" title="Magician: The Magician">
-  <img src="assets/tarot/RWS_Tarot_04_Emperor.jpg" width="80" alt="Ruler: The Emperor" title="Ruler: The Emperor">
-  <img src="assets/tarot/RWS_Tarot_00_Fool.jpg" width="80" alt="Explorer: The Fool" title="Explorer: The Fool">
-  <img src="assets/tarot/RWS_Tarot_09_Hermit.jpg" width="80" alt="Sage: The Hermit" title="Sage: The Hermit">
-  <img src="assets/tarot/RWS_Tarot_03_Empress.jpg" width="80" alt="Creator: The Empress" title="Creator: The Empress">
-  <img src="assets/tarot/RWS_Tarot_18_Moon.jpg" width="80" alt="Shadow: The Moon" title="Shadow: The Moon">
-  <img src="assets/tarot/RWS_Tarot_Swords_07.jpg" width="80" alt="Trickster: Seven of Swords" title="Trickster: Seven of Swords">
-  <img src="assets/tarot/RWS_Tarot_02_High_Priestess.jpg" width="80" alt="Persona: The High Priestess" title="Persona: The High Priestess">
-</p>
+Unconscious Development (UD) takes a GitHub issue from an approved spec to a reviewed pull request, using a set of agent roles called the cast. You make two calls: you approve the spec, and you merge the result.
 
-A cast of agent archetypes takes an issue from approved spec to reviewed
-diff. You approve the spec and the merge. In between, `spec-to-tasks` splits
-the spec into tasks, a Creator implements each task in its own session and
-worktree (a vessel), a Shadow checks the diff against the spec's acceptance
-criteria, and a Trickster runs the criteria that reading can't settle.
+## How a change moves through it
 
-The contract is files and scripts: Personas, specs, `🌀 Now/`
-pages, `check-spec`, `spec-to-tasks`. No harness, tracker or runner is a
-dependency.
+1. You open an issue, then write its spec and plan with the Ruler on a `spec/<issue>` branch. Each open question in the spec becomes a PR comment thread, and your reply is written into the spec.
+2. Merging the spec PR approves it. CI splits the plan into tasks named `gh-<issue>/t1`, `gh-<issue>/t2`, and so on.
+3. For each task, a Creator makes the change in its own worktree. A Shadow checks the diff against the spec's acceptance criteria, and a Trickster runs the criteria that reading the code can't settle.
+4. You review and merge each task PR. When the last one merges, CI marks the spec built and closes the issue.
 
-Opt-in. Nothing here is loaded by default. `bin/unconscious enable` installs the cast into every harness on PATH, pi and Claude Code; `--harness pi` or `--harness claude` picks one.
+A small change skips the spec: its criteria go in the issue body. [Development flow](docs/Development%20flow.md) draws the whole loop.
 
-`bin/unconscious help` lists every command, and `bin/unconscious help <command>` shows one command's options and examples. Each command's help lives in `src/help.ts`; a new command goes there too, or the tests fail.
+UD is files and scripts: Personas, specs, `🌀 Now/` pages in Obsidian, and the `bin/unconscious` command. It doesn't depend on any one agent harness, issue tracker, or task runner.
 
-New here? Start with the [Quickstart](docs/Quickstart.md), which takes one change from issue to merged PR. The [Glossary](docs/Glossary.md) says what each name means.
+## Try it
 
-- [docs/Unconscious Development.md](docs/Unconscious%20Development.md): the working doc and current source of truth. As practices get their own file under `docs/`, the matching decisions leave it.
-- `docs/archive/`: the interview doc and the composition drafts it grew from. Reference only.
+You need Node 24, the GitHub CLI logged in, and pi or Claude Code.
 
-## Scripts
+To see the reviewer on a PR you already have, run this from that repo:
 
-Node 24, no dependencies. Run from a project repo; `-h` for options.
+```sh
+~/code/unconscious-development/bin/unconscious review 128
+```
 
-- `bin/unconscious init --domain NAME`: sets a repo up: `docs/specs/`, a draft Persona for the domain, and the CI workflow pinned to this checkout's commit. It never overwrites a file. Run with no flags on a terminal, it asks for the domain and confirms before writing.
-- `bin/unconscious check-spec`: checks every spec and plan under `docs/specs/`, or a trivial issue's criteria with `--issue N`. With `--pr N` it also keeps one comment on that PR saying why the check fails, and rewrites it once the check passes; the workflow runs it that way.
-- `bin/unconscious spec-to-tasks N`: turns issue N's plan (or its body, for the trivial tier) into tasks keyed `gh-N/t1`, through Bakery when `bakery-cli` is on the path, else printed for a plain session. `--dry-run` shows them without the state check.
-- `bin/unconscious on-merge --base SHA`: flips the issue of each approved spec the merge touched to `ready-for-agent` and runs `spec-to-tasks`.
-- `bin/unconscious task-merged --pr N` (or `--head SHA [--base SHA]` for every PR a push merged): after a task PR merges, if every task of its issue has a merged PR (one naming its key, `gh-42/t2`), sets the spec to `built`, removes its plan, and closes the issue, or moves it to `verifying` when the spec has after-deploy criteria. It pushes the spec change to the base branch, or opens a PR titled `docs(<domain>): mark the <name> spec built` when the branch refuses; `--via-pr` always opens the PR, from a scratch worktree. `UD_PR_TOKEN` opens that PR with a token whose PRs run checks.
-- `bin/unconscious questions`: for every project page's repo, posts each open `[NEEDS CLARIFICATION]` on a spec PR as a review comment on its line, once, and turns a reply in that thread into the text that replaces its marker, committed to the PR branch. A small model reads the reply (`UD_INTERPRETER_MODEL`, default `anthropic/claude-haiku-5-5` at low thinking, through `pi`), so plain words like "yeah, go with 31" work; a reply in quotes or backticks goes in as written. The model only returns the replacement, the code puts it in that one span, and the thread shows the line before and after. A reply that asks back or is unclear changes nothing, and a later reply corrects the answer. A marker can be a short slot with the full question in a `> **Open:**` note on the line below; the comment asks the note's question, and the answer removes the note. Replies count from people with a stake in the repo (on GitHub: owner, members, collaborators), or only the logins in `UD_SELF` when set. It runs as you, through `gh`, every 2 minutes with `schedule on` (`UD_QUESTIONS_INTERVAL` seconds), about 19 GitHub API calls a run with five spec PRs open, so the commit starts the repo's CI like any push. The tracker verbs it uses are in `src/tracker/tracker.ts`; GitHub's adapter is `src/tracker/github.ts`.
-- `templates/comments/`: the text of those comments (`question.md`, `answered.md`, `unclear.md`, `gone.md`, `check-failed.md`, `check-passed.md`). Copy one to `~/.config/unconscious/comments/` (or `$UD_COMMENT_TEMPLATES`) to change it. `{{card}}` is a Rider-Waite-Smith card from the `ud-assets` branch, floated left, drawn at random for a question and repeated on every reply in its thread; `{{card_name}}` is its name. The tag that lets the next run recognise a comment is added after the template.
-- `workflows/unconscious.yml` and `workflows/unconscious-tasks.yml`: the CI workflows a project repo copies (`init` does) to run all of these. The second is separate because it runs on every push to the default branch, not only those touching `docs/`.
-- `bin/unconscious status-page`: rebuilds each `🌀 Now/<project>.md` page (any page with `repo:` in its frontmatter; `path:` to read specs, `ci:` to name the main workflow) and the Projects table in `🌀 Now/index.md`, whose Next column is each page's first proposal. Sections it doesn't write stay as they are; Proposed next goes first.
-- `skills/persona`: drafts a domain's Persona from the code, and promotes the invariants reviews propose.
-- `skills/propose`: the Magician. Writes the Proposed next section of a Now page; run it in a session with "propose".
-- `skills/issue`: starts the spec flow from an issue id. Finds the repo, picks the domain from its label or the Personas, opens the `spec/<n>` worktree, and makes the session that domain's Ruler. `/issue 6686` in pi, through `prompts/issue.md`, which `enable` links.
-- `skills/build`: does an approved spec's tasks from an interactive session, one per run. Picks the next task from the plan, opens `.worktrees/gh-N-tK` (stacked on the parent task's PR branch while that PR is open), sends a Creator, a Shadow and a Trickster, and opens the task's PR. `/build 6983` in pi, through `prompts/build.md`. The alternative to Bakery cards.
-- `bin/unconscious propose`: runs the Magician headless in `pi` over every Now page.
-- `bin/unconscious review N [--comment]`: runs the Shadow headless on existing PR N, in a temporary worktree, against the criteria in the PR or its linked issues, or the ones the PR claims when none were written. A first try that needs no setup.
-- `bin/unconscious draft N`: runs the Ruler headless in `pi` on issue N. A small issue gets its criteria written into its body and a comment asking for `ready-for-agent`; a bigger one gets a comment saying it needs a spec session. Adding `ready-for-agent` is the approval: the furthest-along state label wins, so `needs-spec` doesn't have to come off first.
-- `bin/unconscious schedule on|mirror|off`: runs `status-page` every 15 minutes, `questions` every 2 and `propose` daily at 07:00 (`UD_PROPOSE_HOUR`), with launchd on macOS or systemd user timers on Linux. On Linux a missed `propose` runs when the host is back, and a failed one retries every 30 minutes. Each 15-minute run is `tick`: after `status-page`, a project whose Do next issues are all closed gets its own `propose` (`unconscious-propose@<page>` on Linux). `schedule mirror` runs only `mirror` (the vault's Specs and Personas links, which Obsidian Sync can't carry) on the Mac you read the vault on, when another host runs the rest with `UD_VAULT_MIRROR=off`.
-- `npm test`: the tests.
+The Shadow prints a verdict for each acceptance criterion, with the line of code that settles it. Add `--comment` to post the verdicts on the PR.
+
+To set up a repo and take one change from issue to merged PR, follow the [Quickstart](docs/Quickstart.md). The [Glossary](docs/Glossary.md) explains each name.
+
+## Install the cast
+
+Nothing loads by default. `bin/unconscious enable` installs the roles and skills into every harness on PATH (pi and Claude Code). Add `--harness pi` or `--harness claude` to pick one, and run `bin/unconscious disable` to remove them.
+
+## Commands
+
+Run them from your project's repo. `bin/unconscious help` lists every command, and `bin/unconscious help <command>` shows its options and examples.
+
+| Command | What it does |
+| --- | --- |
+| `init` | Sets a repo up: `docs/specs/`, a draft Persona, and the CI workflows. Never overwrites a file. |
+| `enable`, `disable` | Install or remove the cast in pi and Claude Code. |
+| `status` | Shows what's installed and which background jobs are on. |
+| `schedule on\|mirror\|off` | Runs the background jobs with launchd (macOS) or systemd (Linux). |
+| `check-spec` | Checks the specs and plans in `docs/specs/`. With `--pr N`, explains a failure in a PR comment. |
+| `spec-to-tasks N` | Turns issue N's plan into tasks, in Bakery if installed, otherwise printed. |
+| `on-merge` | After a spec merges, marks its issue `ready-for-agent` and creates its tasks. CI runs it. |
+| `task-merged` | After the last task PR of an issue merges, marks the spec built and closes the issue. CI runs it. |
+| `draft N` | The Ruler writes criteria for small issue N, or says it needs a spec. |
+| `review N` | The Shadow reviews PR N against its criteria. |
+| `propose` | The Magician writes the Proposed next section of each Now page. |
+| `questions` | Posts a spec PR's open questions as comments, and writes replies into the spec. |
+| `status-page` | Rebuilds the `🌀 Now/` pages from GitHub. |
+
+## Background jobs
+
+`schedule on` runs `status-page` every 15 minutes, `questions` every 2 minutes, and `propose` daily at 07:00. `questions` runs as you through `gh`, about 19 GitHub API calls per run with five spec PRs open. Its commits to a PR branch start that repo's CI like any push.
+
+## Skills
+
+`enable` installs these. In pi, `/issue` and `/build` are also slash commands.
+
+- `issue`: starts the spec flow from an issue id, as in `/issue 6686`. It opens the `spec/<issue>` worktree and makes the session that domain's Ruler.
+- `spec`: writes the acceptance criteria, as issue criteria for a small change or as a spec and plan.
+- `build`: builds an approved spec's next task in this session, as in `/build 6983`. It sends a Creator, a Shadow, and a Trickster, then opens the task's PR. Use it instead of Bakery cards.
+- `persona`: drafts a domain's Persona from the code, and promotes the invariants that reviews propose.
+- `propose`: the Magician. Writes the Proposed next section of a Now page.
+
+## CI workflows
+
+`init` copies both into the project repo's `.github/workflows/`.
+
+- `workflows/unconscious.yml` runs `check-spec` on spec PRs and creates tasks when a spec merges.
+- `workflows/unconscious-tasks.yml` closes out the issue when its last task PR merges. It runs on every push to the default branch, not only pushes that touch `docs/`, so it's a separate file.
+
+## Comment templates
+
+The comments UD posts come from `templates/comments/`. To change one, copy it to `~/.config/unconscious/comments/` (or `$UD_COMMENT_TEMPLATES`) and edit the copy. In a template, `{{card}}` is a tarot card image drawn at random for each question, and `{{card_name}}` is its name.
 
 ## The cast
 
@@ -69,3 +91,16 @@ Node 24, no dependencies. Run from a project repo; `-h` for options.
 | <img src="assets/tarot/RWS_Tarot_02_High_Priestess.jpg" width="80" alt="The High Priestess"> | Persona | `docs/personas/<domain>.md`. The file any archetype reads first to become a specialist in that domain. |
 
 Card images: Rider-Waite deck, 1909, public domain, via Wikimedia Commons.
+
+## Docs
+
+- [Quickstart](docs/Quickstart.md): one change from issue to merged PR.
+- [Glossary](docs/Glossary.md): what each name means.
+- [Development flow](docs/Development%20flow.md): the full loop as a diagram.
+- [Who owns what](docs/Who%20owns%20what.md): which state lives on GitHub, in the repo, and in Obsidian.
+- [Unconscious Development](docs/Unconscious%20Development.md): the design doc. Decisions leave it as they get their own file under `docs/`.
+- `docs/archive/`: the interview and drafts the design grew from. Reference only.
+
+## Working on UD
+
+Node 24, no runtime dependencies. Run `npm test` for the tests. Each command's help lives in `src/help.ts`, and a new command needs an entry there or the tests fail.
