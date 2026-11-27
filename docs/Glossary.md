@@ -49,4 +49,8 @@ All of these live in the project repo.
 | `spec-to-tasks` | Turns an issue's plan (or a trivial issue's body) into tasks for the runner. |
 | `on-merge` | After a spec PR merges, moves its issue to `ready-for-agent` and runs `spec-to-tasks`. |
 | `task-merged` | After a task PR merges, checks whether every task of its issue has merged. If so, marks the spec `built`, removes the plan, and closes the issue or moves it to `verifying`. |
+<<<<<<< HEAD
+=======
+| `questions` | Posts each open question on a spec PR as a review comment, and writes your reply into the spec. |
+>>>>>>> origin/main
 | Now page | `🌀 Now/<project>.md` in an Obsidian vault: what's waiting on you, stuck, in flight and ready, rebuilt by `status-page`. Parked. |
