@@ -110,10 +110,10 @@ export const COMMANDS: Command[] = [
     args: "ISSUE",
     summary: "turn an issue's plan into tasks",
     details:
-      "Tasks are keyed gh-N/t1, gh-N/t2… They go to Bakery when bakery-cli is on the path, else they're printed for you to start in a session. Refuses unless the issue is ready-for-agent and its spec is approved and passes check-spec.",
+      "Tasks are keyed gh-N/t1, gh-N/t2… They go to Alice when the alice CLI (or the older bakery-cli) is on the path, else they're printed for you to start in a session. Refuses unless the issue is ready-for-agent and its spec is approved and passes check-spec.",
     options: [
-      ["--runner bakery|session", "where tasks go (default: bakery if installed)"],
-      ["--board ID", "the Bakery board"],
+      ["--runner alice|session", "where tasks go (default: alice if installed; bakery still works)"],
+      ["--board ID", "the Alice board"],
       ...ROOT_REPO,
       ["--dry-run", "show the tasks, skip the state checks"],
     ],
@@ -130,7 +130,7 @@ export const COMMANDS: Command[] = [
     options: [
       ["--base SHA", "the commit before the merge"],
       ["--head SHA", "the merge (default: HEAD)"],
-      ["--runner bakery|session", ""],
+      ["--runner alice|session", ""],
       ["--board ID", ""],
       ...ROOT_REPO,
     ],
@@ -404,7 +404,7 @@ export function help(args: string[]): number {
     return 0;
   }
   const near = suggest(name);
-  // The same line as bakery-cli and impression (house-style references/cli.md).
+  // The same line as the alice CLI and impression (house-style references/cli.md).
   console.error(
     `unconscious: Unknown command: ${name}.${near ? ` Did you mean ${near}?` : ""} Run unconscious help to see them all.`,
   );

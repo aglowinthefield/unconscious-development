@@ -69,5 +69,5 @@ When the last task's PR merges, the workflow marks the spec `built`, removes the
 - **Questions in PR threads.** `bin/unconscious questions --pr <number>` posts each open question as a review comment on its line. Reply in the thread and the next run writes your answer into the spec and commits it. A reply in quotes goes in as written. A plain-words reply needs pi to read it. On macOS, `bin/unconscious schedule on` runs this every 2 minutes for every project with a Now page.
 - **Now pages.** In an Obsidian vault, a `🌀 Now/<project>.md` page with `repo: <owner>/<repo>` in its frontmatter gets rebuilt by `bin/unconscious status-page`, showing what's waiting on you, stuck, in flight and ready. Set `UD_NOW_DIR` to that folder.
 - **The Magician.** `bin/unconscious propose` writes the Proposed next section of each Now page.
-- **Bakery.** To have tasks become Bakery cards instead of job-log lines, run the workflow on a runner that can reach your board, and set `UD_RUNNER: bakery` and `BAKERY_URL` in it.
+- **Alice.** To have tasks become Alice cards instead of job-log lines, run the workflow on a runner that can reach your board, and set `UD_RUNNER: alice` and `ALICE_URL` in it.
 - **Updating.** The workflow pins one commit of this repo in `UD_REF`. To pick up changes, set it to a newer commit.

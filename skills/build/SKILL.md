@@ -1,6 +1,6 @@
 ---
 name: build
-description: "Build an approved spec's next task in this session. Takes an issue id, picks the next task from its plan, opens the task's worktree (stacked on an unmerged parent), sends a Creator, then a Shadow and a Trickster, and opens the task's PR. Use when the user says \"/build 6983\", \"build 6983\", \"build gh-6983/t2\", \"do the next task of 6983\", or wants an approved spec's tasks done without Bakery."
+description: "Build an approved spec's next task in this session. Takes an issue id, picks the next task from its plan, opens the task's worktree (stacked on an unmerged parent), sends a Creator, then a Shadow and a Trickster, and opens the task's PR. Use when the user says \"/build 6983\", \"build 6983\", \"build gh-6983/t2\", \"do the next task of 6983\", or wants an approved spec's tasks done without Alice."
 ---
 
 # Build

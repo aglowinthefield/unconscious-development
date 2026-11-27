@@ -9,7 +9,7 @@ Work lives on GitHub, and specs live in your repo. That's all a new user needs: 
 Two add-ons are optional, and neither holds anything you can't find on GitHub or in the repo, apart from your planning notes:
 
 - Obsidian, for planning across projects. Its notes show copies of GitHub's state next to your own planning. Properties starting `gh_` or `run_` are copies and get overwritten; everything else is yours.
-- A runner like Bakery, for tasks the cast does without you. Without one, a task is a session you start.
+- A runner like Alice, for tasks the cast does without you. Without one, a task is a session you start.
 
 The rest of this note is how UD decides what to copy where, for whoever works on UD itself. It fixes a real problem: today the same piece of work shows up as a GitHub label, a PR thread, a Now-page line written only in the vault, and `Specs.base` reading whatever branch the local clone has checked out, and nothing says which copy is current. [[Development flow]] draws it.
 
@@ -54,23 +54,23 @@ Dreams live only in the vault. They are planning, and planning is Obsidian's.
 
 The Magician's `autonomy` judgment picks the runner when a task is handed out:
 
-- `full`: Bakery or a headless agent. You see only the PR.
+- `full`: Alice or a headless agent. You see only the PR.
 - `assisted`: an interactive session in the task's worktree, opened with the task body, for work that needs you partway.
 - `manual`: you, by hand.
 
-Every runner names the task's branch after its key (`task/gh-42-t1`), so a runner that reports nothing still shows its stage: no branch means queued, a branch means in progress, an open PR means in review, and a merged PR means done. Bakery adds blocked, retries and cost on top.
+Every runner names the task's branch after its key (`task/gh-42-t1`), so a runner that reports nothing still shows its stage: no branch means queued, a branch means in progress, an open PR means in review, and a merged PR means done. Alice adds blocked, retries and cost on top.
 
 ## What this changes in the design doc
 
 - "One vault page per project": the page becomes a summary over per-item notes.
 - "The Magician's contract is its inputs and the page it writes": it writes dream notes and the planning properties of item notes.
-- "Bakery is the first runner": runner choice comes from the item's `autonomy`.
+- "Alice is the first runner": runner choice comes from the item's `autonomy`.
 
 ## Build order
 
 1. `status-page` writes item notes with `gh_` properties and `synced_at`, plus the Bases views. The Now page's owned sections become embeds.
 2. The `propose` skill writes dreams as notes and sets planning properties on item notes.
-3. `run_` properties from Bakery, and the key-named branch convention in the Creator's prompt and `spec-to-tasks`.
+3. `run_` properties from Alice, and the key-named branch convention in the Creator's prompt and `spec-to-tasks`.
 4. Runner choice from `autonomy` in `spec-to-tasks`.
 
 ## Open

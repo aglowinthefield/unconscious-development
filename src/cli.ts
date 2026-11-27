@@ -19,7 +19,7 @@ import {
 import { taskFromIssue, tasksFromPlan } from "./tasks.ts";
 import { githubTracker, repoFromRemote } from "./tracker/github.ts";
 import { STATES, stateOf, type Issue, type Tracker } from "./tracker/tracker.ts";
-import { bakeryRunner } from "./runner/bakery.ts";
+import { aliceRunner } from "./runner/alice.ts";
 import { sessionRunner } from "./runner/session.ts";
 import type { Runner, TaskInput } from "./runner/runner.ts";
 import { isTransient, nowDir, projectPages, statusPage } from "./status.ts";
@@ -57,11 +57,23 @@ const onPath = (cmd: string) => {
   }
 };
 
+// The Alice CLI: ALICE_CLI, else `alice` on the path, else the pre-rename `bakery-cli`.
+// BAKERY_CLI is read too until the rename's one-release grace ends.
+function aliceCli(): string | undefined {
+  const set = process.env.ALICE_CLI || process.env.BAKERY_CLI;
+  if (set) return set;
+  if (onPath("alice")) return "alice";
+  if (onPath("bakery-cli")) return "bakery-cli";
+  return undefined;
+}
+
 function pickRunner(name: string | undefined, root: string, board?: string): Runner {
-  const chosen = name ?? (process.env.BAKERY_CLI || onPath("bakery-cli") ? "bakery" : "session");
-  if (chosen === "bakery") return bakeryRunner({ cwd: root, board });
+  const cli = aliceCli();
+  // "bakery" is the runner's old name, kept as an alias for one release.
+  const chosen = name === "bakery" ? "alice" : (name ?? (cli ? "alice" : "session"));
+  if (chosen === "alice") return aliceRunner({ cwd: root, board, cli: cli ?? "alice" });
   if (chosen === "session") return sessionRunner();
-  throw new Refusal(`unknown runner "${chosen}"; use bakery or session`);
+  throw new Refusal(`unknown runner "${chosen}"; use alice or session`);
 }
 
 function specToTasks(root: string, tracker: Tracker, issue: Issue, runner: Runner, dryRun: boolean): TaskInput[] {

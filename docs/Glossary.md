@@ -38,7 +38,7 @@ All of these live in the project repo.
 | Spec PR | The PR on branch `spec/<issue>` that adds or edits a spec and adds its plan. Merging it is the approval. |
 | Task | One unit of a plan that one Creator builds, keyed `gh-<issue>/t1`. Its PR's title starts with the key and its body says `Refs #<issue>`, so the merge job can tell when every task is done. |
 | Vessel | One agent session, in its own worktree, that carries a task from start to PR. |
-| Runner | What runs vessels: Bakery, an agent session you start, or a headless agent. With no runner set up, tasks are printed for you to start. |
+| Runner | What runs vessels: Alice, an agent session you start, or a headless agent. With no runner set up, tasks are printed for you to start. |
 | Tracker | Where issues and PRs live. GitHub is the only one so far. |
 
 ## Tools

@@ -178,7 +178,7 @@ export function gather(fm: Frontmatter, now = new Date()): Snapshot {
     : null;
   if (!main) limits.push(ci ? `no "${ci}" run in the last 30 on main` : "no push run in the last 30 on main");
 
-  limits.push("Runner tasks aren't read yet; Bakery cards don't show here.");
+  limits.push("Runner tasks aren't read yet; Alice cards don't show here.");
   return { repo, at: now.toISOString(), mine, reviewRequested, issues, specs, main, limits };
 }
 
