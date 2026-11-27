@@ -34,7 +34,7 @@ All of these live in the project repo.
 
 | Name | What it is |
 |---|---|
-| Issue | One piece of work, on the tracker (GitHub Issues). Its label says its state: `needs-spec`, `ready-for-agent`, `ready-for-human` or `verifying`. |
+| Issue | One piece of work, on the tracker (GitHub Issues). Its label says its state: `ud:spec`, `ud:build`, `ud:human` or `ud:verify`. UD ignores the unprefixed `ready-for-agent` and `ready-for-human`, which the triage skill uses for something else. |
 | Spec PR | The PR on branch `spec/<issue>` that adds or edits a spec and adds its plan. Merging it is the approval. |
 | Task | One unit of a plan that one Creator builds, keyed `gh-<issue>/t1`. Its PR's title starts with the key and its body says `Refs #<issue>`, so the merge job can tell when every task is done. |
 | Vessel | One agent session, in its own worktree, that carries a task from start to PR. |
@@ -47,6 +47,6 @@ All of these live in the project repo.
 |---|---|
 | `check-spec` | Checks every spec and plan, in CI and locally. On a PR it comments why it fails. |
 | `spec-to-tasks` | Turns an issue's plan (or a trivial issue's body) into tasks for the runner. |
-| `on-merge` | After a spec PR merges, moves its issue to `ready-for-agent` and runs `spec-to-tasks`. |
-| `task-merged` | After a task PR merges, checks whether every task of its issue has merged. If so, marks the spec `built`, removes the plan, and closes the issue or moves it to `verifying`. |
+| `on-merge` | After a spec PR merges, moves its issue to `ud:build` and runs `spec-to-tasks`. |
+| `task-merged` | After a task PR merges, checks whether every task of its issue has merged. If so, marks the spec `built`, removes the plan, and closes the issue or moves it to `ud:verify`. |
 | Now page | `🌀 Now/<project>.md` in an Obsidian vault: what's waiting on you, stuck, in flight and ready, rebuilt by `status-page`. Parked. |

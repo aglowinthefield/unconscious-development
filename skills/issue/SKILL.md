@@ -14,8 +14,8 @@ The argument is a number (`6686`, `#6686`), `owner/repo#6686`, or an issue URL. 
 Read it: `gh issue view <n> -R <repo> --json number,url,title,body,labels,state,comments`. Stop and say why when:
 
 - it is closed;
-- it is labelled `ready-for-agent` or `verifying`: its spec is already approved. Name the spec and ask whether the Self wants to edit it;
-- it is labelled `ready-for-human`: a person is on it.
+- it is labelled `ud:build` or `ud:verify`: its spec is already approved. Name the spec and ask whether the Self wants to edit it;
+- it is labelled `ud:human`: a person is on it.
 
 ## 2. Find work already started
 
