@@ -2,7 +2,7 @@
 status: proposed
 decided: 2026-11-10
 revised: 2026-11-12
-scope: cross-project (Silk, impression, bakery)
+scope: cross-project (Silk, impression, alice)
 supersedes:
   - "[[Agent team design]]"
   - "[[Agent team compositions]]"
@@ -33,7 +33,7 @@ Work starts only from approved acceptance criteria. Where they live depends on t
 
 The tracker is an interface, not a tool: an issue has a domain, a state, and acceptance criteria, and the scripts read and write those through one thin adapter. GitHub Issues is today's implementation, the same way Pi is today's harness.
 
-A vessel is where one task is worked, after the alchemists' sealed *vas* that Jung read as the container of the work: one agent session, in one fresh worktree, sealed from the others, its result taken out for review. The runner that provides vessels is an interface too, with four verbs: start a task in a fresh worktree, make one task depend on another, report a finished task for review, retry a task in the same session. A plain agent session started by hand is a runner; Bakery is today's. Vessel is the name on paper. Scripts, prompts and the runner adapter say task.
+A vessel is where one task is worked, after the alchemists' sealed *vas* that Jung read as the container of the work: one agent session, in one fresh worktree, sealed from the others, its result taken out for review. The runner that provides vessels is an interface too, with four verbs: start a task in a fresh worktree, make one task depend on another, report a finished task for review, retry a task in the same session. A plain agent session started by hand is a runner; Alice is today's. Vessel is the name on paper. Scripts, prompts and the runner adapter say task.
 
 
 ## The cast
@@ -171,7 +171,7 @@ What any runner must guarantee: one vessel is one agent session in one worktree;
 | Needs an interactive session | no                                      | no                                                     | no                                            | for approval only                    |
 | Build-order step             | 2                                       | 1 and 2                                                | 3                                             | 4                                    |
 
-A is the default and needs nothing new. The Shadow must read criteria from the task body, never from the Creator's message; a Shadow briefed by the Creator is a mirror. B is for a domain whose specs keep coming back thin; its risk is a Ruler whose context fills with the Creator's transcript and starts judging, so the Shadow stays a separate delegate. C needs a runner that records cost per vessel (Bakery does) and gives each stage its own diff and cost line; its cost is three Review stops unless unattended review passes the read-only vessels. D is the end state and composes with A or B inside the vessel. The walked ticket is D with A inside.
+A is the default and needs nothing new. The Shadow must read criteria from the task body, never from the Creator's message; a Shadow briefed by the Creator is a mirror. B is for a domain whose specs keep coming back thin; its risk is a Ruler whose context fills with the Creator's transcript and starts judging, so the Shadow stays a separate delegate. C needs a runner that records cost per vessel (Alice does) and gives each stage its own diff and cost line; its cost is three Review stops unless unattended review passes the read-only vessels. D is the end state and composes with A or B inside the vessel. The walked ticket is D with A inside.
 
 
 ## Decisions
@@ -231,15 +231,15 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 **The status page is a script; proposing is a skill.**[^Q7][^Q27] (revised 2026-11-12) `status` rebuilds the page from the tracker adapter (open PRs, CI state, issues by state) and the runner (tasks, runs, cost) on every stage change, with no agent in it. The Magician's `propose` skill writes only the Proposed next section, from the same inputs plus `PROJECT.md`. Grafana and Sentry join later. Both work headless; neither relies on a terminal UI.
 
-**The Magician is a resumed agent session.**[^Q26][^Q42] Its contract is its inputs and the `🌀 Now/` page it writes. Where it runs is a choice per day: a resumed session in a terminal, a herdr tab, a headless cron on mochi, later a Bakery room. A Ruler you collaborate with is the same kind of session. Rulers inside a vessel are ephemeral delegates.
+**The Magician is a resumed agent session.**[^Q26][^Q42] Its contract is its inputs and the `🌀 Now/` page it writes. Where it runs is a choice per day: a resumed session in a terminal, a herdr tab, a headless cron on mochi, later an Alice room. A Ruler you collaborate with is the same kind of session. Rulers inside a vessel are ephemeral delegates.
 
-**Bakery is the first runner.**[^Q41] A Bakery card is a vessel. `bakery-cli` covers the four verbs (`create --key`, idempotent; `depend`; Review; retry in the same session) and adds a cost line per run (`runs`) and a spend cap (`pickup --budget`). For these projects, hosted Bakery on mochi, `http://mochi:4317`, is canonical, set in each `PROJECT.md`. Local boards are scratch and the Magician ignores them.
+**Alice is the first runner.**[^Q41] An Alice card is a vessel. `alice` covers the four verbs (`create --key`, idempotent; `depend`; Review; retry in the same session) and adds a cost line per run (`runs`) and a spend cap (`pickup --budget`). For these projects, hosted Alice on mochi, `http://mochi:4317`, is canonical, set in each `PROJECT.md`. Local boards are scratch and the Magician ignores them.
 
 ### Tooling home
 
 **UD ships its own tooling.**[^Q43] (revised) `check-spec`, `spec-to-tasks`, the `tracker` and `runner` adapters, the spec, Persona and `PROJECT.md` templates, and the state-flip workflow live in this repo. No tracker or runner owns any of it. It is meant for public release, so nothing in it assumes this machine, these projects or these tools.
 
-**Discovered first, configured second.** Every setting has a default found from the repo, and `PROJECT.md` frontmatter overrides it. Tracker: from the git remote (a GitHub remote means `gh`). Runner: Bakery when `bakery-cli` is on the path and a board is configured, else a plain agent session. Personas: `docs/personas/*.md`. Specs: `docs/specs/`. Domains: the Persona filenames. The vault page: a `now_dir` setting, with no default, so nothing writes outside the repo until asked. Runner settings, such as a Bakery server URL, belong to the adapter's own block in `PROJECT.md`. An adapter is a module implementing its four verbs, chosen by name, so a new tracker or runner is added without touching the scripts.
+**Discovered first, configured second.** Every setting has a default found from the repo, and `PROJECT.md` frontmatter overrides it. Tracker: from the git remote (a GitHub remote means `gh`). Runner: Alice when `alice` is on the path and a board is configured, else a plain agent session. Personas: `docs/personas/*.md`. Specs: `docs/specs/`. Domains: the Persona filenames. The vault page: a `now_dir` setting, with no default, so nothing writes outside the repo until asked. Runner settings, such as an Alice server URL, belong to the adapter's own block in `PROJECT.md`. An adapter is a module implementing its four verbs, chosen by name, so a new tracker or runner is added without touching the scripts.
 
 **Layout.** (added 2026-11-13) `docs/roles/` holds the cast, one Markdown file per role, frontmatter for the harness and body for the prompt; they sit under `docs/` so they read as notes in the vault. `skills/<name>/SKILL.md` holds the skills, each with its templates beside it (`skills/spec/templates/`). `bin/unconscious` is the one CLI: today `enable`, `disable` and `status` install the cast into the harness; `check-spec`, `spec-to-tasks` and `status-page` join as subcommands, in TypeScript on Node once they need real parsing, under `src/` with the adapters. The first harness target is Pi with the pi-subagents package.
 
@@ -250,15 +250,15 @@ A is the default and needs nothing new. The Shadow must read criteria from the t
 
 This repo, the cast: role definitions for all of it, with the Shadow's verdict contract in its prompt; `spec` skill (the spec format[^Q11]); `propose` skill (the Magician's inputs[^Q27]), replacing `~/.agents/skills/briefing`; the `status` script; the merge job that runs `spec-to-tasks`; the task merge job that sets `built` and closes or moves the issue to `verifying`; the scheduled after-deploy job; the ready and stuck notices; an install step that links them into the harness.
 
-This repo: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; `spec-to-tasks` and the `runner` adapter with a Bakery implementation; spec, Persona, `PROJECT.md` templates; state-flip workflow.
+This repo: `check-spec` (both spec tiers); the `tracker` adapter with a `gh` implementation; `spec-to-tasks` and the `runner` adapter with an Alice implementation; spec, Persona, `PROJECT.md` templates; state-flip workflow.
 
-Bakery, as a runner: store the `criteria` array on the task; start a Trickster vessel when any verdict is `needs-run`.
+Alice, as a runner: store the `criteria` array on the task; start a Trickster vessel when any verdict is `needs-run`.
 
 silk-remix: six Personas under `docs/personas/` (ingestion-search, mobile, web, api-contracts-shared, infra-ci-release, billing-insights-console), drafted by an Explorer from `docs/agent-map/`, `CODEBASE_OVERVIEW.md`, ADRs, `notes/03 Landscape/`; you edit invariants and standing questions[^Q28]. `PROJECT.md`. Linear migration script.
 
-impression, bakery: `PROJECT.md`, `docs/specs/`, a mochi board for impression.
+impression, alice: `PROJECT.md`, `docs/specs/`, a mochi board for impression.
 
-Vault: `🌀 Now/index.md`, `🌀 Now/silk.md`, `🌀 Now/impression.md`, `🌀 Now/bakery.md`.
+Vault: `🌀 Now/index.md`, `🌀 Now/silk.md`, `🌀 Now/impression.md`, `🌀 Now/alice.md`.
 
 
 ## Build order
@@ -271,8 +271,8 @@ From the interview.[^Q30]
 4. `status` script, ready and stuck notices, the merge job running `spec-to-tasks`, the task merge job, the after-deploy job. Magician role and `propose` skill, Silk `PROJECT.md`, its status page. Use it for one week. The status page came first, 2026-11-15, as `status-page` on a 15-minute launchd schedule rather than on every stage change; the page's frontmatter stands in for `PROJECT.md` until that exists, and runner tasks aren't read yet.
 5. Migrate Linear, add labels, retire `linear-nuke`.
 6. The other five Silk Personas.
-7. `PROJECT.md`, `docs/specs/`, mochi board for impression and bakery[^Q38].
-8. Bakery stores criteria; Trickster vessel on first `needs-run`; later, block Done on `unmet`.
+7. `PROJECT.md`, `docs/specs/`, mochi board for impression and alice[^Q38].
+8. Alice stores criteria; Trickster vessel on first `needs-run`; later, block Done on `unmet`.
 
 
 ## Decide

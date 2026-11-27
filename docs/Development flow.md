@@ -24,7 +24,7 @@ flowchart LR
   subgraph Do["Who does the task"]
     direction TB
     Session["A session you start"]
-    Bakery["Runner (optional):<br/>Bakery or a headless agent"]
+    Alice["Runner (optional):<br/>Alice or a headless agent"]
   end
 
   subgraph GH2["GitHub"]
@@ -40,9 +40,9 @@ flowchart LR
   Self -- "1 open an issue" --> Issues
   Issues -- "2 spec it<br/>with the Ruler" --> Specs
   Specs -- "3 merged:<br/>tasks handed out" --> Session
-  Specs -.-> Bakery
+  Specs -.-> Alice
   Session -- "4 PR names<br/>the task key" --> PRs
-  Bakery -.-> PRs
+  Alice -.-> PRs
   PRs -- "5 you merge; the last task closes the issue" --> Issues
 
   Dreams -. "you affirm a dream" .-> Issues
@@ -53,7 +53,7 @@ flowchart LR
   classDef opt fill:#fafafa,stroke:#9e9e9e,stroke-dasharray:5 4,color:#424242
   class Issues,PRs,Session core
   class Specs repo
-  class Dreams,Copies,Bakery opt
+  class Dreams,Copies,Alice opt
   style Vault stroke-dasharray:5 4
 ```
 
@@ -78,7 +78,7 @@ flowchart TD
     M --> R["Issue: ready-for-agent<br/>spec-to-tasks makes gh-&lt;issue&gt;/t1…"]
     TC --> R
     R --> RN{"Runner, by autonomy"}
-    RN -- "full" --> B["Bakery or a headless agent"]
+    RN -- "full" --> B["Alice or a headless agent"]
     RN -- "assisted" --> S["Interactive session"]
     B --> V["Vessel: Creator builds,<br/>Shadow judges criteria and invariants,<br/>Trickster runs what needs a run"]
     S --> V

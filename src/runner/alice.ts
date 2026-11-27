@@ -1,11 +1,12 @@
 import { execFileSync } from "node:child_process";
 import type { Runner } from "./runner.ts";
 
-// Bakery: a card is a vessel. `create --key` is idempotent per board.
-export function bakeryRunner(opts: { cwd: string; board?: string; cli?: string }): Runner {
-  const cli = opts.cli ?? process.env.BAKERY_CLI ?? "bakery-cli";
+// Alice: a card is a vessel. `create --key` is idempotent per board.
+// `cli` is `alice`, or `bakery-cli` where only the pre-rename CLI is installed.
+export function aliceRunner(opts: { cwd: string; board?: string; cli: string }): Runner {
+  const cli = opts.cli;
   return {
-    name: "bakery",
+    name: "alice",
     createTask(task, idsByKey) {
       const after = task.after.map((k) => {
         const id = idsByKey.get(k);
