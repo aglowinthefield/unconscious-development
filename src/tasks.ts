@@ -17,7 +17,7 @@ function invariantLines(invs: { id: string; verdict: string }[]) {
   const holds = invs.filter((i) => /^holds/i.test(i.verdict)).map((i) => i.id);
   const exceptions = invs.filter((i) => !/^holds/i.test(i.verdict)).map((i) => `- ${i.id}: ${i.verdict}`);
   return [
-    holds.length ? `These hold, and the Shadow checks each against the diff: ${holds.join(", ")}.` : "",
+    holds.length ? `These hold, and the review checks each against the diff: ${holds.join(", ")}.` : "",
     ...exceptions,
   ]
     .filter(Boolean)
@@ -25,7 +25,6 @@ function invariantLines(invs: { id: string; verdict: string }[]) {
 }
 
 const closing = (issue: Issue, key: string) =>
-  `Before you report, summon a Shadow with the criteria above and attach its verdicts. ` +
   `The PR's title starts with \`${key}\` and its body says \`Refs #${issue.number}\`, never \`Closes\`; ` +
   `that is how the merge job knows this task is done.`;
 
