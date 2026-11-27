@@ -11,7 +11,7 @@ Unconscious Development (UD) takes a GitHub issue from an approved spec to a rev
 
 A small change skips the spec: its criteria go in the issue body. [Development flow](docs/Development%20flow.md) draws the whole loop.
 
-UD is files and scripts: Personas, specs, `🌀 Now/` pages in Obsidian, and the `bin/unconscious` command. It doesn't depend on any one agent harness, issue tracker, or task runner.
+UD is files and scripts: Personas, specs, and the `bin/unconscious` command. It doesn't depend on any one agent harness, issue tracker, or task runner.
 
 ## Try it
 
@@ -47,13 +47,13 @@ Run them from your project's repo. `bin/unconscious help` lists every command, a
 | `task-merged` | After the last task PR of an issue merges, marks the spec built and closes the issue. CI runs it. |
 | `draft N` | The Ruler writes criteria for small issue N, or says it needs a spec. |
 | `review N` | The Shadow reviews PR N against its criteria. |
-| `propose` | The Magician writes the Proposed next section of each Now page. |
+| `propose` | Parked. The Magician writes the Proposed next section of each Now page. |
 | `questions` | Posts a spec PR's open questions as comments, and writes replies into the spec. |
-| `status-page` | Rebuilds the `🌀 Now/` pages from GitHub. |
+| `status-page` | Parked. Rebuilds the `🌀 Now/` pages from GitHub. |
 
-## Background jobs
+## Parked
 
-`schedule on` runs `status-page` every 15 minutes, `questions` every 2 minutes, and `propose` daily at 07:00. `questions` runs as you through `gh`, about 19 GitHub API calls per run with five spec PRs open. Its commits to a PR branch start that repo's CI like any push.
+The Magician (`propose`), `status-page`, the vault mirror, and the `schedule` timers stay in the code, but they're off until the vault's role is decided. Leave `schedule` off. [Who owns what](docs/Who%20owns%20what.md) lists what else is parked.
 
 ## Skills
 
@@ -63,7 +63,7 @@ Run them from your project's repo. `bin/unconscious help` lists every command, a
 - `spec`: writes the acceptance criteria, as issue criteria for a small change or as a spec and plan.
 - `build`: builds an approved spec's next task in this session, as in `/build 6983`. It sends a Creator, a Shadow, and a Trickster, then opens the task's PR. Use it instead of Alice cards.
 - `persona`: drafts a domain's Persona from the code, and promotes the invariants that reviews propose.
-- `propose`: the Magician. Writes the Proposed next section of a Now page.
+- `propose`: the Magician. Writes the Proposed next section of a Now page. Parked.
 
 ## CI workflows
 
@@ -81,7 +81,7 @@ The comments UD posts come from `templates/comments/`. To change one, copy it to
 | Card | Archetype | Role |
 | --- | --- | --- |
 | <img src="assets/tarot/RWS_Tarot_21_World.jpg" width="80" alt="The World"> | Self | You. Approves specs and merges. |
-| <img src="assets/tarot/RWS_Tarot_01_Magician.jpg" width="80" alt="The Magician"> | Magician | `chief`. Reads every `PROJECT.md` and `🌀 Now/` page, proposes which issues to spec next. |
+| <img src="assets/tarot/RWS_Tarot_01_Magician.jpg" width="80" alt="The Magician"> | Magician | Parked. `chief`. Reads every `PROJECT.md` and `🌀 Now/` page, proposes which issues to spec next. |
 | <img src="assets/tarot/RWS_Tarot_04_Emperor.jpg" width="80" alt="The Emperor"> | Ruler | `lead`. Holds one domain's Persona, dispatches, writes specs, makes small changes. |
 | <img src="assets/tarot/RWS_Tarot_00_Fool.jpg" width="80" alt="The Fool"> | Explorer | `explorer`. Reads anything, returns paths and lines, answers questions. |
 | <img src="assets/tarot/RWS_Tarot_09_Hermit.jpg" width="80" alt="The Hermit"> | Sage | `sage`. Proposes steps and order, with a reason. |
@@ -97,7 +97,7 @@ Card images: Rider-Waite deck, 1909, public domain, via Wikimedia Commons.
 - [Quickstart](docs/Quickstart.md): one change from issue to merged PR.
 - [Glossary](docs/Glossary.md): what each name means.
 - [Development flow](docs/Development%20flow.md): the full loop as a diagram.
-- [Who owns what](docs/Who%20owns%20what.md): which state lives on GitHub, in the repo, and in Obsidian.
+- [Who owns what](docs/Who%20owns%20what.md): how UD, Alice, and Impression split the work, and where state lives.
 - [Unconscious Development](docs/Unconscious%20Development.md): the design doc. Decisions leave it as they get their own file under `docs/`.
 - `docs/archive/`: the interview and drafts the design grew from. Reference only.
 

@@ -7,7 +7,7 @@ The cast is the set of agent roles. Each role is a prompt file in `docs/roles/`,
 | Name | What it does |
 |---|---|
 | Self | You. You decide what work exists, approve specs by merging them, and review the PRs the cast raises. |
-| Magician | Proposes what to spec next, from a project's issues, specs and Now page. Runs as the `propose` skill, by hand or daily. |
+| Magician | Parked. Proposes what to spec next, from a project's issues, specs and Now page. Runs as the `propose` skill. |
 | Ruler | Writes the spec and plan for one issue with you, in your session. Can send out an Explorer, a Sage or a Shadow to help. |
 | Explorer | Answers questions about the code: reads files and returns paths and line numbers. Changes nothing. |
 | Sage | Proposes how to do something and in what order, with its reasons. Changes nothing. |
@@ -38,7 +38,7 @@ All of these live in the project repo.
 | Spec PR | The PR on branch `spec/<issue>` that adds or edits a spec and adds its plan. Merging it is the approval. |
 | Task | One unit of a plan that one Creator builds, keyed `gh-<issue>/t1`. Its PR's title starts with the key and its body says `Refs #<issue>`, so the merge job can tell when every task is done. |
 | Vessel | One agent session, in its own worktree, that carries a task from start to PR. |
-| Runner | What runs vessels: Alice, an agent session you start, or a headless agent. With no runner set up, tasks are printed for you to start. |
+| Runner | What runs vessels: Alice when it's installed, or a `/build` session you start. Without Alice, tasks are printed for you to start. |
 | Tracker | Where issues and PRs live. GitHub is the only one so far. |
 
 ## Tools
@@ -50,4 +50,4 @@ All of these live in the project repo.
 | `on-merge` | After a spec PR merges, moves its issue to `ready-for-agent` and runs `spec-to-tasks`. |
 | `task-merged` | After a task PR merges, checks whether every task of its issue has merged. If so, marks the spec `built`, removes the plan, and closes the issue or moves it to `verifying`. |
 | `questions` | Posts each open question on a spec PR as a review comment, and writes your reply into the spec. |
-| Now page | `🌀 Now/<project>.md` in an Obsidian vault: what's waiting on you, stuck, in flight and ready, rebuilt by `status-page`. Optional. |
+| Now page | `🌀 Now/<project>.md` in an Obsidian vault: what's waiting on you, stuck, in flight and ready, rebuilt by `status-page`. Parked. |

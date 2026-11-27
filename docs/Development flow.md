@@ -103,4 +103,4 @@ The purple steps are yours. Everything else runs without you.
 ## Decided since
 
 - A task is done when a merged PR names its key, or its plan box is ticked. `task-merged` finishes the issue from that.
-- Who owns what, the key-named branches, and where dreams live: see [[Who owns what]].
+- How UD, Alice, and Impression split the work, and where state lives: see [[Who owns what]].
