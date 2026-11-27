@@ -25,7 +25,9 @@ Alice never learns UD's concepts. To Alice, a task key like `gh-42/t1` is an opa
 
 UD reaches the tracker only through `src/tracker/`. GitHub is the only tracker so far, and code outside that folder doesn't assume it.
 
-A task is done when a merged PR names its key, or when its box in the plan is ticked. `task-merged` reads that to finish the issue. The runner's state is progress up to the PR, never the answer to "is it done?". Each runner reports stage its own way: Alice through `alice --json`, and a `/build` session through its branch.
+A task is done when a merged PR names its key, or when its box in the plan is ticked. `task-merged` reads that to finish the issue.
+
+The runner's state is progress up to the PR, never the answer to "is it done?". Each runner reports stage its own way: Alice through `alice --json`, and a `/build` session through its branch.
 
 ## Rules and memories
 
