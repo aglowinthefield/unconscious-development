@@ -45,7 +45,7 @@ Then go to [Do the tasks](#do-the-tasks).
 
 ### A trivial change
 
-1. Get criteria into the issue body: one `- AC1: <claim>` line per thing a reviewer could check, under `## Acceptance criteria`. With the cast, run `bin/unconscious draft <number>` from your repo, or ask your agent to spec the issue; the Ruler writes them and comments asking for your approval. By hand, write them and run `bin/unconscious check-spec --issue <number>`.
+1. Get criteria into the issue body: one `- AC1: <claim>` line per thing a reviewer could check, under `## Acceptance criteria`. With the cast, ask your agent to spec the issue (`/issue <number>`); the Ruler writes them with you. By hand, write them and run `bin/unconscious check-spec --issue <number>`.
 2. Read the criteria, edit any that are wrong, and add the `ud:build` label. That's the whole approval. The workflow lists the issue's one task in the job log.
 
 ### Exploring first
@@ -66,7 +66,6 @@ When the last task's PR merges, the workflow marks the spec `built`, removes the
 
 ## Optional extras
 
-- **Questions in PR threads.** `bin/unconscious questions --pr <number>` posts each open question as a review comment on its line. Reply in the thread and the next run writes your answer into the spec and commits it. A reply in quotes goes in as written. A plain-words reply needs pi to read it. On macOS, `bin/unconscious schedule on` runs this every 2 minutes for every project with a Now page.
 - **Now pages.** In an Obsidian vault, a `🌀 Now/<project>.md` page with `repo: <owner>/<repo>` in its frontmatter gets rebuilt by `bin/unconscious status-page`, showing what's waiting on you, stuck, in flight and ready. Set `UD_NOW_DIR` to that folder.
 - **The Magician.** `bin/unconscious propose` writes the Proposed next section of each Now page.
 - **Alice.** To have tasks become Alice cards instead of job-log lines, run the workflow on a runner that can reach your board, and set `UD_RUNNER: alice` and `ALICE_URL` in it.

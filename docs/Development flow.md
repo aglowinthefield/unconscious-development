@@ -68,7 +68,7 @@ flowchart TD
     I --> T{"Tier?"}
     T -- "trivial" --> TC["The Ruler drafts criteria into the issue<br/>You add ud:build"]
     T -- "designed" --> SP["Spec PR on spec/&lt;issue&gt;<br/>you and the Ruler draft spec and plan"]
-    SP --> Q["Open questions arrive as PR threads<br/>your replies are written into the spec"]
+    SP --> Q["Open questions: the Ruler asks you<br/>and writes your answers into the spec"]
     Q --> C{"check-spec green?"}
     C -- "no: the PR comment says why" --> SP
     C -- "yes" --> M["You merge the spec PR<br/>(merging approves it)"]

@@ -4,7 +4,7 @@ Unconscious Development (UD) takes a GitHub issue from an approved spec to a rev
 
 ## How a change moves through it
 
-1. You open an issue, then write its spec and plan with the Ruler on a `spec/<issue>` branch. Each open question in the spec becomes a PR comment thread, and your reply is written into the spec.
+1. You open an issue, then write its spec and plan with the Ruler on a `spec/<issue>` branch. The Ruler marks each question it can't decide, and the spec can't merge until you answer them all.
 2. Merging the spec PR approves it. CI splits the plan into tasks named `gh-<issue>/t1`, `gh-<issue>/t2`, and so on.
 3. For each task, a Creator makes the change in its own worktree. A Shadow checks the diff against the spec's acceptance criteria, and a Trickster runs the criteria that reading the code can't settle.
 4. You review and merge each task PR. When the last one merges, CI marks the spec built and closes the issue.
@@ -45,10 +45,8 @@ Run them from your project's repo. `bin/unconscious help` lists every command, a
 | `spec-to-tasks N` | Turns issue N's plan into tasks, in Alice if installed, otherwise printed. |
 | `on-merge` | After a spec merges, marks its issue `ud:build` and creates its tasks. CI runs it. |
 | `task-merged` | After the last task PR of an issue merges, marks the spec built and closes the issue. CI runs it. |
-| `draft N` | The Ruler writes criteria for small issue N, or says it needs a spec. |
 | `review N` | The Shadow reviews PR N against its criteria. |
 | `propose` | Parked. The Magician writes the Proposed next section of each Now page. |
-| `questions` | Posts a spec PR's open questions as comments, and writes replies into the spec. |
 | `status-page` | Parked. Rebuilds the `🌀 Now/` pages from GitHub. |
 
 ## Parked
@@ -74,7 +72,7 @@ The Magician (`propose`), `status-page`, the vault mirror, and the `schedule` ti
 
 ## Comment templates
 
-The comments UD posts come from `templates/comments/`. To change one, copy it to `~/.config/unconscious/comments/` (or `$UD_COMMENT_TEMPLATES`) and edit the copy. In a template, `{{card}}` is a tarot card image drawn at random for each question, and `{{card_name}}` is its name.
+The comments UD posts come from `templates/comments/`. To change one, copy it to `~/.config/unconscious/comments/` (or `$UD_COMMENT_TEMPLATES`) and edit the copy. In a template, `{{card}}` is a tarot card image drawn at random for each comment, and `{{card_name}}` is its name.
 
 ## The cast
 

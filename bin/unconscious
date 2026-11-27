@@ -106,7 +106,7 @@ disable_claude() {
 
 status() { node --disable-warning=ExperimentalWarning "$ud_root/src/cli.ts" status; }
 
-# Run status-page every 15 minutes and questions every 2 (both also at login), and propose daily at 07:00, as launchd
+# Run status-page every 15 minutes (also at login) and propose daily at 07:00, as launchd
 # agents. launchd never starts a job while its last run is still going. The agent keeps the PATH and
 # Now folder of the shell that turned it on, so gh, git and node resolve the same way.
 plist="$HOME/Library/LaunchAgents/dev.unconscious.status-page.plist"
@@ -155,20 +155,6 @@ tick() {
   done
   return "$rc"
 }
-# Draft a small issue's criteria headless: the Ruler, with the spec skill, writes them into the
-# issue body and asks for ready-for-agent, or says the issue needs a spec session.
-draft() {
-  [ -n "${1:-}" ] || { echo "usage: unconscious draft <issue>" >&2; exit 2; }
-  local prompt="Headless, for issue $1 in this repo. Read it with gh. If it's trivial, follow the spec skill's trivial tier: write its criteria into the body, check them, and comment asking for ready-for-agent. If it needs the designed tier, comment one line saying why and that it needs a spec session, and stop. Change no files and open no PRs."
-  if [ "${UD_HARNESS:-pi}" = claude ]; then
-    claude -p --agent ruler --allowedTools "Read Grep Glob Bash Skill" "$prompt"
-    return
-  fi
-  local role; role="$(mktemp)"; trap 'rm -f "$role"' RETURN
-  awk 'f>=2; /^---$/{f++}' "$ud_root/docs/roles/ruler.md" > "$role"
-  pi -p --no-session --skill "$ud_root/skills/spec" --append-system-prompt "$role" --tools read,grep,find,ls,bash "$prompt"
-}
-
 # Run the Shadow on a PR that already exists, as a first try of UD with no setup: criteria from the
 # PR or its linked issues, or, when nobody wrote any, the ones the PR claims, marked as derived.
 # Reads only; --comment posts the verdicts on the PR.
@@ -207,14 +193,17 @@ $context"
   return 0
 }
 
-# On Linux the same three jobs are systemd user timers. Persistent=true runs a missed propose
+# On Linux the same jobs are systemd user timers. Persistent=true runs a missed propose
 # once the host is back, and a failed propose retries every 30 minutes, up to 6 times a day.
 # Needs lingering (`loginctl enable-linger`) to run while nobody is logged in.
 systemd_dir="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 schedule_systemd() {
   local dir="$1" name
   mkdir -p "$systemd_dir"
-  for name in status-page questions propose; do
+  # questions was removed; take down the units an older schedule wrote for it.
+  systemctl --user disable --now unconscious-questions.timer >/dev/null 2>&1 || true
+  rm -f "$systemd_dir/unconscious-questions.timer" "$systemd_dir/unconscious-questions.service"
+  for name in status-page propose; do
     local limit="" retry=""
     if [ "$name" = propose ]; then
       limit=$'StartLimitIntervalSec=1d\nStartLimitBurst=6'
@@ -264,17 +253,6 @@ OnUnitActiveSec=900
 [Install]
 WantedBy=timers.target
 UNIT
-  cat > "$systemd_dir/unconscious-questions.timer" <<UNIT
-[Unit]
-Description=Unconscious Development: questions every ${UD_QUESTIONS_INTERVAL:-120} seconds
-
-[Timer]
-OnBootSec=1min
-OnUnitActiveSec=${UD_QUESTIONS_INTERVAL:-120}
-
-[Install]
-WantedBy=timers.target
-UNIT
   cat > "$systemd_dir/unconscious-propose.timer" <<UNIT
 [Unit]
 Description=Unconscious Development: propose daily
@@ -287,9 +265,8 @@ Persistent=true
 WantedBy=timers.target
 UNIT
   systemctl --user daemon-reload
-  systemctl --user enable --now unconscious-status-page.timer unconscious-questions.timer unconscious-propose.timer >/dev/null
+  systemctl --user enable --now unconscious-status-page.timer unconscious-propose.timer >/dev/null
   echo "status-page runs every 15 minutes into $dir; log: journalctl --user -u unconscious-status-page"
-  echo "questions runs every ${UD_QUESTIONS_INTERVAL:-120} seconds; log: journalctl --user -u unconscious-questions"
   echo "propose runs daily at ${UD_PROPOSE_HOUR:-7}:00, and after the host was down then; log: journalctl --user -u unconscious-propose"
   echo "a project whose Do next is done gets its own propose; log: journalctl --user -u 'unconscious-propose@*'"
 }
@@ -330,27 +307,6 @@ schedule() {
 </dict>
 </plist>
 PLIST
-      cat > "$questions_plist" <<PLIST
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>Label</key><string>dev.unconscious.questions</string>
-  <key>ProgramArguments</key>
-  <array><string>$ud_root/bin/unconscious</string><string>questions</string></array>
-  <key>EnvironmentVariables</key>
-  <dict>
-    <key>PATH</key><string>$PATH</string>
-    <key>UD_NOW_DIR</key><string>$dir</string>
-    <key>UD_HARNESS</key><string>${UD_HARNESS:-pi}</string>
-  </dict>
-  <key>StartInterval</key><integer>${UD_QUESTIONS_INTERVAL:-120}</integer>
-  <key>RunAtLoad</key><true/>
-  <key>StandardOutPath</key><string>$HOME/Library/Logs/unconscious-questions.log</string>
-  <key>StandardErrorPath</key><string>$HOME/Library/Logs/unconscious-questions.log</string>
-</dict>
-</plist>
-PLIST
       cat > "$propose_plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -373,12 +329,13 @@ PLIST
 </plist>
 PLIST
       launchctl bootout "gui/$(id -u)" "$mirror_plist" 2>/dev/null || true; rm -f "$mirror_plist"
-      for p in "$plist" "$questions_plist" "$propose_plist"; do
+      # questions was removed; an older schedule may still have its agent loaded.
+      launchctl bootout "gui/$(id -u)" "$questions_plist" 2>/dev/null || true; rm -f "$questions_plist"
+      for p in "$plist" "$propose_plist"; do
         launchctl bootout "gui/$(id -u)" "$p" 2>/dev/null || true
         launchctl bootstrap "gui/$(id -u)" "$p"
       done
       echo "status-page runs every 15 minutes into $dir; log: ~/Library/Logs/unconscious-status-page.log"
-      echo "questions runs every ${UD_QUESTIONS_INTERVAL:-120} seconds; log: ~/Library/Logs/unconscious-questions.log"
       echo "propose runs daily at ${UD_PROPOSE_HOUR:-7}:00; log: ~/Library/Logs/unconscious-propose.log" ;;
     mirror)
       # Only the vault links, for the machine you read the vault on while another host runs the rest.
@@ -446,7 +403,6 @@ case "$1" in
   schedule) schedule "${2:-}" ;;
   propose) propose "${2:-}" ;;
   tick) tick ;;
-  draft) draft "${2:-}" ;;
   review) shift; review "$@" ;;
   *) cli "$@" ;; # src/cli.ts runs its commands, and says "did you mean" for unknown ones
 esac
