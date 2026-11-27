@@ -11,7 +11,7 @@ Takes an approved issue to one task's PR, from an interactive session. You dispa
 
 The argument is an issue (`6983`, `owner/repo#6983`, a URL), optionally with a task (`t2`, `gh-6983/t2`). Find the repo and checkout as the `issue` skill's step 1 does.
 
-From the checkout's main worktree, `git fetch origin`, then run `unconscious spec-to-tasks <n> --runner session --repo <repo>` (`bin/unconscious` in the repo this skill belongs to: `readlink -f` this skill's directory, then up two). It refuses unless the issue is `ready-for-agent` and its spec is approved and passes `check-spec`; if it refuses, say why and stop. Each task it prints starts `===== gh-<n>/tK: <title>`, may have a `Start after:` line, and the rest is the task's body.
+From the checkout's main worktree, `git fetch origin`, then run `unconscious spec-to-tasks <n> --runner session --repo <repo>` (`bin/unconscious` in the repo this skill belongs to: `readlink -f` this skill's directory, then up two). It refuses unless the issue is `ud:build` and its spec is approved and passes `check-spec`; if it refuses, say why and stop. Each task it prints starts `===== gh-<n>/tK: <title>`, may have a `Start after:` line, and the rest is the task's body.
 
 ## 2. Pick the task
 

@@ -17,12 +17,12 @@ import {
   type Problem,
 } from "./spec.ts";
 import { taskFromIssue, tasksFromPlan } from "./tasks.ts";
-import { githubTracker, repoFromRemote } from "./tracker/github.ts";
+import { githubTracker, LABELS, repoFromRemote } from "./tracker/github.ts";
 import { STATES, stateOf, type Issue, type Tracker } from "./tracker/tracker.ts";
-import { aliceRunner } from "./runner/alice.ts";
+import { aliceRunner, aliceTaskLines } from "./runner/alice.ts";
 import { sessionRunner } from "./runner/session.ts";
 import type { Runner, TaskInput } from "./runner/runner.ts";
-import { isTransient, nowDir, projectPages, statusPage } from "./status.ts";
+import { gather, isTransient, mainLine, nowDir, projectPages, renderOwned, statusPage } from "./status.ts";
 import { dueProjects } from "./propose-due.ts";
 import { syncVault } from "./vault-mirror.ts";
 import { postCheckResult } from "./check-comment.ts";
@@ -78,7 +78,8 @@ function specToTasks(root: string, tracker: Tracker, issue: Issue, runner: Runne
   const problems: string[] = [];
   const state = stateOf(issue);
   if (!issue.open) problems.push(`#${issue.number} is closed`);
-  if (state !== "ready-for-agent") problems.push(`#${issue.number} is ${state ?? "unlabelled"}, not ready-for-agent`);
+  if (state !== "ready-for-agent")
+    problems.push(`#${issue.number} is ${state ? LABELS[state] : "unlabelled"}, not ${LABELS["ready-for-agent"]}`);
   // Approval may have only added the label; drop the state it left behind.
   else if (!dryRun && issue.labels.some((l) => l !== state && (STATES as readonly string[]).includes(l)))
     tracker.setState(issue, state);
@@ -147,17 +148,17 @@ export function onMerge(root: string, tracker: Tracker, runner: Runner, base: st
     const issue = tracker.getIssue(issueRef);
     const rel = specPath.slice(root.length + 1);
     if (!issue.open || stateOf(issue) === "verifying") {
-      console.log(`#${issue.number} is already ${issue.open ? stateOf(issue) : "closed"}; not flipping`);
+      console.log(`#${issue.number} is already ${issue.open ? LABELS.verifying : "closed"}; not flipping`);
       continue;
     }
     // An issue already ready-for-agent may be from an earlier run that failed partway through
     // creating tasks. Creating them again is safe, since a runner keys each task, so finish it.
     if (stateOf(issue) === "ready-for-agent")
-      console.log(`#${issue.number} is already ready-for-agent; creating any missing tasks`);
+      console.log(`#${issue.number} is already ${LABELS["ready-for-agent"]}; creating any missing tasks`);
     else {
       tracker.setState(issue, "ready-for-agent");
       tracker.comment(issue, `Spec approved: \`${rel}\`. Creating its tasks.`);
-      console.log(`#${issue.number} → ready-for-agent (${rel})`);
+      console.log(`#${issue.number} → ${LABELS["ready-for-agent"]} (${rel})`);
     }
     specToTasks(root, tracker, issue, runner, false);
   }
@@ -325,6 +326,19 @@ async function main(argv: string[]): Promise<number> {
     if (!ref) throw new Refusal("spec-to-tasks needs an issue number or URL");
     const t = tracker();
     specToTasks(root, t, t.getIssue(ref), pickRunner(values.runner, root, values.board), Boolean(values["dry-run"]));
+    return 0;
+  }
+  if (command === "next") {
+    // The same sections as a Now page, from GitHub and this checkout, plus Alice's task cards.
+    const s = gather({ repo: values.repo ?? repoFromRemote(root), path: root });
+    const owned = renderOwned(s);
+    const cli = aliceCli();
+    if (cli)
+      owned["Alice"] = aliceTaskLines({ cwd: root, board: values.board, cli }).join("\n") || "No task cards open.";
+    for (const heading of ["Waiting on you", "Stuck", "In flight", "Ready", "Alice"])
+      if (owned[heading]) console.log(`## ${heading}\n\n${owned[heading]}\n`);
+    console.log(mainLine(s));
+    for (const l of s.limits) if (!(cli && l.startsWith("Runner tasks"))) console.log(`- ${l}`);
     return 0;
   }
   if (command === "on-merge") {

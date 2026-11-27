@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { githubTracker } from "../src/tracker/github.ts";
+import { githubTracker, stateOfLabel } from "../src/tracker/github.ts";
+import { stateOf } from "../src/tracker/tracker.ts";
 
 // A stand-in `gh` for the contents API of one file on one branch. Like GitHub, a PUT must send the
 // blob sha of the file at the branch head, or it gets a 409.
@@ -41,6 +42,53 @@ function withFakeGh(commits: { sha: string; content: string }[], fn: (state: str
     Object.assign(process.env, saved);
   }
 }
+
+// A stand-in `gh` for one issue: `issue view` prints it, and every other call is logged.
+const FAKE_GH_ISSUE = `#!/usr/bin/env node
+const fs = require("fs"), args = process.argv.slice(2);
+fs.appendFileSync(process.env.FAKE_GH_LOG, JSON.stringify(args) + "\\n");
+if (args[0] === "issue" && args[1] === "view")
+  console.log(JSON.stringify({ number: 7, url: "u", title: "t", body: "", state: "OPEN", labels: [{ name: "ud:build" }, { name: "ready-for-human" }, { name: "bug" }] }));
+`;
+
+test("a ud: label reads as its state, an unprefixed one is ignored, and setState swaps ud: labels", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ud-gh-"));
+  writeFileSync(join(dir, "gh"), FAKE_GH_ISSUE);
+  chmodSync(join(dir, "gh"), 0o755);
+  const log = join(dir, "log");
+  writeFileSync(log, "");
+  const saved = { PATH: process.env.PATH, FAKE_GH_LOG: process.env.FAKE_GH_LOG };
+  process.env.PATH = `${dir}:${process.env.PATH}`;
+  process.env.FAKE_GH_LOG = log;
+  try {
+    const t = githubTracker("o/r");
+    const issue = t.getIssue(7);
+    assert.deepEqual(issue.labels, ["ready-for-agent", "bug"], "triage's ready-for-human isn't a state");
+    assert.equal(stateOf(issue), "ready-for-agent");
+    t.setState(issue, "verifying");
+    const calls = readFileSync(log, "utf8")
+      .trim()
+      .split("\n")
+      .map((l) => JSON.parse(l));
+    assert.deepEqual(calls.at(-2), ["label", "create", "ud:verify", "-R", "o/r"]);
+    assert.deepEqual(calls.at(-1), [
+      "issue",
+      "edit",
+      "7",
+      "-R",
+      "o/r",
+      "--add-label",
+      "ud:verify",
+      "--remove-label",
+      "ud:build",
+    ]);
+    assert.deepEqual(issue.labels, ["bug", "verifying"]);
+    assert.equal(stateOfLabel("ud:build"), "ready-for-agent");
+    assert.equal(stateOfLabel("bug"), undefined);
+  } finally {
+    Object.assign(process.env, saved);
+  }
+});
 
 test("commitFile refuses to overwrite a file that changed after the head it was built from", () =>
   withFakeGh(

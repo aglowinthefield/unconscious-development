@@ -2,7 +2,7 @@
 #
 # task-merged  on each push to the default branch, for every PR it merged that says `Refs #<issue>`
 #              or names a task key: if every task of that issue now has a merged PR, marks the spec
-#              `built`, removes its plan, and closes the issue, or moves it to `verifying` when the
+#              `built`, removes its plan, and closes the issue, or moves it to `ud:verify` when the
 #              spec has after-deploy criteria. Where the branch refuses a push, the spec change comes
 #              as a PR instead; pass --via-pr to always do that.
 #

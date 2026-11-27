@@ -105,12 +105,22 @@ export const COMMANDS: Command[] = [
     ],
   },
   {
+    name: "next",
+    group: "Specs and tasks",
+    args: "",
+    summary: "what's waiting on you, stuck, in flight and ready",
+    details:
+      "Reads this repo's open PRs and ud: labelled issues from GitHub, the specs on origin/main, and, when the alice CLI is on the path, the board's task cards that aren't done. Prints the same sections as a Now page, without the vault.",
+    options: [["--board ID", "the Alice board"], ...ROOT_REPO],
+    examples: [["unconscious next", ""]],
+  },
+  {
     name: "spec-to-tasks",
     group: "Specs and tasks",
     args: "ISSUE",
     summary: "turn an issue's plan into tasks",
     details:
-      "Tasks are keyed gh-N/t1, gh-N/t2… They go to Alice when the alice CLI (or the older bakery-cli) is on the path, else they're printed for you to start in a session. Refuses unless the issue is ready-for-agent and its spec is approved and passes check-spec.",
+      "Tasks are keyed gh-N/t1, gh-N/t2… They go to Alice when the alice CLI (or the older bakery-cli) is on the path, else they're printed for you to start in a session. Refuses unless the issue is labelled ud:build and its spec is approved and passes check-spec.",
     options: [
       ["--runner alice|session", "where tasks go (default: alice if installed; bakery still works)"],
       ["--board ID", "the Alice board"],
@@ -126,7 +136,7 @@ export const COMMANDS: Command[] = [
     usage: ["--base SHA --head SHA"],
     summary: "after a spec merges, start its issue's tasks",
     details:
-      "The CI workflow runs it on every push to main. Each approved spec the merge touched moves its plan's issue to ready-for-agent, then runs spec-to-tasks on it.",
+      "The CI workflow runs it on every push to main. Each approved spec the merge touched moves its plan's issue to ud:build, then runs spec-to-tasks on it.",
     options: [
       ["--base SHA", "the commit before the merge"],
       ["--head SHA", "the merge (default: HEAD)"],
@@ -141,7 +151,7 @@ export const COMMANDS: Command[] = [
     args: "--pr N | --head SHA [--base SHA]",
     summary: "after a task merges, close out its issue",
     details:
-      "When every task of the issue has a merged PR, sets the spec to built, removes its plan, and closes the issue, or moves it to verifying when the spec has after-deploy criteria. Pushes the spec change to the base branch, or opens a PR when the branch refuses. With --via-pr it always opens the PR, from a scratch worktree, so the checkout it runs in is never touched. The PR's title is a conventional commit, docs(<domain>): mark the <name> spec built. On GitHub, set UD_PR_TOKEN to open it with a token whose PRs run checks; one opened with Actions' GITHUB_TOKEN runs none.",
+      "When every task of the issue has a merged PR, sets the spec to built, removes its plan, and closes the issue, or moves it to ud:verify when the spec has after-deploy criteria. Pushes the spec change to the base branch, or opens a PR when the branch refuses. With --via-pr it always opens the PR, from a scratch worktree, so the checkout it runs in is never touched. The PR's title is a conventional commit, docs(<domain>): mark the <name> spec built. On GitHub, set UD_PR_TOKEN to open it with a token whose PRs run checks; one opened with Actions' GITHUB_TOKEN runs none.",
     options: [
       ["--pr N", "the task PR that merged"],
       ["--head SHA", "instead of --pr: every PR merged in a push, up to this commit"],

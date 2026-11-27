@@ -9,7 +9,7 @@ A spec says what a behaviour does and why. A plan says how one change gets there
 
 ## 1. Pick the tier
 
-Trivial: typo, constant, copy, config flag, or a net addition with no design choice. One task, no schema change, no new dependency. Write the criteria into the issue body yourself under `## Acceptance criteria` (`gh issue edit <n> --body-file`), keeping what the body already says above them, and run `unconscious check-spec --issue <n>`. Then comment on the issue: the criteria in one line each, and "Add `ready-for-agent` to hand this to the cast, or edit the criteria first." Adding that label is the Self's whole approval. No spec file, no plan.
+Trivial: typo, constant, copy, config flag, or a net addition with no design choice. One task, no schema change, no new dependency. Write the criteria into the issue body yourself under `## Acceptance criteria` (`gh issue edit <n> --body-file`), keeping what the body already says above them, and run `unconscious check-spec --issue <n>`. Then comment on the issue: the criteria in one line each, and "Add `ud:build` to hand this to the cast, or edit the criteria first." Adding that label is the Self's whole approval. No spec file, no plan.
 
 A change the Self would rather just make by hand doesn't need UD at all: a normal PR, no issue, no criteria. Say so when an issue looks like that.
 
@@ -56,7 +56,7 @@ A question that decides whether a sentence stands gets a slot at the end of it (
 
 A domain with no Persona yet gets one first: follow the persona skill (`skills/persona/`). A draft Persona is enough to write a plan against; `check-spec` warns until the Self confirms it, and the Shadow checks its invariants either way. If the Persona has Proposed invariants, ask the Self whether to promote any before you list the plan's invariants.
 
-The spec and plan land in one PR on `spec/<issue>`. When you write in the Self's answer to the last marker, set `status: approved` in the same edit; the Self never edits the file to approve it. Merging the PR is the approval: the merge job flips the issue and creates the tasks. `check-spec` fails while any marker is open, so a spec can't merge with an open question. To merge a spec as reference without starting work, the Self asks for `draft` and you keep it. Task PRs say `Refs #<issue>`, never `Closes`. When the last task merges, the task merge job sets the spec's `status` to `built` and closes the issue, or moves it to `verifying` until the after-deploy criteria pass. The Self sees every spec by status in the vault's `🌀 Now/Specs.base`.
+The spec and plan land in one PR on `spec/<issue>`. When you write in the Self's answer to the last marker, set `status: approved` in the same edit; the Self never edits the file to approve it. Merging the PR is the approval: the merge job flips the issue and creates the tasks. `check-spec` fails while any marker is open, so a spec can't merge with an open question. To merge a spec as reference without starting work, the Self asks for `draft` and you keep it. Task PRs say `Refs #<issue>`, never `Closes`. When the last task merges, the task merge job sets the spec's `status` to `built` and closes the issue, or moves it to `ud:verify` until the after-deploy criteria pass. The Self sees every spec by status in the vault's `🌀 Now/Specs.base`.
 
 ## After exploring
 

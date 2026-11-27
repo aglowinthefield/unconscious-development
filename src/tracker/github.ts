@@ -10,6 +10,22 @@ const gh = (args: string[], cwd?: string, input?: string, env?: NodeJS.ProcessEn
     stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
   }).trim();
 
+// Each state's label on GitHub. The `ud:` prefix keeps them apart from the triage skill's
+// `ready-for-agent` and `ready-for-human`, which mean something else.
+export const LABELS: Record<State, string> = {
+  "needs-spec": "ud:spec",
+  "ready-for-agent": "ud:build",
+  "ready-for-human": "ud:human",
+  verifying: "ud:verify",
+};
+export const STATE_LABELS = STATES.map((s) => LABELS[s]);
+export const stateOfLabel = (name: string): State | undefined => STATES.find((s) => LABELS[s] === name);
+
+// GitHub's label names as UD reads them: a `ud:` label becomes its state. A label spelled like a
+// state name (the unprefixed labels UD used to write, or triage's) is dropped, so it can't pass for one.
+export const issueLabels = (names: string[]): string[] =>
+  names.filter((n) => !(STATES as readonly string[]).includes(n)).map((n) => stateOfLabel(n) ?? n);
+
 const enc = (path: string) => path.split("/").map(encodeURIComponent).join("/");
 const CR_FIELDS = "number,headRefOid,headRefName,files";
 const CHANGE_FIELDS = "number,url,title,body,state";
@@ -46,7 +62,7 @@ export function githubTracker(repo: string): Tracker {
     url: j.url,
     title: j.title,
     body: j.body ?? "",
-    labels: (j.labels ?? []).map((l: any) => l.name),
+    labels: issueLabels((j.labels ?? []).map((l: any) => l.name)),
     open: j.state === "OPEN",
   });
   const toNote = (j: any): Note => ({
@@ -66,7 +82,8 @@ export function githubTracker(repo: string): Tracker {
       return toIssue(JSON.parse(gh(["issue", "view", n, "-R", repo, "--json", "number,url,title,body,labels,state"])));
     },
     setState(issue, state: State) {
-      ensureLabel(state);
+      const label = LABELS[state];
+      ensureLabel(label);
       const remove = STATES.filter((s) => s !== state && issue.labels.includes(s));
       gh([
         "issue",
@@ -75,8 +92,8 @@ export function githubTracker(repo: string): Tracker {
         "-R",
         repo,
         "--add-label",
-        state,
-        ...remove.flatMap((s) => ["--remove-label", s]),
+        label,
+        ...remove.flatMap((s) => ["--remove-label", LABELS[s]]),
       ]);
       issue.labels = [...issue.labels.filter((l) => !remove.includes(l as State)), state];
     },
