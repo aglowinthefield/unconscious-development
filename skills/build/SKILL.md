@@ -53,7 +53,7 @@ Send a Shadow (`shadow`) with the task's criteria (its `## Criteria` section, pl
 Push `gh-<n>/tK` and open one ready PR against its base from step 2.
 
 - Title: the task key first (`gh-42/t1: …`). If the repo's PR title rule needs a prefix such as `type(scope):`, put the key right after it (`feat(feeds): gh-42/t1 …`), and run the repo's title check before calling GitHub.
-- Body: the repo's PR template, `Refs #<n>` and never `Closes`, the Shadow's verdicts per criterion, the Trickster's results, and what wasn't run. When stacked, say `Stacked on #<parent PR>`: it merges after the parent, and GitHub retargets it to the default branch once the parent's branch is deleted.
+- Body: the repo's PR template, `Refs #<n>` and never `Closes`, the Shadow's verdicts per criterion, the Trickster's results, and what wasn't run. When stacked, say `Stacked on #<parent PR>`: it merges after the parent. Before the parent's branch is deleted, retarget this PR to the default branch (`gh pr edit <n> --base main`) and merge the default branch into it. GitHub closes a PR whose base branch is deleted, and a closed PR can't be retargeted.
 - Follow the repo's own PR rules (verify command, screenshots) where they apply.
 
 If the push or PR fails, stop and report it. Never merge or queue.

@@ -69,4 +69,4 @@ When the last task's PR merges, the workflow marks the spec `built`, removes the
 - **Now pages.** In an Obsidian vault, a `🌀 Now/<project>.md` page with `repo: <owner>/<repo>` in its frontmatter gets rebuilt by `bin/unconscious status-page`, showing what's waiting on you, stuck, in flight and ready. Set `UD_NOW_DIR` to that folder.
 - **The Magician.** `bin/unconscious propose` writes the Proposed next section of each Now page.
 - **Alice.** To have tasks become Alice cards instead of job-log lines, run the workflow on a runner that can reach your board, and set `UD_RUNNER: alice` and `ALICE_URL` in it.
-- **Updating.** The workflow pins one commit of this repo in `UD_REF`. To pick up changes, set it to a newer commit.
+- **Updating.** The workflow's `UD_REF` is `main`, so CI runs this repo's latest commit. To hold a project on one version, set `UD_REF` to a commit.

@@ -13,6 +13,8 @@ supersedes:
 %% @agent 2026-11-11: removed the line; the doc opens with the interview sentence %%
 Settled by interview on 2026-11-10 ([[Interview 2026-11-10|transcript]]; footnotes point at the question), reframed around a cast of Jungian archetypes on 2026-11-11. Nothing below is built. Read it, annotate what is wrong (`<leader>ya`), and the build order at the end starts after that.
 
+> **Out of date in places.** [[Who owns what]] is current where the two differ. State labels are now `ud:spec`, `ud:build`, `ud:human`, and `ud:verify`. The questions bot and `draft` are gone. The Magician, Now pages, vault mirror, and timers are parked.
+
 Written for you, not for agents. Agents get smaller documents derived from this one: role prompts, skills, Personas, PROJECT.md files.
 
 ## The shape
